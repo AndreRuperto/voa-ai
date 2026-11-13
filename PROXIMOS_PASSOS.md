@@ -1,30 +1,38 @@
 # Próximos passos
 
-**Data:** 13/11/2026 · **Branch:** `claude/competent-bohr-5d64e4`
+**Data:** 13/11/2026 · **Branch:** `main` (com o PR #1 `/design` e o PR #2 `/visual-frontend` mergeados)
 
-## O que foi feito nesta sessão
+## Decisão pendente: há duas direções visuais
 
-- Direção visual da interface web definida a partir de todos os docs: [docs/09-direcao-visual.md](docs/09-direcao-visual.md).
-  - Conceito: a **placa de status** segue a gramática das placas de pista (amarelo = direção/normal, preto com borda amarela = posição/identificação, laranja = temporário/atraso, vermelho = obrigatório/cancelado).
-  - Tokens de cor (claro "céu de dia" e escuro "céu de noite"), tipografia (Barlow Semi Condensed para placas e horários, Atkinson Hyperlegible Next para texto e digitação), espaçamento, raios e movimento.
-  - Ponte para a v2: os tokens viram a paleta do globo Three.js, e o "palco" do desktop é onde o globo entra.
-- Protótipo navegável das telas da v1: [prototipo/index.html](prototipo/index.html), com as telas início, erro, confirmação, status (em voo, atrasado, cancelado), link compartilhado e meus voos (com lista e vazia).
-- Capturas verificadas (375 px e desktop, claro e escuro) em [docs/visual/](docs/visual/).
+Duas sessões paralelas desenharam a interface, e as duas estão na `main`:
 
-## Estado atual
+| | [09 · Direção visual](docs/09-direcao-visual.md) (`/visual-frontend`) | [10 · Design](docs/10-design.md) (`/design`) |
+|---|---|---|
+| Ideia central | Placa de status na gramática das placas de pista | "Céu noturno, luz de pista" |
+| Tema padrão | Segue o sistema (claro "céu de dia" / escuro "céu de noite") | Escuro |
+| Cores de estado | Amarelo normal, laranja atraso, vermelho cancelado | Âmbar = ação/destino, azul-céu = em voo |
+| Entregável | Protótipo HTML navegável (`prototipo/index.html`) + capturas em `docs/visual/` | Canvas de design (artifact privado) |
 
-- Funciona: navegação entre telas por hash, prévia do aviso que muda com o apelido, folha de "Parar de acompanhar", animação do avião na rota (desliga com reduced motion).
-- Verificado: contrastes medidos (textos ≥ 5,46:1, controles ≥ 3,84:1), sem rolagem horizontal em 375 px nem com zoom de 200%.
-- Não testado: celular real (sol, brilho baixo), leitor de tela real (VoiceOver/TalkBack).
-- O protótipo é estático (dados de exemplo); não é o código da PWA.
+Em comum: escolha de data com 3 botões (limite de +2 dias da AeroAPI), passo explicado para o iPhone antes de pedir permissão e o globo da v2 nos mesmos tons noturnos.
+
+## Feito
+
+- **/visual-frontend:** [docs/09-direcao-visual.md](docs/09-direcao-visual.md) com tokens, tipografia (Barlow Semi Condensed + Atkinson Hyperlegible Next), componentes, textos e ponte para a v2. Protótipo navegável com início, erro, confirmação, status (em voo, atrasado, cancelado), link compartilhado e meus voos. Contrastes medidos (texto ≥ 5,46:1, controles ≥ 3,84:1). Sem rolagem lateral em 375 px nem com zoom de 200%.
+- **/design:** canvas **[Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14)** (privado) com identidade, componentes, 6 telas da v1 e 1 tela da v2. Resumo em [docs/10-design.md](docs/10-design.md).
+
+## Estado
+
+- Nenhuma das duas direções foi validada em aparelho real nem com leitor de tela.
+- O código do app ainda não existe.
 
 ## Próximos passos
 
-- [ ] Revisar a direção visual com o usuário (e cruzar com a sessão paralela de `/design`, se ela produzir algo)
+- [ ] Escolher entre o `09` e o `10`, ou juntar os dois, e marcar o outro como substituído
 - [ ] Decidir se "Me avisar" substitui "Avisar-me" na [02-v1-alertas.md](docs/02-v1-alertas.md)
-- [ ] Desenhar os estados que faltam: desviado, pousou/no portão na lista, offline e permissão de notificação negada
-- [ ] Ícones da PWA (192/512 e maskable) a partir da placa de posição
-- [ ] Ao implementar o Marco 3, levar os tokens de `prototipo/index.html` para `public/` como um `tokens.css`
+- [ ] Desenhar os estados que faltam: desviado, offline, permissão de notificação negada
+- [ ] Exportar os ícones da PWA (192/512 maskable, badge Android)
+- [ ] Marco 1 do roadmap: conta AeroAPI e script `scripts/buscar-voo.js`
+- [ ] Marco 3: levar os tokens escolhidos para `public/tokens.css`
 
 ## Comandos úteis
 
