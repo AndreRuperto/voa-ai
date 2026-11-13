@@ -171,7 +171,7 @@ A · placa primeiro (escolhida)        B · relógio primeiro
 
 ### Desktop: o palco
 
-A partir de 960 px, as telas de status viram duas colunas: placa e linha do tempo à esquerda, a rota num **palco** à direita ([captura](visual/status-d-escuro.png)). Esse palco é exatamente o espaço que o globo 3D vai ocupar na v2. As outras telas, que são formulários, ficam numa coluna de 440 px centralizada.
+A partir de 960 px, as telas de status viram duas colunas: placa e linha do tempo à esquerda, a rota num **palco** à direita ([captura](visual/status-d-escuro.png)). Esse palco é exatamente o espaço que o globo 3D vai ocupar na v2. As outras telas, que são formulários, ficam numa coluna de 440 px centralizada. Em monitores largos, essa coluna deixa muito espaço vazio dos dois lados; isso vai ser corrigido na v2 (ver [06 · Aproveitar a tela grande](06-v2-3d.md#aproveitar-a-tela-grande)).
 
 ## Textos (UX copy)
 

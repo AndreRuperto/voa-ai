@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "prototipo",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8741", "--directory", "prototipo"],
+      "port": 8741,
+      "autoPort": false
+    }
+  ]
+}
