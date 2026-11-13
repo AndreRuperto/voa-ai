@@ -23,6 +23,7 @@ O nome é um trocadilho: *"tô indo aí"* virou *"voa aí"*.
 | 06 | [v2 · 3D](docs/06-v2-3d.md) | Visão da versão 3D |
 | 07 | [Decisões](docs/07-decisoes.md) | ADRs |
 | 08 | [Roadmap](docs/08-roadmap.md) | Marcos e checklist |
+| 09 | [Direção visual](docs/09-direcao-visual.md) | Tokens, tipografia, componentes, telas e o [protótipo](prototipo/index.html) |
 
 ### Referência da AeroAPI
 

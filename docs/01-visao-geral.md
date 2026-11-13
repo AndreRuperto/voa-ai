@@ -51,4 +51,5 @@ O nome brinca com o *"tô indo aí"*: a pessoa está **voando aí**, até você.
 | 06 | [v2 · 3D](06-v2-3d.md) | Visão da versão 3D |
 | 07 | [Decisões](07-decisoes.md) | Registro das decisões de arquitetura |
 | 08 | [Roadmap](08-roadmap.md) | Marcos e checklist |
+| 09 | [Direção visual](09-direcao-visual.md) | Tokens, tipografia, componentes e telas da v1 |
 | — | [AeroAPI (PDF)](aeroapi/AeroAPI-FlightAware.pdf) | Referência completa da API |

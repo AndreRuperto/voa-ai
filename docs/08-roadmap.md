@@ -26,6 +26,7 @@
 
 ## Marco 3: PWA v1
 
+- [x] Direção visual e protótipo das telas ([09-direcao-visual.md](09-direcao-visual.md))
 - [ ] Tela de início, confirmação, status e "Meus voos"
 - [ ] Service worker (push + cache offline da casca do app)
 - [ ] Manifest e ícones ✈️
