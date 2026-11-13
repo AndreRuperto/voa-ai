@@ -235,6 +235,11 @@
   "$0.000/result set"
  ],
  [
+  "PUSH (callback)",
+  "Alert delivery callback from FlightAware (cobrado a cada alerta entregue)",
+  "$0.020/result set"
+ ],
+ [
   "GET /history/flights/{ident}",
   "Get information for a historical flight",
   "$0.020/result set"

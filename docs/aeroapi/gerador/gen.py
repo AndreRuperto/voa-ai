@@ -211,7 +211,7 @@ const { flights } = await res.json();</code></pre>
 <h3>Boas práticas de custo</h3>
 <ul>
 <li>Faça cache das respostas. Status de voo raramente muda em menos de 1–2 minutos.</li>
-<li>Para acompanhar um voo, prefira <strong>alertas</strong> (<code>POST /alerts</code>, que é gratuito) entregues por webhook em vez de consultar o status repetidamente.</li>
+<li>Para acompanhar um voo, prefira <strong>alertas</strong> entregues por webhook em vez de consultar o status repetidamente. Criar, listar e apagar alertas é gratuito, mas <strong>cada alerta entregue custa US$ 0,020</strong>. Por isso, ative só os eventos necessários.</li>
 <li>Use os endpoints <code>/canonical</code> (US$ 0,001) para validar identificadores antes de buscas caras.</li>
 <li>Defina sempre <code>max_pages</code> e acompanhe o gasto em <code>GET /account/usage</code> (gratuito).</li>
 </ul>

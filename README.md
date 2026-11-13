@@ -8,9 +8,23 @@ O nome é um trocadilho: *"tô indo aí"* virou *"voa aí"*.
 
 ## Status
 
-🚧 Em definição. Escopo e stack ainda não foram decididos.
+📝 **v1 em especificação.** PWA + servidor Node que avisa por push quando o voo decola, atrasa, está chegando e pousa.
+💭 **v2:** o avião voando num globo 3D (Three.js).
 
 ## Documentação
+
+| # | Documento | Conteúdo |
+|---|---|---|
+| 01 | [Visão geral](docs/01-visao-geral.md) | Ideia, público, versões e princípios |
+| 02 | [v1 · Alertas](docs/02-v1-alertas.md) | Histórias, fluxo, telas, notificações e critérios de aceite |
+| 03 | [Arquitetura](docs/03-arquitetura.md) | Componentes, API interna, dados, segurança e deploy |
+| 04 | [Integração AeroAPI](docs/04-integracao-aeroapi.md) | Endpoints, alertas e payload do webhook |
+| 05 | [Custos](docs/05-custos.md) | Custo por voo, planos e limites |
+| 06 | [v2 · 3D](docs/06-v2-3d.md) | Visão da versão 3D |
+| 07 | [Decisões](docs/07-decisoes.md) | ADRs |
+| 08 | [Roadmap](docs/08-roadmap.md) | Marcos e checklist |
+
+### Referência da AeroAPI
 
 - [AeroAPI: referência completa (PDF)](docs/aeroapi/AeroAPI-FlightAware.pdf): endpoints, parâmetros, respostas e preços.
 - [Spec OpenAPI oficial](docs/aeroapi/fonte/aeroapi-openapi.yml)
@@ -18,8 +32,4 @@ O nome é um trocadilho: *"tô indo aí"* virou *"voa aí"*.
 
 ## Configuração
 
-A chave da AeroAPI nunca deve ir para o repositório. Use uma variável de ambiente:
-
-```bash
-export AEROAPI_KEY="sua-chave"
-```
+A chave da AeroAPI nunca deve ir para o repositório. Copie `.env.example` para `.env` e preencha. A lista completa de variáveis está em [03-arquitetura.md](docs/03-arquitetura.md#variáveis-de-ambiente).

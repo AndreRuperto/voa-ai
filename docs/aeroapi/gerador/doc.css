@@ -45,3 +45,4 @@ article.op { border: 1px solid #dfe5ee; border-radius: 6px; padding: 8px 10px; m
 .ct { text-transform: none; font-family: monospace; color: #8a97ab; letter-spacing: 0; }
 article.model { margin-bottom: 14px; }
 a { color: #0b5cad; }
+.m-push { background: #c2185b; }
