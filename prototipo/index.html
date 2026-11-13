@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Voa Aí · protótipo v1</title>
+<meta name="theme-color" content="#13213A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS — fonte da verdade: docs/09-direcao-visual.md
+   ============================================================ */
+:root {
+  /* cor: céu de dia + tinta de cartão de embarque + sinalização de pista */
+  --c-fundo: #F2F5F9;
+  --c-superficie: #FFFFFF;
+  --c-tinta: #13213A;
+  --c-tinta-suave: #4B5A72;
+  --c-linha: #D5DCE6;
+  --c-linha-forte: #75839A;
+  --c-pista: #FFC72C;          /* placa de direção: amarelo, texto tinta */
+  --c-pista-tinta: #13213A;
+  --c-local: #13213A;          /* placa de posição: fundo tinta, texto e borda amarelos */
+  --c-atencao: #F28C28;        /* laranja de obra/temporário: atraso */
+  --c-atencao-tinta: #13213A;
+  --c-atencao-texto: #9A4A00;
+  --c-critico: #C8102E;        /* vermelho de placa obrigatória: cancelado, desviado */
+  --c-critico-tinta: #FFFFFF;
+  --c-critico-texto: #B00D28;
+  --c-ok-texto: #1A6E44;
+  --c-foco: #1C5BD6;
+  --c-botao: #13213A;
+  --c-botao-tinta: #FFFFFF;
+  --c-rota-voada: #13213A;
+  --c-rota-falta: #75839A;
+  --c-halo: rgba(255, 199, 44, .45);
+
+  /* tipo */
+  --f-texto: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --f-placa: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --fs-pp: .875rem;     /* 14 */
+  --fs-p: 1.0625rem;    /* 17: corpo */
+  --fs-m: 1.328rem;     /* 21  (×1,25) */
+  --fs-g: 1.66rem;      /* 26,5 */
+  --fs-gg: 2.075rem;    /* 33 */
+
+  /* espaço e forma */
+  --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 24px; --e-6: 32px; --e-7: 48px;
+  --r-placa: 4px;       /* placas reais têm canto quase reto */
+  --r-campo: 10px;
+  --r-cartao: 14px;
+  --r-folha: 22px;
+  --sombra-folha: 0 -8px 32px rgba(19, 33, 58, .18);
+
+  /* movimento */
+  --m-dur: 200ms;
+  --m-curva: cubic-bezier(.2, .7, .2, 1);
+  --m-voo: 1400ms;      /* o único momento orquestrado: o avião assume a posição */
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-fundo: #0D1828; --c-superficie: #15233A; --c-tinta: #E6ECF4; --c-tinta-suave: #A7B4C8;
+    --c-linha: #2A3A55; --c-linha-forte: #6E7F9A; --c-local: #060B14;
+    --c-atencao-texto: #FFB061; --c-critico-texto: #FF8593; --c-ok-texto: #63D39C; --c-foco: #8AB4FF;
+    --c-botao: #FFC72C; --c-botao-tinta: #13213A;
+    --c-rota-voada: #FFC72C; --c-rota-falta: #6E7F9A; --c-halo: rgba(255, 199, 44, .35);
+    --sombra-folha: 0 -8px 32px rgba(0, 0, 0, .5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --c-fundo: #0D1828; --c-superficie: #15233A; --c-tinta: #E6ECF4; --c-tinta-suave: #A7B4C8;
+  --c-linha: #2A3A55; --c-linha-forte: #6E7F9A; --c-local: #060B14;
+  --c-atencao-texto: #FFB061; --c-critico-texto: #FF8593; --c-ok-texto: #63D39C; --c-foco: #8AB4FF;
+  --c-botao: #FFC72C; --c-botao-tinta: #13213A;
+  --c-rota-voada: #FFC72C; --c-rota-falta: #6E7F9A; --c-halo: rgba(255, 199, 44, .35);
+  --sombra-folha: 0 -8px 32px rgba(0, 0, 0, .5);
+  color-scheme: dark;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--c-fundo); color: var(--c-tinta);
+  font: 400 var(--fs-p)/1.5 var(--f-texto);
+}
+h1, h2, h3, p, ol, ul { margin: 0; }
+h1 { font-size: var(--fs-g); line-height: 1.2; font-weight: 700; }
+h2 { font-size: var(--fs-m); line-height: 1.25; font-weight: 700; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+:focus-visible { outline: 3px solid var(--c-foco); outline-offset: 3px; }
+[tabindex="-1"]:focus { outline: none; } /* foco programático ao trocar de tela não desenha anel */
+body { overflow-wrap: break-word; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.app { max-width: 440px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column;
+  padding: 0 var(--e-4) calc(var(--e-6) + env(safe-area-inset-bottom)); }
+.tela { display: none; flex-direction: column; gap: var(--e-5); }
+.tela.ativa { display: flex; }
+
+/* barra do topo */
+.topo { display: flex; align-items: center; justify-content: space-between; min-height: 64px; }
+.topo a { color: inherit; }
+.marca { text-decoration: none; display: inline-flex; min-height: 44px; align-items: center; border-radius: var(--r-placa); }
+.link-topo { font-weight: 600; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center;
+  gap: var(--e-2); padding: 0 var(--e-2); border-radius: var(--r-campo); }
+.link-topo:hover { text-decoration: underline; }
+.contador { font-family: var(--f-placa); font-weight: 700; background: var(--c-local); color: var(--c-pista);
+  border-radius: var(--r-placa); padding: 0 6px; font-size: var(--fs-pp); line-height: 1.5; }
+.voltar { display: inline-flex; align-items: center; gap: var(--e-1); min-height: 44px; font-weight: 600;
+  color: inherit; text-decoration: none; padding-right: var(--e-2); border-radius: var(--r-campo); }
+
+/* ============================================================
+   PLACA — o elemento ousado. Linguagem das placas de pista:
+   amarelo = direção (para onde vai), preto com borda amarela = posição (onde está),
+   laranja = temporário (atraso), vermelho = obrigatório (cancelado/desviado).
+   ============================================================ */
+.placa { display: flex; align-items: stretch; font-family: var(--f-placa); font-weight: 700;
+  border-radius: var(--r-placa); overflow: hidden; line-height: 1.1; width: 100%; }
+.placa > * { padding: var(--e-3) var(--e-4); display: flex; flex-direction: column; justify-content: center; }
+.placa__local { background: var(--c-local); color: var(--c-pista); box-shadow: inset 0 0 0 3px var(--c-pista);
+  border-radius: var(--r-placa); font-size: var(--fs-g); letter-spacing: .01em; flex: none; }
+.placa__direcao { background: var(--c-pista); color: var(--c-pista-tinta); flex: 1; }
+.placa__atencao { background: var(--c-atencao); color: var(--c-atencao-tinta); flex: none; }
+.placa__critico { background: var(--c-critico); color: var(--c-critico-tinta); flex: 1; }
+.placa__estado { font-size: var(--fs-gg); }
+.placa__detalhe { font-size: var(--fs-m); font-weight: 600; margin-top: 2px; }
+.placa--marca { width: auto; }
+.placa--marca .placa__local { font-size: var(--fs-m); padding: 6px var(--e-3); flex-direction: row; gap: 6px; align-items: center; }
+.placa--marca svg { width: 20px; height: 20px; transform: rotate(45deg); fill: currentColor; }
+.placa--mini { width: auto; }
+.placa--mini > * { padding: 4px var(--e-2); }
+.placa--mini .placa__local { font-size: var(--fs-p); box-shadow: inset 0 0 0 2px var(--c-pista); }
+.placa--mini .placa__direcao, .placa--mini .placa__atencao, .placa--mini .placa__critico { font-size: var(--fs-p); flex: none; }
+
+/* ============================================================
+   FORMULÁRIOS E BOTÕES
+   ============================================================ */
+.pergunta { font-size: var(--fs-gg); line-height: 1.15; font-weight: 700; letter-spacing: -.01em; }
+.apoio { color: var(--c-tinta-suave); }
+.campo { display: flex; flex-direction: column; gap: var(--e-2); }
+.campo > label, .grupo > legend { font-weight: 700; }
+.campo input[type="text"] {
+  font: inherit; color: inherit; background: var(--c-superficie); min-height: 56px; padding: 0 var(--e-4);
+  border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); width: 100%;
+}
+/* digitação usa Atkinson: distingue O/0 e I/1, o erro mais comum ao copiar um número de voo */
+.campo input.ident { font-weight: 700; font-size: var(--fs-m); letter-spacing: .06em; text-transform: uppercase; }
+.campo input.ident::placeholder { color: var(--c-tinta-suave); opacity: .7; letter-spacing: .04em; }
+.campo input:focus-visible { outline-offset: 0; border-color: var(--c-foco); }
+.campo input[aria-invalid="true"] { border-color: var(--c-critico-texto); }
+.dica { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.erro { font-size: var(--fs-pp); color: var(--c-critico-texto); font-weight: 600; display: flex; gap: var(--e-2); }
+.erro svg { flex: none; width: 18px; height: 18px; margin-top: 2px; fill: currentColor; }
+
+.grupo { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--e-2); }
+.segmentado { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: var(--e-2); }
+.segmentado label { position: relative; }
+.segmentado input { position: absolute; opacity: 0; inset: 0; }
+.segmentado span { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px;
+  border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); background: var(--c-superficie); cursor: pointer;
+  transition: border-color var(--m-dur) var(--m-curva); text-align: center; line-height: 1.2; }
+.segmentado b { font-weight: 700; }
+.segmentado small { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.segmentado input:checked + span { border-color: var(--c-tinta); box-shadow: inset 0 0 0 1px var(--c-tinta); }
+.segmentado input:focus-visible + span { outline: 3px solid var(--c-foco); outline-offset: 2px; }
+
+.botao { font: 700 var(--fs-p)/1.2 var(--f-texto); min-height: 56px; padding: 0 var(--e-5); border-radius: var(--r-campo);
+  border: 2px solid transparent; background: var(--c-botao); color: var(--c-botao-tinta); cursor: pointer; width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--e-2); text-decoration: none;
+  transition: transform var(--m-dur) var(--m-curva); }
+.botao:active { transform: scale(.98); }
+.botao svg { width: 20px; height: 20px; fill: currentColor; }
+.botao--secundario { background: transparent; color: var(--c-tinta); border-color: var(--c-linha-forte); }
+.botao--texto { background: none; color: var(--c-tinta); width: auto; min-height: 44px; padding: 0 var(--e-2); text-decoration: underline; text-underline-offset: 3px; }
+.botao--perigo { color: var(--c-critico-texto); }
+.botao--compacto { min-height: 44px; width: auto; padding: 0 var(--e-4); }
+
+/* ============================================================
+   CONFIRMAÇÃO
+   ============================================================ */
+.opcoes { display: flex; flex-direction: column; gap: var(--e-3); }
+.cartao-voo { position: relative; display: block; }
+.cartao-voo input { position: absolute; opacity: 0; inset: 0; }
+.cartao-voo__corpo { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: var(--e-1) var(--e-3); align-items: start;
+  background: var(--c-superficie); border: 2px solid var(--c-linha-forte); border-radius: var(--r-cartao); padding: var(--e-4);
+  cursor: pointer; transition: border-color var(--m-dur) var(--m-curva); }
+.cartao-voo input:checked + .cartao-voo__corpo { border-color: var(--c-tinta); box-shadow: inset 0 0 0 1px var(--c-tinta); }
+.cartao-voo input:focus-visible + .cartao-voo__corpo { outline: 3px solid var(--c-foco); outline-offset: 2px; }
+.cartao-voo__cia { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center;
+  font-size: var(--fs-pp); color: var(--c-tinta-suave); margin-bottom: var(--e-2); }
+.cartao-voo__marca { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--c-linha-forte); display: grid; place-items: center; }
+.cartao-voo input:checked + .cartao-voo__corpo .cartao-voo__marca { border-color: var(--c-tinta); background: var(--c-tinta); }
+.cartao-voo input:checked + .cartao-voo__corpo .cartao-voo__marca::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c-superficie); }
+.ponta { display: flex; flex-direction: column; }
+.ponta--fim { text-align: right; }
+.ponta__codigo { font-family: var(--f-placa); font-weight: 700; font-size: var(--fs-g); line-height: 1; }
+.ponta__cidade { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.ponta__hora { font: 700 var(--fs-m)/1.2 var(--f-placa); margin-top: var(--e-1); }
+.cartao-voo__aviao { align-self: center; width: 24px; height: 24px; fill: var(--c-tinta-suave); transform: rotate(90deg); }
+
+.previa { background: var(--c-superficie); border: 1px solid var(--c-linha); border-radius: var(--r-cartao);
+  padding: var(--e-3) var(--e-4); display: grid; grid-template-columns: 36px 1fr; gap: 2px var(--e-3); }
+.previa__icone { grid-row: span 2; width: 36px; height: 36px; border-radius: 9px; background: var(--c-local);
+  box-shadow: inset 0 0 0 2px var(--c-pista); display: grid; place-items: center; }
+.previa__icone svg { width: 20px; height: 20px; fill: var(--c-pista); transform: rotate(45deg); }
+.previa__app { font-size: var(--fs-pp); color: var(--c-tinta-suave); display: flex; justify-content: space-between; }
+.previa__texto { font-weight: 600; }
+.previa-titulo { font-size: var(--fs-pp); color: var(--c-tinta-suave); margin-bottom: var(--e-2); }
+
+.aviso-ios { border: 2px solid var(--c-linha-forte); border-radius: var(--r-cartao); padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-3); }
+.aviso-ios ol { padding-left: 1.4em; display: flex; flex-direction: column; gap: var(--e-1); }
+.aviso-ios h2 { font-size: var(--fs-p); }
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+.cabeca-status { display: flex; flex-direction: column; gap: var(--e-3); }
+.quem { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-3); }
+.quem small { color: var(--c-tinta-suave); font-size: var(--fs-pp); }
+
+.rota { background: var(--c-superficie); border-radius: var(--r-cartao); padding: var(--e-4) var(--e-4) var(--e-3); border: 1px solid var(--c-linha); }
+.rota svg { display: block; width: 100%; height: auto; overflow: visible; }
+.rota__voada { fill: none; stroke: var(--c-rota-voada); stroke-width: 3; stroke-linecap: round; }
+.rota__falta { fill: none; stroke: var(--c-rota-falta); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+.rota__origem { fill: var(--c-rota-voada); }
+.rota__destino { fill: var(--c-pista); stroke: var(--c-pista-tinta); stroke-width: 2; }
+.rota__halo { fill: var(--c-halo); transform-origin: center; transform-box: fill-box; animation: espera 2.4s ease-in-out infinite; }
+.rota__aviao { fill: var(--c-tinta); }
+.rota__pontas { display: flex; justify-content: space-between; margin-top: var(--e-2); }
+.rota__restante { text-align: center; color: var(--c-tinta-suave); font-size: var(--fs-pp); margin-top: var(--e-2); }
+@keyframes espera { 0%, 100% { transform: scale(.7); opacity: .9; } 50% { transform: scale(1.25); opacity: .35; } }
+
+.linha-tempo { list-style: none; padding: 0; display: flex; flex-direction: column; }
+.linha-tempo li { display: grid; grid-template-columns: 28px 1fr auto; gap: 0 var(--e-3); position: relative; padding-bottom: var(--e-4); }
+.linha-tempo li:last-child { padding-bottom: 0; }
+.linha-tempo li::before { content: ""; position: absolute; left: 13px; top: 26px; bottom: -2px; width: 2px; background: var(--c-linha-forte); }
+.linha-tempo li:last-child::before { display: none; }
+.linha-tempo li.feito::before { background: var(--c-tinta); }
+.marco { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--c-linha-forte); background: var(--c-fundo);
+  display: grid; place-items: center; position: relative; z-index: 1; }
+.feito .marco { background: var(--c-tinta); border-color: var(--c-tinta); }
+.feito .marco svg { width: 16px; height: 16px; fill: var(--c-fundo); }
+.agora .marco { background: var(--c-pista); border-color: var(--c-pista-tinta); }
+.agora .marco svg { width: 16px; height: 16px; fill: var(--c-pista-tinta); transform: rotate(90deg); }
+.marco__nome { font-weight: 700; line-height: 28px; }
+.marco__nota { grid-column: 2 / 3; font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.marco__hora { text-align: right; font: 700 var(--fs-m)/28px var(--f-placa); }
+.marco__hora small { display: block; font-weight: 600; font-size: var(--fs-p); color: var(--c-tinta-suave); line-height: 1.2; }
+.previsto .marco__nome { color: var(--c-tinta-suave); font-weight: 600; }
+.previsto .marco__hora { color: var(--c-tinta-suave); }
+.riscado { text-decoration: line-through; }
+.atrasou { color: var(--c-atencao-texto); }
+
+.nota-aviso { display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-3) var(--e-4); border-radius: var(--r-cartao);
+  background: var(--c-superficie); border: 1px solid var(--c-linha); }
+.nota-aviso svg { flex: none; width: 22px; height: 22px; fill: var(--c-tinta); margin-top: 1px; }
+.fuso { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.acoes { display: flex; flex-direction: column; gap: var(--e-3); align-items: center; }
+
+/* ============================================================
+   MEUS VOOS
+   ============================================================ */
+.lista-voos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--e-3); }
+.item-voo { background: var(--c-superficie); border: 1px solid var(--c-linha); border-radius: var(--r-cartao); display: flex; align-items: stretch; }
+.item-voo__link { flex: 1; display: flex; flex-direction: column; gap: var(--e-2); padding: var(--e-4); color: inherit; text-decoration: none; border-radius: var(--r-cartao) 0 0 var(--r-cartao); min-width: 0; }
+.item-voo__link:hover .item-voo__nome { text-decoration: underline; }
+.item-voo__nome { font-weight: 700; font-size: var(--fs-m); }
+.item-voo__trecho { color: var(--c-tinta-suave); font-size: var(--fs-pp); }
+.item-voo__remover { border: 0; border-left: 1px solid var(--c-linha); background: none; color: var(--c-tinta-suave); width: 56px; cursor: pointer;
+  border-radius: 0 var(--r-cartao) var(--r-cartao) 0; display: grid; place-items: center; }
+.item-voo__remover svg { width: 22px; height: 22px; fill: currentColor; }
+.item-voo__remover:hover { color: var(--c-critico-texto); }
+.limite { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+
+.vazio { text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--e-3); padding: var(--e-7) var(--e-2); }
+.vazio svg.pista { width: 160px; height: auto; }
+.vazio p { max-width: 30ch; }
+
+/* ============================================================
+   FOLHA DE CONFIRMAÇÃO (dialog)
+   ============================================================ */
+dialog.folha { border: 0; padding: var(--e-5) var(--e-4) calc(var(--e-5) + env(safe-area-inset-bottom)); margin: auto auto 0; width: 100%; max-width: 440px;
+  border-radius: var(--r-folha) var(--r-folha) 0 0; background: var(--c-superficie); color: var(--c-tinta); box-shadow: var(--sombra-folha); }
+dialog.folha::backdrop { background: rgba(13, 24, 40, .55); }
+dialog.folha[open] { animation: sobe var(--m-dur) var(--m-curva); }
+.folha__corpo { display: flex; flex-direction: column; gap: var(--e-4); }
+@keyframes sobe { from { transform: translateY(24px); opacity: 0; } }
+
+.toast { position: fixed; left: 50%; bottom: calc(var(--e-5) + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--c-local); color: var(--c-pista); box-shadow: inset 0 0 0 2px var(--c-pista); border-radius: var(--r-placa);
+  font: 700 var(--fs-p)/1.2 var(--f-placa); padding: var(--e-3) var(--e-4); max-width: calc(100% - 32px); }
+.toast[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (min-width: 720px) {
+  .app { padding-top: var(--e-5); }
+}
+/* PALCO: no desktop a rota ocupa a coluna da direita.
+   É o lugar exato onde o globo 3D da v2 entra (docs/06-v2-3d.md). */
+@media (min-width: 960px) {
+  .app:has(.tela--palco.ativa) { max-width: 1160px; }
+  .tela--palco.ativa { display: grid; grid-template-columns: 420px minmax(0, 1fr); column-gap: var(--e-7); row-gap: var(--e-5); align-items: start; }
+  .tela--palco > * { grid-column: 1; }
+  .tela--palco > .rota { grid-column: 2; grid-row: 1 / span 12; position: sticky; top: var(--e-5);
+    min-height: min(640px, calc(100dvh - 48px)); display: flex; flex-direction: column; justify-content: center; padding: var(--e-6); }
+}
+</style>
+</head>
+<body>
+<!-- ícones (Material Icons, Apache 2.0) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-aviao" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
+  <symbol id="i-sino" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></symbol>
+  <symbol id="i-lixo" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-mais" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+</svg>
+
+<div class="app">
+
+<!-- ======================= INÍCIO ======================= -->
+<section class="tela" data-tela="inicio" aria-labelledby="t-inicio">
+  <header class="topo">
+    <a class="marca" href="#inicio" aria-label="Voa Aí, início">
+      <span class="placa placa--marca"><span class="placa__local"><svg aria-hidden="true"><use href="#i-aviao"/></svg>Voa Aí</span></span>
+    </a>
+    <a class="link-topo" href="#meus-voos">Meus voos <span class="contador num" aria-label="2 voos">2</span></a>
+  </header>
+
+  <h1 id="t-inicio" class="pergunta">Quem você está esperando?</h1>
+  <p class="apoio">Digite o número do voo. A gente avisa no celular quando decolar, atrasar, estiver chegando e pousar.</p>
+
+  <form class="tela-form" data-ir="confirmacao" novalidate style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <div class="campo">
+      <label for="ident">Número do voo</label>
+      <input id="ident" class="ident" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+             placeholder="TP103" aria-describedby="ident-dica" value="">
+      <p id="ident-dica" class="dica">Está no cartão de embarque ou na mensagem da companhia. Ex.: LA3054, G31450, TP103.</p>
+    </div>
+
+    <fieldset class="grupo">
+      <legend>Data do voo</legend>
+      <div class="segmentado">
+        <label><input type="radio" name="data" value="0" checked><span><b>Hoje</b><small class="num">13 nov</small></span></label>
+        <label><input type="radio" name="data" value="1"><span><b>Amanhã</b><small class="num">14 nov</small></span></label>
+        <label><input type="radio" name="data" value="2"><span><b>Sábado</b><small class="num">15 nov</small></span></label>
+      </div>
+      <p class="dica">Dá para acompanhar voos de hoje até daqui a 2 dias.</p>
+    </fieldset>
+
+    <button class="botao" type="submit">Acompanhar voo</button>
+  </form>
+</section>
+
+<!-- ======================= INÍCIO · ERRO ======================= -->
+<section class="tela" data-tela="inicio-erro" aria-labelledby="t-inicio-erro">
+  <header class="topo">
+    <a class="marca" href="#inicio" aria-label="Voa Aí, início">
+      <span class="placa placa--marca"><span class="placa__local"><svg aria-hidden="true"><use href="#i-aviao"/></svg>Voa Aí</span></span>
+    </a>
+    <a class="link-topo" href="#meus-voos">Meus voos <span class="contador num" aria-label="2 voos">2</span></a>
+  </header>
+  <h1 id="t-inicio-erro" class="pergunta">Quem você está esperando?</h1>
+  <form novalidate style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <div class="campo">
+      <label for="ident2">Número do voo</label>
+      <input id="ident2" class="ident" type="text" value="TP1O3" aria-invalid="true" aria-describedby="ident2-erro">
+      <p id="ident2-erro" class="erro" role="alert"><svg aria-hidden="true"><use href="#i-alerta"/></svg>
+        <span>Não achamos o voo TP1O3 hoje. Confira se é a letra O ou o número 0 e a data do voo.</span></p>
+    </div>
+    <fieldset class="grupo">
+      <legend>Data do voo</legend>
+      <div class="segmentado">
+        <label><input type="radio" name="data2" checked><span><b>Hoje</b><small class="num">13 nov</small></span></label>
+        <label><input type="radio" name="data2"><span><b>Amanhã</b><small class="num">14 nov</small></span></label>
+        <label><input type="radio" name="data2"><span><b>Sábado</b><small class="num">15 nov</small></span></label>
+      </div>
+    </fieldset>
+    <button class="botao" type="button">Acompanhar voo</button>
+  </form>
+</section>
+
+<!-- ======================= CONFIRMAÇÃO ======================= -->
+<section class="tela" data-tela="confirmacao" aria-labelledby="t-conf">
+  <header class="topo">
+    <a class="voltar" href="#inicio"><svg width="22" height="22" fill="currentColor" aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
+  </header>
+
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-conf">É um destes?</h1>
+    <p class="apoio">Achamos 2 voos TP103 hoje. Escolha o de quem você espera.</p>
+  </div>
+
+  <fieldset class="grupo opcoes">
+    <legend class="sr">Voos encontrados</legend>
+    <label class="cartao-voo">
+      <input type="radio" name="voo" value="TAP103-1" checked>
+      <span class="cartao-voo__corpo">
+        <span class="cartao-voo__cia"><span>TAP Air Portugal, Airbus A330-900</span><span class="cartao-voo__marca" aria-hidden="true"></span></span>
+        <span class="ponta"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span><span class="ponta__hora num">sai 08:30</span></span>
+        <svg class="cartao-voo__aviao" aria-hidden="true"><use href="#i-aviao"/></svg>
+        <span class="ponta ponta--fim"><span class="ponta__codigo">GRU</span><span class="ponta__cidade">São Paulo</span><span class="ponta__hora num">chega 18:40</span></span>
+      </span>
+    </label>
+    <label class="cartao-voo">
+      <input type="radio" name="voo" value="TAP103-2">
+      <span class="cartao-voo__corpo">
+        <span class="cartao-voo__cia"><span>TAP Air Portugal, Airbus A321neo</span><span class="cartao-voo__marca" aria-hidden="true"></span></span>
+        <span class="ponta"><span class="ponta__codigo">OPO</span><span class="ponta__cidade">Porto</span><span class="ponta__hora num">sai 06:10</span></span>
+        <svg class="cartao-voo__aviao" aria-hidden="true"><use href="#i-aviao"/></svg>
+        <span class="ponta ponta--fim"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span><span class="ponta__hora num">chega 07:05</span></span>
+      </span>
+    </label>
+    <p class="fuso">Horários de Brasília, o fuso de quem espera em São Paulo.</p>
+  </fieldset>
+
+  <div class="campo">
+    <label for="apelido">Como chamar quem vem? <span class="apoio" style="font-weight:400">(opcional)</span></label>
+    <input id="apelido" type="text" placeholder="Mãe, Ana, Vô Zé…" maxlength="24" autocomplete="off" aria-describedby="apelido-dica">
+    <p id="apelido-dica" class="sr">O apelido aparece nos avisos. Fica só neste aparelho e no aviso do voo.</p>
+  </div>
+
+  <div>
+    <p class="previa-titulo">Os avisos vão chegar assim:</p>
+    <div class="previa" aria-live="polite">
+      <span class="previa__icone" aria-hidden="true"><svg><use href="#i-aviao"/></svg></span>
+      <span class="previa__app"><span>Voa Aí</span><span>agora</span></span>
+      <span class="previa__texto" id="previa-texto">🛫 O voo TP103 decolou de Lisboa. Chegada prevista às 18:40</span>
+    </div>
+  </div>
+
+  <div class="aviso-ios" data-so-ios>
+    <h2>No iPhone, falta um passo</h2>
+    <p>Os avisos só chegam com o Voa Aí na Tela de Início:</p>
+    <ol>
+      <li>Toque em <b>Compartilhar</b> no Safari.</li>
+      <li>Escolha <b>Adicionar à Tela de Início</b>.</li>
+      <li>Abra o Voa Aí por lá e toque em <b>Me avisar</b>.</li>
+    </ol>
+  </div>
+
+  <div class="acoes">
+    <a class="botao" href="#status" data-toast="Pronto! Vamos te avisar."><svg aria-hidden="true"><use href="#i-sino"/></svg>Me avisar</a>
+    <p class="dica" style="text-align:center">O celular vai pedir permissão para mostrar notificações.</p>
+  </div>
+</section>
+
+<!-- ======================= STATUS (em voo) ======================= -->
+<section class="tela tela--palco" data-tela="status" aria-labelledby="t-status">
+  <header class="topo">
+    <a class="voltar" href="#meus-voos"><svg width="22" height="22" fill="currentColor" aria-hidden="true"><use href="#i-voltar"/></svg>Meus voos</a>
+  </header>
+
+  <div class="cabeca-status">
+    <div class="quem"><h1 id="t-status">Voo da Mãe</h1><small>TAP Air Portugal</small></div>
+    <div class="placa" role="status" aria-label="TP103: em voo, chega às 18:52 em Guarulhos">
+      <span class="placa__local num">TP103</span>
+      <span class="placa__direcao"><span class="placa__estado">Em voo</span><span class="placa__detalhe num">chega 18:52 em GRU</span></span>
+    </div>
+  </div>
+
+  <figure class="rota" style="margin:0" data-progresso=".62">
+    <svg viewBox="0 0 320 96" role="img" aria-label="Rota de Lisboa a São Paulo. O avião já fez 62% do caminho; faltam 3 h 50 min.">
+      <path class="rota__voada"/><path class="rota__falta"/>
+      <circle class="rota__origem" r="5"/>
+      <circle class="rota__halo" r="14"/><circle class="rota__destino" r="6"/>
+      <g class="rota__aviao"><use href="#i-aviao" x="-14" y="-14" width="28" height="28"/></g>
+    </svg>
+    <figcaption>
+      <div class="rota__pontas">
+        <span class="ponta"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span></span>
+        <span class="ponta ponta--fim"><span class="ponta__codigo">GRU</span><span class="ponta__cidade">Guarulhos</span></span>
+      </div>
+      <p class="rota__restante num">Faltam 3 h 50 min de voo</p>
+    </figcaption>
+  </figure>
+
+  <section aria-labelledby="t-linha">
+    <h2 id="t-linha" class="sr">Etapas do voo</h2>
+    <ol class="linha-tempo">
+      <li class="feito"><span class="marco"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+        <span class="marco__nome">Saiu do portão</span><span class="marco__hora num">08:41<small>previsto 08:30</small></span></li>
+      <li class="feito"><span class="marco"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+        <span class="marco__nome">Decolou</span><span class="marco__hora num">08:58</span></li>
+      <li class="agora" aria-current="step"><span class="marco"><svg aria-hidden="true"><use href="#i-aviao"/></svg></span>
+        <span class="marco__nome">Em voo</span><span class="marco__hora num">agora</span>
+        <span class="marco__nota">Sobre o Atlântico, a 11.300 m</span></li>
+      <li class="previsto"><span class="marco"></span>
+        <span class="marco__nome">Pousa</span><span class="marco__hora num">18:52<small>previsto 18:40</small></span></li>
+      <li class="previsto"><span class="marco"></span>
+        <span class="marco__nome">Chega ao portão</span><span class="marco__hora num">19:05</span></li>
+    </ol>
+  </section>
+
+  <p class="nota-aviso"><svg aria-hidden="true"><use href="#i-sino"/></svg>
+    <span>Vamos te avisar <b>40 min antes do pouso</b>, a hora de sair para o aeroporto.</span></p>
+  <p class="fuso">Horários de Brasília. Atualizado às 15:02.</p>
+
+  <div class="acoes">
+    <button class="botao botao--secundario" type="button" data-compartilhar><svg aria-hidden="true"><use href="#i-share"/></svg>Compartilhar voo</button>
+    <button class="botao botao--texto botao--perigo" type="button" data-abrir="parar">Parar de acompanhar</button>
+  </div>
+</section>
+
+<!-- ======================= STATUS (atrasado) ======================= -->
+<section class="tela tela--palco" data-tela="status-atraso" aria-labelledby="t-status-a">
+  <header class="topo">
+    <a class="voltar" href="#meus-voos"><svg width="22" height="22" fill="currentColor" aria-hidden="true"><use href="#i-voltar"/></svg>Meus voos</a>
+  </header>
+  <div class="cabeca-status">
+    <div class="quem"><h1 id="t-status-a">Voo da Mãe</h1><small>TAP Air Portugal</small></div>
+    <div class="placa" role="status" aria-label="TP103: atrasado 35 minutos, nova saída 09:05, chega 19:15 em Guarulhos">
+      <span class="placa__local num">TP103</span>
+      <span class="placa__direcao"><span class="placa__estado">Atrasado</span><span class="placa__detalhe num">chega 19:15</span></span>
+      <span class="placa__atencao"><span class="placa__estado num">+35</span><span class="placa__detalhe">min</span></span>
+    </div>
+  </div>
+
+  <figure class="rota" style="margin:0" data-progresso="0">
+    <svg viewBox="0 0 320 96" role="img" aria-label="Rota de Lisboa a São Paulo. O avião ainda está em Lisboa.">
+      <path class="rota__voada"/><path class="rota__falta"/>
+      <circle class="rota__origem" r="5"/>
+      <circle class="rota__halo" r="14"/><circle class="rota__destino" r="6"/>
+      <g class="rota__aviao"><use href="#i-aviao" x="-14" y="-14" width="28" height="28"/></g>
+    </svg>
+    <figcaption>
+      <div class="rota__pontas">
+        <span class="ponta"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span></span>
+        <span class="ponta ponta--fim"><span class="ponta__codigo">GRU</span><span class="ponta__cidade">Guarulhos</span></span>
+      </div>
+      <p class="rota__restante num">Ainda no solo. Nova saída às 09:05</p>
+    </figcaption>
+  </figure>
+
+  <ol class="linha-tempo">
+    <li class="agora" aria-current="step"><span class="marco"><svg aria-hidden="true"><use href="#i-aviao"/></svg></span>
+      <span class="marco__nome">No portão</span><span class="marco__hora num">agora</span>
+      <span class="marco__nota atrasou">A companhia adiou a saída em 35 min</span></li>
+    <li class="previsto"><span class="marco"></span>
+      <span class="marco__nome">Decola</span><span class="marco__hora num"><span class="atrasou">09:20</span><small class="riscado">08:45</small></span></li>
+    <li class="previsto"><span class="marco"></span>
+      <span class="marco__nome">Pousa</span><span class="marco__hora num"><span class="atrasou">19:15</span><small class="riscado">18:40</small></span></li>
+    <li class="previsto"><span class="marco"></span>
+      <span class="marco__nome">Chega ao portão</span><span class="marco__hora num">19:28</span></li>
+  </ol>
+
+  <p class="nota-aviso"><svg aria-hidden="true"><use href="#i-sino"/></svg>
+    <span>Se o horário mudar de novo, você recebe outro aviso. Não precisa ficar conferindo.</span></p>
+  <p class="fuso">Horários de Brasília. Atualizado às 05:47.</p>
+  <div class="acoes">
+    <button class="botao botao--secundario" type="button" data-compartilhar><svg aria-hidden="true"><use href="#i-share"/></svg>Compartilhar voo</button>
+    <button class="botao botao--texto botao--perigo" type="button" data-abrir="parar">Parar de acompanhar</button>
+  </div>
+</section>
+
+<!-- ======================= STATUS (cancelado) ======================= -->
+<section class="tela" data-tela="status-cancelado" aria-labelledby="t-status-c">
+  <header class="topo">
+    <a class="voltar" href="#meus-voos"><svg width="22" height="22" fill="currentColor" aria-hidden="true"><use href="#i-voltar"/></svg>Meus voos</a>
+  </header>
+  <div class="cabeca-status">
+    <div class="quem"><h1 id="t-status-c">Voo do Pedro</h1><small>LATAM</small></div>
+    <div class="placa" role="status" aria-label="LA3054: cancelado pela companhia">
+      <span class="placa__local num">LA3054</span>
+      <span class="placa__critico"><span class="placa__estado">Cancelado</span><span class="placa__detalhe">pela companhia</span></span>
+    </div>
+  </div>
+  <div class="nota-aviso" style="flex-direction:column;gap:var(--e-2)">
+    <h2 style="font-size:var(--fs-p)">E agora?</h2>
+    <p>A LATAM costuma remarcar quem estava no voo. Pergunte ao Pedro qual é o novo voo e acompanhe por aqui.</p>
+  </div>
+  <div class="acoes">
+    <a class="botao" href="#inicio"><svg aria-hidden="true"><use href="#i-mais"/></svg>Acompanhar o novo voo</a>
+    <button class="botao botao--texto" type="button" data-abrir="parar">Tirar da lista</button>
+  </div>
+  <p class="fuso">CGH a SDU, saída prevista às 14:20. Cancelado às 11:58.</p>
+</section>
+
+<!-- ======================= STATUS (link compartilhado) ======================= -->
+<section class="tela tela--palco" data-tela="compartilhado" aria-labelledby="t-comp">
+  <header class="topo">
+    <a class="marca" href="#inicio" aria-label="Voa Aí, início">
+      <span class="placa placa--marca"><span class="placa__local"><svg aria-hidden="true"><use href="#i-aviao"/></svg>Voa Aí</span></span>
+    </a>
+  </header>
+  <div class="cabeca-status">
+    <div class="quem"><h1 id="t-comp">Voo da Ana</h1></div>
+    <div class="placa" role="status" aria-label="TP103: pousou às 18:52 em Guarulhos">
+      <span class="placa__local num">TP103</span>
+      <span class="placa__direcao"><span class="placa__estado">Pousou</span><span class="placa__detalhe num">18:52 em GRU</span></span>
+    </div>
+    <p class="apoio">A Ana compartilhou este voo com você.</p>
+  </div>
+  <figure class="rota" style="margin:0" data-progresso="1">
+    <svg viewBox="0 0 320 96" role="img" aria-label="Rota de Lisboa a São Paulo. O avião já pousou.">
+      <path class="rota__voada"/><path class="rota__falta"/>
+      <circle class="rota__origem" r="5"/>
+      <circle class="rota__destino" r="6"/>
+      <g class="rota__aviao"><use href="#i-aviao" x="-14" y="-14" width="28" height="28"/></g>
+    </svg>
+    <figcaption>
+      <div class="rota__pontas">
+        <span class="ponta"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span></span>
+        <span class="ponta ponta--fim"><span class="ponta__codigo">GRU</span><span class="ponta__cidade">Guarulhos</span></span>
+      </div>
+      <p class="rota__restante num">Taxiando até o portão</p>
+    </figcaption>
+  </figure>
+  <ol class="linha-tempo">
+    <li class="feito"><span class="marco"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="marco__nome">Decolou</span><span class="marco__hora num">08:58</span></li>
+    <li class="feito"><span class="marco"><svg aria-hidden="true"><use href="#i-check"/></svg></span><span class="marco__nome">Pousou</span><span class="marco__hora num">18:52</span></li>
+    <li class="previsto"><span class="marco"></span><span class="marco__nome">Chega ao portão</span><span class="marco__hora num">19:05</span></li>
+  </ol>
+  <div class="acoes">
+    <a class="botao" href="#confirmacao"><svg aria-hidden="true"><use href="#i-sino"/></svg>Receber os avisos deste voo</a>
+    <p class="dica" style="text-align:center">Sem cadastro. Só permitir as notificações.</p>
+  </div>
+</section>
+
+<!-- ======================= MEUS VOOS ======================= -->
+<section class="tela" data-tela="meus-voos" aria-labelledby="t-meus">
+  <header class="topo">
+    <a class="marca" href="#inicio" aria-label="Voa Aí, início">
+      <span class="placa placa--marca"><span class="placa__local"><svg aria-hidden="true"><use href="#i-aviao"/></svg>Voa Aí</span></span>
+    </a>
+  </header>
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-meus">Meus voos</h1>
+    <p class="limite num">3 de 5 voos neste aparelho</p>
+  </div>
+  <ul class="lista-voos">
+    <li class="item-voo">
+      <a class="item-voo__link" href="#status">
+        <span class="item-voo__nome">Mãe</span>
+        <span class="placa placa--mini"><span class="placa__local num">TP103</span><span class="placa__direcao num">Em voo, chega 18:52</span></span>
+        <span class="item-voo__trecho">Lisboa a Guarulhos, hoje</span>
+      </a>
+      <button class="item-voo__remover" type="button" aria-label="Parar de acompanhar o voo da Mãe" data-abrir="parar"><svg aria-hidden="true"><use href="#i-lixo"/></svg></button>
+    </li>
+    <li class="item-voo">
+      <a class="item-voo__link" href="#status-atraso">
+        <span class="item-voo__nome">Vô Zé</span>
+        <span class="placa placa--mini"><span class="placa__local num">G31450</span><span class="placa__direcao num">Atrasado, sai 16:40</span><span class="placa__atencao num">+50 min</span></span>
+        <span class="item-voo__trecho">Recife a Congonhas, amanhã</span>
+      </a>
+      <button class="item-voo__remover" type="button" aria-label="Parar de acompanhar o voo do Vô Zé" data-abrir="parar"><svg aria-hidden="true"><use href="#i-lixo"/></svg></button>
+    </li>
+    <li class="item-voo">
+      <a class="item-voo__link" href="#status-cancelado">
+        <span class="item-voo__nome">Pedro</span>
+        <span class="placa placa--mini"><span class="placa__local num">LA3054</span><span class="placa__critico">Cancelado</span></span>
+        <span class="item-voo__trecho">Congonhas ao Santos Dumont, hoje</span>
+      </a>
+      <button class="item-voo__remover" type="button" aria-label="Tirar o voo do Pedro da lista" data-abrir="parar"><svg aria-hidden="true"><use href="#i-lixo"/></svg></button>
+    </li>
+  </ul>
+  <a class="botao botao--secundario" href="#inicio"><svg aria-hidden="true"><use href="#i-mais"/></svg>Acompanhar outro voo</a>
+</section>
+
+<!-- ======================= MEUS VOOS · VAZIO ======================= -->
+<section class="tela" data-tela="meus-voos-vazio" aria-labelledby="t-vazio">
+  <header class="topo">
+    <a class="marca" href="#inicio" aria-label="Voa Aí, início">
+      <span class="placa placa--marca"><span class="placa__local"><svg aria-hidden="true"><use href="#i-aviao"/></svg>Voa Aí</span></span>
+    </a>
+  </header>
+  <h1 id="t-vazio">Meus voos</h1>
+  <div class="vazio">
+    <svg class="pista" viewBox="0 0 160 64" aria-hidden="true">
+      <rect x="0" y="20" width="160" height="24" rx="2" fill="var(--c-linha)"/>
+      <g fill="var(--c-superficie)"><rect x="8" y="31" width="16" height="2"/><rect x="36" y="31" width="16" height="2"/><rect x="64" y="31" width="16" height="2"/><rect x="92" y="31" width="16" height="2"/><rect x="120" y="31" width="16" height="2"/></g>
+      <g fill="var(--c-pista)"><circle cx="4" cy="14" r="3"/><circle cx="44" cy="14" r="3"/><circle cx="84" cy="14" r="3"/><circle cx="124" cy="14" r="3"/><circle cx="4" cy="50" r="3"/><circle cx="44" cy="50" r="3"/><circle cx="84" cy="50" r="3"/><circle cx="124" cy="50" r="3"/></g>
+    </svg>
+    <h2>Pista livre</h2>
+    <p class="apoio">Nenhum voo sendo acompanhado neste aparelho. Quando você acompanhar um, ele aparece aqui.</p>
+    <a class="botao botao--compacto" href="#inicio"><svg aria-hidden="true"><use href="#i-mais"/></svg>Acompanhar um voo</a>
+  </div>
+</section>
+
+</div>
+
+<dialog class="folha" id="parar" aria-labelledby="t-parar">
+  <form method="dialog" class="folha__corpo">
+    <h2 id="t-parar">Parar de acompanhar o voo da Mãe?</h2>
+    <p class="apoio">Você não vai mais receber avisos do TP103. Quem recebeu o link continua recebendo.</p>
+    <button class="botao" value="parar" style="background:var(--c-critico);color:var(--c-critico-tinta)">Parar avisos</button>
+    <button class="botao botao--secundario" value="manter" autofocus>Continuar acompanhando</button>
+  </form>
+</dialog>
+
+<p class="toast" id="toast" role="status" hidden></p>
+
+<script>
+// ---- tema forçado por parâmetro (?tema=escuro|claro), útil para screenshots
+const tema = new URLSearchParams(location.search).get('tema');
+if (tema === 'escuro') document.documentElement.dataset.theme = 'dark';
+if (tema === 'claro') document.documentElement.dataset.theme = 'light';
+
+// ---- iOS: só mostra o passo de instalação no iPhone fora da tela de início (ou ?ios=1)
+const ehIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || new URLSearchParams(location.search).get('ios') === '1';
+const instalado = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+document.querySelectorAll('[data-so-ios]').forEach(el => el.hidden = !(ehIOS && !instalado));
+
+// ---- rota: curva quadrática dividida no ponto do progresso (de Casteljau).
+// A mesma codificação vai para o arco 3D da v2: trecho voado sólido, restante tracejado, destino com halo.
+const P0 = [16, 80], P1 = [160, -6], P2 = [304, 80];
+const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+function desenharRota(fig, t) {
+  const a = lerp(P0, P1, t), b = lerp(P1, P2, t), p = lerp(a, b, t);
+  const svg = fig.querySelector('svg');
+  svg.querySelector('.rota__voada').setAttribute('d', t > 0 ? `M${P0} Q${a} ${p}` : '');
+  svg.querySelector('.rota__falta').setAttribute('d', t < 1 ? `M${p} Q${b} ${P2}` : '');
+  const [ox, oy] = P0, [dx, dy] = P2;
+  svg.querySelector('.rota__origem').setAttribute('cx', ox); svg.querySelector('.rota__origem').setAttribute('cy', oy);
+  svg.querySelectorAll('.rota__destino, .rota__halo').forEach(c => { c.setAttribute('cx', dx); c.setAttribute('cy', dy); });
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI + 90; // o ícone aponta para cima
+  svg.querySelector('.rota__aviao').setAttribute('transform', `translate(${p}) rotate(${ang})`);
+}
+function animarRota(fig) {
+  const alvo = parseFloat(fig.dataset.progresso);
+  const reduzir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduzir || alvo === 0) return desenharRota(fig, alvo);
+  const dur = 1400, ini = performance.now();
+  const passo = agora => {
+    const k = Math.min(1, (agora - ini) / dur), e = 1 - Math.pow(1 - k, 3);
+    desenharRota(fig, alvo * e);
+    if (k < 1) requestAnimationFrame(passo);
+  };
+  requestAnimationFrame(passo);
+}
+
+// ---- navegação por hash entre telas
+function mostrar() {
+  const nome = location.hash.slice(1) || 'inicio';
+  document.querySelectorAll('.tela').forEach(s => s.classList.toggle('ativa', s.dataset.tela === nome));
+  const ativa = document.querySelector('.tela.ativa');
+  ativa?.querySelectorAll('.rota').forEach(animarRota);
+  ativa?.querySelector('h1')?.setAttribute('tabindex', '-1');
+  scrollTo(0, 0);
+}
+addEventListener('hashchange', () => { mostrar(); document.querySelector('.tela.ativa h1')?.focus({ preventScroll: true }); });
+mostrar();
+
+// ---- formulário inicial: vazio → erro; preenchido → confirmação
+document.querySelector('[data-tela="inicio"] form').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = document.getElementById('ident').value.trim();
+  location.hash = v ? 'confirmacao' : 'inicio-erro';
+});
+
+// ---- prévia do aviso acompanha o apelido
+const apelido = document.getElementById('apelido'), previa = document.getElementById('previa-texto');
+apelido.addEventListener('input', () => {
+  const n = apelido.value.trim();
+  previa.textContent = `🛫 O voo ${n ? 'de ' + n : 'TP103'} decolou de Lisboa. Chegada prevista às 18:40`;
+});
+
+// ---- toast, compartilhar e folha de confirmação
+const toast = document.getElementById('toast');
+function avisar(msg) { toast.textContent = msg; toast.hidden = false; clearTimeout(avisar.t); avisar.t = setTimeout(() => toast.hidden = true, 3200); }
+document.querySelectorAll('[data-toast]').forEach(a => a.addEventListener('click', () => setTimeout(() => avisar(a.dataset.toast), 50)));
+document.querySelectorAll('[data-compartilhar]').forEach(b => b.addEventListener('click', async () => {
+  const dados = { title: 'Voo da Mãe · Voa Aí', text: 'Acompanhe o TP103 comigo no Voa Aí', url: location.origin + '/v/TAP103-1734567890' };
+  if (navigator.share) { try { await navigator.share(dados); } catch {} } else { avisar('Link do voo copiado'); }
+}));
+const folha = document.getElementById('parar');
+document.querySelectorAll('[data-abrir="parar"]').forEach(b => b.addEventListener('click', () => folha.showModal()));
+folha.addEventListener('close', () => { if (folha.returnValue === 'parar') { avisar('Você não recebe mais avisos deste voo'); location.hash = 'meus-voos'; } });
+</script>
+</body>
+</html>

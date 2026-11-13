@@ -1,28 +1,43 @@
 # Próximos passos
 
-**Data:** 13/11/2026 · **Branch:** `claude/modest-bose-270dbb`
+**Data:** 13/11/2026 · **Branch:** `main` (com o PR #1 `/design` e o PR #2 `/visual-frontend` mergeados)
 
-## Feito nesta sessão (/design)
+## Decisão pendente: há duas direções visuais
 
-- Lidos todos os docs (`01` a `08`, `aeroapi/README.md`).
-- Criado o canvas de design **[Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14)** (privado): identidade, componentes, 6 telas da v1 e 1 tela da v2 (globo 3D).
-- Resumo e decisões em [docs/10-design.md](docs/10-design.md).
+Duas sessões paralelas desenharam a interface, e as duas estão na `main`:
+
+| | [09 · Direção visual](docs/09-direcao-visual.md) (`/visual-frontend`) | [10 · Design](docs/10-design.md) (`/design`) |
+|---|---|---|
+| Ideia central | Placa de status na gramática das placas de pista | "Céu noturno, luz de pista" |
+| Tema padrão | Segue o sistema (claro "céu de dia" / escuro "céu de noite") | Escuro |
+| Cores de estado | Amarelo normal, laranja atraso, vermelho cancelado | Âmbar = ação/destino, azul-céu = em voo |
+| Entregável | Protótipo HTML navegável (`prototipo/index.html`) + capturas em `docs/visual/` | Canvas de design (artifact privado) |
+
+Em comum: escolha de data com 3 botões (limite de +2 dias da AeroAPI), passo explicado para o iPhone antes de pedir permissão e o globo da v2 nos mesmos tons noturnos.
+
+## Feito
+
+- **/visual-frontend:** [docs/09-direcao-visual.md](docs/09-direcao-visual.md) com tokens, tipografia (Barlow Semi Condensed + Atkinson Hyperlegible Next), componentes, textos e ponte para a v2. Protótipo navegável com início, erro, confirmação, status (em voo, atrasado, cancelado), link compartilhado e meus voos. Contrastes medidos (texto ≥ 5,46:1, controles ≥ 3,84:1). Sem rolagem lateral em 375 px nem com zoom de 200%.
+- **/design:** canvas **[Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14)** (privado) com identidade, componentes, 6 telas da v1 e 1 tela da v2. Resumo em [docs/10-design.md](docs/10-design.md).
 
 ## Estado
 
-- Design: pronto para revisão. Não validado em aparelho real.
-- Código do app: ainda não existe.
-- `docs/09-direcao-visual.md` é da sessão paralela `/visual-frontend`; conciliar com o `10-design.md` quando as duas terminarem.
+- Nenhuma das duas direções foi validada em aparelho real nem com leitor de tela.
+- O código do app ainda não existe.
 
 ## Próximos passos
 
-- [ ] Revisar o canvas e escolher entre esta direção e a do `09-direcao-visual.md` (ou juntar as duas)
-- [ ] Exportar ícones da PWA (192/512 maskable, badge Android) a partir do canvas
+- [ ] Escolher entre o `09` e o `10`, ou juntar os dois, e marcar o outro como substituído
+- [ ] Decidir se "Me avisar" substitui "Avisar-me" na [02-v1-alertas.md](docs/02-v1-alertas.md)
+- [ ] Desenhar os estados que faltam: desviado, offline, permissão de notificação negada
+- [ ] Exportar os ícones da PWA (192/512 maskable, badge Android)
 - [ ] Marco 1 do roadmap: conta AeroAPI e script `scripts/buscar-voo.js`
-- [ ] Marco 3: transformar os tokens de `docs/10-design.md` em `public/tokens.css`
+- [ ] Marco 3: levar os tokens escolhidos para `public/tokens.css`
 
-## Decisões
+## Comandos úteis
 
-- Tema escuro padrão ("céu noturno, luz de pista"), âmbar = ação/destino, azul-céu = em voo.
-- Seletor de data com 3 botões (Hoje/Amanhã/+2) por causa do limite de +2 dias da AeroAPI.
-- Folha específica para iPhone antes do pedido de permissão de push.
+```bash
+python -m http.server 5173 --directory prototipo
+```
+
+Abrir `http://localhost:5173/#status`. Use `?tema=escuro` ou `?tema=claro` para forçar o tema e `?ios=1` para ver o passo do iPhone.
