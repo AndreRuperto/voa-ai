@@ -1,0 +1,317 @@
+[
+ [
+  "GET /flights/search",
+  "Search for flights",
+  "$0.050/result set"
+ ],
+ [
+  "GET /flights/search/positions",
+  "Search for flight positions",
+  "$0.050/result set"
+ ],
+ [
+  "GET /flights/search/count",
+  "Get count of flights matching search parameters",
+  "$0.020/result set"
+ ],
+ [
+  "GET /flights/search/advanced",
+  "Search for flights using advanced syntax",
+  "$0.050/result set"
+ ],
+ [
+  "GET /flights/{ident}",
+  "Get information for a flight",
+  "$0.005/result set"
+ ],
+ [
+  "GET /flights/{ident}/canonical",
+  "Get the canonical ident of a flight",
+  "$0.001/result set"
+ ],
+ [
+  "POST /flights/{ident}/intents",
+  "Submit a Flight Intent",
+  "$0.000/result set"
+ ],
+ [
+  "GET /flights/{id}/position",
+  "Get flight's current position",
+  "$0.010/result set"
+ ],
+ [
+  "GET /flights/{id}/track",
+  "Get flight's track",
+  "$0.012/result set"
+ ],
+ [
+  "GET /flights/{id}/route",
+  "Get flight's filed route",
+  "$0.010/result set"
+ ],
+ [
+  "GET /flights/{id}/map",
+  "Get an image of a flight's track on a map",
+  "$0.030/result set"
+ ],
+ [
+  "GET /foresight/flights/{ident}",
+  "Get information for a flight, including Foresight data",
+  "$0.015/result set"
+ ],
+ [
+  "GET /foresight/flights/search/advanced",
+  "Search for flights, responses include Foresight data",
+  "$0.060/result set"
+ ],
+ [
+  "GET /foresight/flights/{id}/position",
+  "Get flight's current position, including Foresight data",
+  "$0.020/result set"
+ ],
+ [
+  "GET /airports",
+  "Get all airports",
+  "$0.005/result set"
+ ],
+ [
+  "GET /airports/nearby",
+  "Get airports near a location",
+  "$0.004/result set"
+ ],
+ [
+  "GET /airports/delays",
+  "Get delay information for all airports with delays",
+  "$0.050/result set"
+ ],
+ [
+  "GET /airports/{id}",
+  "Get static information about an airport",
+  "$0.015/result set"
+ ],
+ [
+  "GET /airports/{id}/canonical",
+  "Get the canonical code of an airport",
+  "$0.001/result set"
+ ],
+ [
+  "GET /airports/{id}/nearby",
+  "Get airports near an airport",
+  "$0.004/result set"
+ ],
+ [
+  "GET /airports/{id}/delays",
+  "Get airport delay information",
+  "$0.010/result set"
+ ],
+ [
+  "GET /airports/{id}/flights",
+  "Get all flights for a given airport",
+  "$0.020/result set"
+ ],
+ [
+  "GET /airports/{id}/flights/arrivals",
+  "Get flights that have recently arrived at an airport",
+  "$0.005/result set"
+ ],
+ [
+  "GET /airports/{id}/flights/departures",
+  "Get flights that have recently departed from an airport",
+  "$0.005/result set"
+ ],
+ [
+  "GET /airports/{id}/flights/scheduled_departures",
+  "Get future flights departing from an airport",
+  "$0.005/result set"
+ ],
+ [
+  "GET /airports/{id}/flights/scheduled_arrivals",
+  "Get future flights arriving at an airport",
+  "$0.005/result set"
+ ],
+ [
+  "GET /airports/{id}/flights/to/{dest_id}",
+  "Get flights with a specific origin and destination",
+  "$0.050/result set"
+ ],
+ [
+  "GET /airports/{id}/flights/counts",
+  "Get flight counts for an airport",
+  "$0.100/result set"
+ ],
+ [
+  "GET /airports/{id}/weather/observations",
+  "Get weather conditions for given airport",
+  "$0.002/result set"
+ ],
+ [
+  "GET /airports/{id}/weather/forecast",
+  "Get weather forecast for given airport",
+  "$0.002/result set"
+ ],
+ [
+  "GET /airports/{id}/routes/{dest_id}",
+  "Get routes between 2 airports",
+  "$0.020/result set"
+ ],
+ [
+  "GET /operators",
+  "Get all operators.",
+  "$0.002/result set"
+ ],
+ [
+  "GET /operators/{id}",
+  "Get static information for an operator.",
+  "$0.015/result set"
+ ],
+ [
+  "GET /operators/{id}/canonical",
+  "Get the canonical code of an operator for API usage.",
+  "$0.001/result set"
+ ],
+ [
+  "GET /operators/{id}/flights",
+  "Get all of an operator's flights",
+  "$0.030/result set"
+ ],
+ [
+  "GET /operators/{id}/flights/scheduled",
+  "Get scheduled flights",
+  "$0.005/result set"
+ ],
+ [
+  "GET /operators/{id}/flights/arrivals",
+  "Get arrived flights",
+  "$0.005/result set"
+ ],
+ [
+  "GET /operators/{id}/flights/enroute",
+  "Get en route flights",
+  "$0.005/result set"
+ ],
+ [
+  "GET /operators/{id}/flights/counts",
+  "Get flight counts for operator",
+  "$0.100/result set"
+ ],
+ [
+  "GET /alerts",
+  "Get all configured alerts",
+  "$0.000/result set"
+ ],
+ [
+  "POST /alerts",
+  "Create new alert",
+  "$0.000/result set"
+ ],
+ [
+  "GET /alerts/{id}",
+  "Get specific alert",
+  "$0.000/result set"
+ ],
+ [
+  "PUT /alerts/{id}",
+  "Modify specific alert",
+  "$0.000/result set"
+ ],
+ [
+  "DELETE /alerts/{id}",
+  "Delete specific alert",
+  "$0.000/result set"
+ ],
+ [
+  "GET /alerts/endpoint",
+  "Get configured alert callback URL",
+  "$0.000/result set"
+ ],
+ [
+  "PUT /alerts/endpoint",
+  "Set alert callback URL",
+  "$0.000/result set"
+ ],
+ [
+  "DELETE /alerts/endpoint",
+  "Remove and disable default account-wide alert callback URL",
+  "$0.000/result set"
+ ],
+ [
+  "GET /history/flights/{ident}",
+  "Get information for a historical flight",
+  "$0.020/result set"
+ ],
+ [
+  "GET /history/flights/{id}/track",
+  "Get historical information for a flight's track",
+  "$0.060/result set"
+ ],
+ [
+  "GET /history/flights/{id}/map",
+  "Get an image of a historical flight's track on a map",
+  "$0.140/result set"
+ ],
+ [
+  "GET /history/flights/{id}/route",
+  "Get historical flight's filed route",
+  "$0.040/result set"
+ ],
+ [
+  "GET /history/airports/{id}/flights/arrivals",
+  "Get historical flights that were planned to arrive at an airport",
+  "$0.020/result set"
+ ],
+ [
+  "GET /history/airports/{id}/flights/departures",
+  "Get historical flights that were planned to depart from an airport",
+  "$0.020/result set"
+ ],
+ [
+  "GET /history/airports/{id}/flights/to/{dest_id}",
+  "Get historical flights with a specific origin and destination",
+  "$0.120/result set"
+ ],
+ [
+  "GET /history/aircraft/{registration}/last_flight",
+  "Get aircraft's last known flight",
+  "$0.200/result set"
+ ],
+ [
+  "GET /history/operators/{id}/flights",
+  "Get historical flights for a given operator",
+  "$0.020/result set"
+ ],
+ [
+  "GET /aircraft/{ident}/blocked",
+  "Check if a given ident is blocked",
+  "$0.020/result set"
+ ],
+ [
+  "GET /aircraft/{ident}/owner",
+  "Get the owner of an aircraft",
+  "$0.002/result set"
+ ],
+ [
+  "GET /aircraft/types/{type}",
+  "Get information about an aircraft type",
+  "$0.100/result set"
+ ],
+ [
+  "GET /schedules/{date_start}/{date_end}",
+  "Get scheduled flights",
+  "$0.020/result set"
+ ],
+ [
+  "GET /disruption_counts/{entity_type}",
+  "Get global flight disruption statistics",
+  "$0.020/result set"
+ ],
+ [
+  "GET /disruption_counts/{entity_type}/{id}",
+  "Get flight disruption statistics for a particular entity",
+  "$0.020/result set"
+ ],
+ [
+  "GET /account/usage",
+  "Get AeroAPI usage statistics for account",
+  "$0.000/result set"
+ ]
+]
