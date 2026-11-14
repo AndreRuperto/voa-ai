@@ -46,8 +46,10 @@ Estados sempre levam **cor + ícone + palavra** ("Atrasado 35 min"), nunca só c
 | Papel | Fonte | Tamanhos |
 |---|---|---|
 | Títulos | Bricolage Grotesque 700/800 | 40 / 34 / 28 / 22 |
-| Texto | Inter 400/600 | 16 corpo, 13 mínimo |
-| Horários e códigos | JetBrains Mono 500/700 | 88 (hora de chegada), 26 (IATA), 15 (linha do tempo) |
+| Texto e campos | Atkinson Hyperlegible Next 400/600/700 | 17 corpo, 13 mínimo |
+| Placa, horários e códigos | Barlow Semi Condensed 600/700 | 33 (estado na placa), 26 (IATA), 21 (linha do tempo) |
+
+> Atualizado em 14/11/2026, na junção com a 09: Inter e JetBrains Mono saíram, e o estado do voo passou a ser a placa de pista. A prancha já está atualizada (ver [11](11-v2-visual.md)).
 
 **Forma e movimento:** raio 12 (chips de data), 14 (botões), 16 (cartões), 20+ (folhas), pílula (estados). Espaço em múltiplos de 4, margem lateral de 20 px. Alvo de toque mínimo de 52 px. Transições de 200 ms; o ponto "agora" pulsa a cada 2 s e para com `prefers-reduced-motion`. Foco: anel âmbar de 3 px.
 

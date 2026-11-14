@@ -67,7 +67,7 @@ DESKTOP (≥ 960 px)                                         CELULAR (< 960 px)
 | Terra | Icosaedro com uma cor por face e sombreamento plano (visual low-poly). Os continentes vêm do Natural Earth 110m (`world-atlas`), desenhados num mapa de bits e amostrados no centro de cada face. Sem rede, o globo fica só com o oceano e o resto funciona |
 | Dia e noite | Luz direcional na posição do ponto subsolar para a hora da tela (15:02 de Brasília). O lado da noite fica escuro, mas visível |
 | Rota | Arco do grande círculo, elevado conforme a distância. Trecho voado como tubo em céu e o restante em pontinhos brancos a 70% |
-| Avião | Modelo low-poly em céu, orientado pela tangente da rota. No solo, fica na origem, apontado para o destino |
+| Avião | **Marcador, não miniatura** ([recorte](visual/v2-aviao-marcador.png)): a silhueta do ícone do app em branco-nuvem, num disco noite com anel céu, como um pino de mapa. O rastro em céu para antes do disco e o tracejado recomeça depois dele. O nariz segue a tangente da rota. No solo, fica na origem, apontado para o destino. A primeira versão (avião em céu, fino) se confundia com o rastro |
 | Destino | Ponto âmbar com halo pulsando ("o aeroporto brilhando à espera"). Em voo cancelado, ponto vermelho e sem halo |
 | Rótulos | HTML sobre o 3D, no formato da placa mini. Somem quando o ponto vai para o lado de trás do globo |
 | Câmera | Modos **Avião**, **Destino** e **Livre**. Arrastar o globo muda para Livre. As transições levam 1,3 s, com curva suave |
@@ -112,4 +112,18 @@ Mudanças de conteúdo em relação à v1:
 - Desempenho em celular intermediário (a meta da [06](06-v2-3d.md#stack) é 60 fps). O render pausa com a aba escondida e quando o globo não aparece.
 - Leitor de tela de verdade (VoiceOver e TalkBack). Só a árvore de acessibilidade foi conferida.
 - O protótipo carrega o three.js, o `world-atlas` e as fontes de CDN. No app, tudo isso precisa ir para o `public/`, e a cena precisa ser carregada só na tela do voo (import dinâmico).
-- A prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) ainda mostra as fontes Inter e JetBrains Mono e não tem a placa. Precisa ser atualizada com esta junção.
+## Prancha de design
+
+A prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) foi atualizada em 14/11/2026 (versões 12 e 13) com esta junção:
+
+- **Todas as pranchas:** saíram Inter e JetBrains Mono e entraram Atkinson Hyperlegible Next e Barlow Semi Condensed. O campo do número do voo usa Atkinson.
+- **Identidade:** o princípio 02 agora é "A placa diz o estado". Os estados aparecem como placas de pista, e os cartões de tipografia mostram as fontes novas.
+- **Componentes:** entraram a placa de status (em voo, atrasado e cancelado), o trajeto, a placa mini e o marcador do avião no globo. O item de "Meus voos" passou a usar a placa mini.
+- **Status (v1):** a placa substituiu a hora gigante e o trajeto substituiu a curva da rota.
+- **v2:** o globo desenhado à mão deu lugar às capturas reais do protótipo, com o status no celular, o status no desktop e Meus voos no desktop.
+
+Ainda com o visual antigo de estado (pílulas): a prancha de Meus voos (v1). As fontes dela já foram trocadas.
+
+### Cantos da placa
+
+O arredondamento de 4 px fica só no contorno de fora da placa (`overflow: hidden`). O painel do código não tem canto próprio: com ele, abria-se um entalhe na junção com o painel âmbar. Corrigido no protótipo v1, no v2 e na prancha.

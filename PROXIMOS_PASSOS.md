@@ -18,12 +18,13 @@ A [09 · Direção visual](docs/09-direcao-visual.md) (`/visual-frontend`) e a [
 
 - Testado no navegador em 1600×900 e 375×812: as telas carregam sem erro no console, o painel recolhe e volta, e a câmera troca de modo.
 - Não testado: desempenho em celular real, leitor de tela, zoom de 200% na v2.
-- Prancha de design ainda desatualizada: mostra Inter e JetBrains Mono e não tem a placa.
+- Prancha de design atualizada (versão 12) com a junção. Meus voos (v1) ainda mostra pílulas de estado.
 - O código do app ainda não existe.
 
 ## Próximos passos
 
-- [ ] Atualizar a prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) com a junção da 11 (fontes, placa, trajeto)
+- [x] Atualizar a prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) com a junção da 11 (fontes, placa, trajeto, capturas da v2)
+- [ ] Levar a placa mini para a prancha de Meus voos (v1), que ainda usa pílulas
 - [ ] Levar a v1 (`prototipo/index.html`) para a paleta unificada, ou marcá-la como histórica
 - [ ] Testar o globo num celular intermediário (meta de 60 fps)
 - [ ] Decidir se "Me avisar" substitui "Avisar-me" na [02-v1-alertas.md](docs/02-v1-alertas.md)

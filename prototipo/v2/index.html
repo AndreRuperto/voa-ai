@@ -102,7 +102,7 @@ a { color: inherit; }
 /* ============================================================ PLACA (09) — o único elemento ousado do painel */
 .placa { display: flex; align-items: stretch; font-family: var(--f-placa); font-weight: 700; border-radius: var(--r-placa); overflow: hidden; line-height: 1.1; width: 100%; }
 .placa > * { padding: var(--e-3) var(--e-4); display: flex; flex-direction: column; justify-content: center; }
-.placa__local { background: var(--c-fundo); color: var(--c-pista); box-shadow: inset 0 0 0 3px var(--c-pista); border-radius: var(--r-placa);
+.placa__local { background: var(--c-fundo); color: var(--c-pista); box-shadow: inset 0 0 0 3px var(--c-pista);
   font-size: var(--fs-g); letter-spacing: .01em; flex: none; }
 .placa__direcao { background: var(--c-pista); color: var(--c-placa-tinta); flex: 1; }
 .placa__atencao { background: var(--c-atraso); color: var(--c-placa-tinta); flex: none; }
@@ -734,19 +734,30 @@ cena.add(atmosfera);
 /* ============================================================ ROTAS
    Mesma codificação da linha do tempo e do trajeto no painel:
    voado sólido em céu, restante tracejado em branco 70%, destino aceso em âmbar. */
+/* AVIÃO: marcador, não miniatura. Para não se confundir com o rastro (céu):
+   - silhueta do ícone do app (asas enflechadas, cauda), em branco-nuvem;
+   - pousado num disco noite com anel céu, como um pino de mapa visto de cima;
+   - o rastro termina antes do disco, deixando um respiro. */
+const SILHUETA = [[10,3.5],[10.4,2.4],[11.5,2],[12.6,2.4],[13,3.5],[13,9],[21,14],[21,16],[13,13.5],[13,19],[15,20.5],[15,22],
+  [11.5,21],[8,22],[8,20.5],[10,19],[10,13.5],[2,16],[2,14],[10,9]];        // mesmos pontos do símbolo #i-aviao
 function avião() {
-  const m = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true });
+  const forma = new THREE.Shape(SILHUETA.map(([x, y]) => new THREE.Vector2(x - 11.5, 12 - y)));
+  const geo = new THREE.ExtrudeGeometry(forma, { depth: .9, bevelEnabled: false })
+    .translate(0, 0, -.45).rotateX(Math.PI / 2).scale(.0034, .0034, .0034);   // nariz para +Z, topo para +Y
+  const mCorpo = new THREE.MeshBasicMaterial({ color: COR.tinta, transparent: true });
+  const mDisco = new THREE.MeshBasicMaterial({ color: 0x0B1426, transparent: true, opacity: .88, depthWrite: false });
+  const mAnel = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true, side: THREE.DoubleSide });
   const g = new THREE.Group();
-  const corpo = new THREE.Mesh(new THREE.CylinderGeometry(.0045, .0035, .046, 6).rotateX(Math.PI / 2), m);
-  const nariz = new THREE.Mesh(new THREE.ConeGeometry(.0045, .012, 6).rotateX(Math.PI / 2).translate(0, 0, .029), m);
-  const asa = new THREE.Mesh(new THREE.BoxGeometry(.05, .0015, .011).translate(0, 0, .002), m);
-  const cauda = new THREE.Mesh(new THREE.BoxGeometry(.018, .0015, .006).translate(0, 0, -.02), m);
-  const leme = new THREE.Mesh(new THREE.BoxGeometry(.0015, .009, .007).translate(0, .005, -.02), m);
-  g.add(corpo, nariz, asa, cauda, leme);
-  g.userData.material = m;
+  const disco = new THREE.Mesh(new THREE.CircleGeometry(.05, 40).rotateX(-Math.PI / 2).translate(0, -.004, 0), mDisco);
+  const anel = new THREE.Mesh(new THREE.RingGeometry(.05, .057, 48).rotateX(-Math.PI / 2).translate(0, -.0035, 0), mAnel);
+  const corpo = new THREE.Mesh(geo, mCorpo);
+  disco.renderOrder = 1; anel.renderOrder = 2; corpo.renderOrder = 3;
+  g.add(disco, anel, corpo);
+  g.userData.materiais = [mCorpo, mDisco, mAnel];
   return g;
 }
 const objetos = {};
+const aviaoNaRota = v => v.estado !== 'cancelado' && v.estado !== 'opcao';
 function montarVoo(id) {
   const v = VOOS[id], a = vetor(AERO[v.de][0], AERO[v.de][1]), b = vetor(AERO[v.para][0], AERO[v.para][1]);
   const ang = a.angleTo(b), h = .012 + .16 * ang / Math.PI, pts = [];
@@ -759,8 +770,9 @@ function montarVoo(id) {
   const curva = new THREE.CatmullRomCurve3(pts);
   const grupo = new THREE.Group(), mats = [];
   const cancelado = v.estado === 'cancelado';
-  if (v.t > 0) {
-    const sub = []; for (let i = 0; i <= 60; i++) sub.push(curva.getPoint(v.t * i / 60));
+  const respiro = .075 / curva.getLength();          // o rastro para antes do marcador do avião
+  if (v.t > respiro) {
+    const fim = v.t - respiro, sub = []; for (let i = 0; i <= 60; i++) sub.push(curva.getPoint(fim * i / 60));
     const m = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true }); mats.push(m);
     grupo.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sub), 60, .0042, 6), m));
   }
@@ -768,7 +780,8 @@ function montarVoo(id) {
   const passo = .012 / Math.max(ang, .05), qtd = Math.max(4, Math.floor((1 - v.t) / passo));
   const mPonto = new THREE.MeshBasicMaterial({ color: cancelado ? COR.cancelado : COR.tinta, transparent: true, opacity: .7 }); mats.push(mPonto);
   const pontos = new THREE.InstancedMesh(new THREE.SphereGeometry(.0028, 6, 4), mPonto, qtd), mx = new THREE.Matrix4();
-  for (let i = 0; i < qtd; i++) { mx.setPosition(curva.getPoint(v.t + (1 - v.t) * (i + .5) / qtd)); pontos.setMatrixAt(i, mx); }
+  const ini = aviaoNaRota(v) ? Math.min(1, v.t + respiro) : v.t;   // o tracejado também respeita o respiro do avião
+  for (let i = 0; i < qtd; i++) { mx.setPosition(curva.getPoint(ini + (1 - ini) * (i + .5) / qtd)); pontos.setMatrixAt(i, mx); }
   grupo.add(pontos);
   // origem e destino
   const mOrigem = new THREE.MeshBasicMaterial({ color: COR.tinta, transparent: true }); mats.push(mOrigem);
@@ -781,8 +794,8 @@ function montarVoo(id) {
   grupo.add(origem, destino, halo);
   // avião orientado pela tangente da rota (no solo, fica na origem apontando para o destino)
   let aviao = null;
-  if (!cancelado && v.estado !== 'opcao') {
-    aviao = avião(); mats.push(aviao.userData.material);
+  if (aviaoNaRota(v)) {
+    aviao = avião(); mats.push(...aviao.userData.materiais);
     const t = Math.min(v.t, .995), p = curva.getPoint(t), frente = curva.getPoint(Math.min(1, t + .01)).sub(p).normalize();
     const cima = p.clone().normalize(), direita = new THREE.Vector3().crossVectors(cima, frente).normalize();
     frente.crossVectors(direita, cima);
@@ -795,6 +808,7 @@ function montarVoo(id) {
     base: mats.map(m => m.opacity) };
 }
 Object.keys(VOOS).forEach(montarVoo);
+window.__voa = { objetos, camera, THREE };   // inspeção no console do protótipo
 
 function realce(id, nivel) {           // 1 = aceso, .3 = em segundo plano
   const o = objetos[id]; o.mats.forEach((m, i) => m.opacity = o.base[i] * nivel);
