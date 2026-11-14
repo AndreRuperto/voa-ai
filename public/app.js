@@ -221,7 +221,7 @@ async function prepararGoogle() {
     return mostrarErro(erro, 'Não deu para abrir o login do Google. Confira a internet ou se algum bloqueador está ligado.');
   }
   caixa.innerHTML = '';
-  window.google.accounts.id.renderButton(caixa, { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular',
+  window.google.accounts.id.renderButton(caixa, { type: 'standard', theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'rectangular',
     logo_alignment: 'left', locale: 'pt-BR', width: Math.max(220, Math.min(400, caixa.clientWidth || 320)) });
 }
 async function aoEntrar(resposta) {

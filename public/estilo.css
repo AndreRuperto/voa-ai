@@ -385,8 +385,9 @@ dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
 .assinar { display: flex; flex-direction: column; gap: var(--e-4); padding: var(--e-4); border-radius: var(--r-cartao); border: 2px solid var(--c-linha-forte); }
 .assinar h2 { font-size: var(--fs-p); }
 
-/* Google Identity Services: o botão oficial entra aqui */
-.google-botao { min-height: 44px; display: flex; justify-content: flex-start; color-scheme: light; }
+/* Google Identity Services: o botão oficial (iframe) entra aqui, no tema escuro do Google ("filled_black").
+   Não recortamos nem cobrimos o iframe: o Google posiciona o botão com margens negativas e pede que ele não seja alterado. */
+.google-botao { min-height: 44px; display: flex; justify-content: flex-start; color-scheme: light; } /* light: com dark, o navegador pinta o fundo do iframe de branco */
 .google-botao iframe { max-width: 100%; }
 /* topo no celular estreito com conta: a marca e os links não quebram; "Minha conta" vira só o avatar (o nome fica para o leitor de tela) */
 .marca, .link-topo { white-space: nowrap; }
