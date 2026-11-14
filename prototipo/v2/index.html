@@ -149,6 +149,37 @@ a { color: inherit; }
 .botao--perigo { color: var(--c-cancelado); }
 .botao--icone { width: 44px; min-height: 44px; padding: 0; background: transparent; color: var(--c-tinta); border-color: var(--c-linha); }
 .privacidade { font-size: var(--fs-pp); color: var(--c-tinta-suave); border-top: 1px solid var(--c-linha); padding-top: var(--e-4); }
+.topo__direita { display: flex; align-items: center; gap: var(--e-1); }
+.link-conta .avatar { width: 28px; height: 28px; font-size: var(--fs-pp); }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--c-campo); border: 2px solid var(--c-ceu); display: inline-grid; place-items: center; font-weight: 700; flex: none; }
+.cartao-conta { display: flex; gap: var(--e-3); align-items: center; padding: var(--e-4); border-radius: var(--r-cartao); background: var(--c-superficie); border: 1px solid var(--c-linha); }
+.vantagens { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--e-3); }
+.vantagens li { display: flex; gap: var(--e-3); align-items: flex-start; }
+.vantagens svg { width: 22px; height: 22px; fill: var(--c-ceu); flex: none; }
+/* botão do Google: branco com o "G" colorido, como pede a marca do Google */
+.botao--google { background: #FFFFFF; color: #1F1F1F; border-color: #DADCE0; font-weight: 600; }
+.botao--google svg { width: 20px; height: 20px; }
+/* busca por rota */
+.seletor { font: 600 var(--fs-p) var(--f-texto); color: var(--c-tinta); background: var(--c-campo); min-height: 52px; padding: 0 var(--e-4);
+  border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); width: 100%; }
+.seletor:focus-visible { outline-offset: 0; border-color: var(--c-foco); }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--e-2); }
+.chips label { position: relative; }
+.chips input { position: absolute; opacity: 0; inset: 0; }
+.chips span { display: flex; flex-direction: column; min-height: 52px; justify-content: center; padding: var(--e-1) var(--e-3); line-height: 1.15;
+  border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); background: var(--c-campo); cursor: pointer; }
+.chips b { font: 700 var(--fs-m)/1 var(--f-placa); }
+.chips small { font-size: .75rem; color: var(--c-tinta-suave); }
+.chips input:checked + span { border-color: var(--c-pista); box-shadow: inset 0 0 0 1px var(--c-pista); }
+.chips input:focus-visible + span { outline: 3px solid var(--c-foco); outline-offset: 2px; }
+.resultados { display: flex; flex-direction: column; gap: var(--e-3); }
+.resultado { font: inherit; color: inherit; text-align: left; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--e-1) var(--e-3); align-items: center; padding: var(--e-3) var(--e-4); border-radius: var(--r-cartao); background: var(--c-superficie);
+  border: 2px solid var(--c-linha); transition: border-color var(--m-dur) var(--m-curva); }
+.resultado:hover, .resultado:focus-visible { border-color: var(--c-pista); }
+.resultado__cia { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.resultado__cia b { font: 700 var(--fs-p) var(--f-placa); color: var(--c-tinta); }
+.resultado__meio { font-size: .75rem; color: var(--c-tinta-suave); text-align: center; line-height: 1.3; }
 
 /* ============================================================ CONFIRMAÇÃO */
 .opcoes { display: flex; flex-direction: column; gap: var(--e-3); }
@@ -330,7 +361,10 @@ body[data-camera] .camera { display: flex; }
 
 <header class="topo">
   <a class="marca" href="#inicio" aria-label="Voa Aí, início"><svg aria-hidden="true"><use href="#i-marca"/></svg><span aria-hidden="true">Voa A<span class="marca__i">ı</span></span></a>
-  <a class="link-topo" href="#meus-voos">Meus voos <span class="contador num" aria-label="3 voos">3</span></a>
+  <nav class="topo__direita" aria-label="Conta e voos">
+    <a class="link-topo" href="#meus-voos">Meus voos <span class="contador num" aria-label="3 voos">3</span></a>
+    <a class="link-topo link-conta" href="#entrar" id="link-conta">Entrar</a>
+  </nav>
 </header>
 
 <button class="botao botao--secundario mostrar-painel" type="button" data-recolher="nao"><svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-painel"/></svg>Mostrar detalhes do voo</button>
@@ -373,6 +407,7 @@ body[data-camera] .camera { display: flex; }
     </fieldset>
     <button class="botao" type="submit">Acompanhar voo</button>
   </form>
+  <a class="botao botao--secundario" href="#rota"><svg aria-hidden="true"><use href="#i-aviao"/></svg>Não sabe o número? Buscar pela rota</a>
   <p class="privacidade">Sem cadastro e sem senha. Os dados do voo são apagados 7 dias depois do pouso.</p>
 </section>
 
@@ -546,10 +581,79 @@ body[data-camera] .camera { display: flex; }
 </section>
 
 <!-- ======================= MEUS VOOS ======================= -->
+<!-- ======================= BUSCAR PELA ROTA ======================= -->
+<section class="tela" data-tela="rota" aria-labelledby="t-rota">
+  <a class="voltar" href="#inicio"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-rota">Buscar pela rota</h1>
+    <p class="apoio">Não sabe o número do voo? Escolha de onde sai e para onde vai.</p>
+  </div>
+  <form id="form-rota" novalidate style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <fieldset class="grupo">
+      <legend>De</legend>
+      <label class="sr" for="pais-de">País de origem</label>
+      <select class="seletor" id="pais-de" data-lado="de"></select>
+      <div class="chips" id="aero-de" role="group" aria-label="Aeroportos de origem"></div>
+    </fieldset>
+    <fieldset class="grupo">
+      <legend>Para</legend>
+      <label class="sr" for="pais-para">País de destino</label>
+      <select class="seletor" id="pais-para" data-lado="para"></select>
+      <div class="chips" id="aero-para" role="group" aria-label="Aeroportos de destino"></div>
+      <p class="dica" id="pares-dica">Até 3 combinações de aeroportos por busca.</p>
+    </fieldset>
+    <fieldset class="grupo">
+      <legend>Data do voo</legend>
+      <div class="segmentado">
+        <label><input type="radio" name="data-rota" value="0" checked><span><b>Hoje</b><small class="num">13 nov</small></span></label>
+        <label><input type="radio" name="data-rota" value="1"><span><b>Amanhã</b><small class="num">14 nov</small></span></label>
+        <label><input type="radio" name="data-rota" value="2"><span><b>Sábado</b><small class="num">15 nov</small></span></label>
+      </div>
+    </fieldset>
+    <p id="rota-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg><span></span></p>
+    <button class="botao" type="submit">Buscar voos</button>
+  </form>
+  <section id="rota-resultados" aria-labelledby="t-res" aria-live="polite" hidden style="display:flex;flex-direction:column;gap:var(--e-3)">
+    <h2 id="t-res" style="font-size:var(--fs-p)"></h2>
+    <div class="resultados" id="lista-rota"></div>
+    <p class="fuso" id="rota-nota"></p>
+  </section>
+</section>
+
+<!-- ======================= ENTRAR / MINHA CONTA ======================= -->
+<section class="tela" data-tela="entrar" aria-labelledby="t-entrar">
+  <a class="voltar" href="#inicio"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
+  <div id="conta-fora" style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <h1 id="t-entrar" class="pergunta">Seus voos em qualquer aparelho</h1>
+    <p class="apoio">Entrar é opcional. Sem conta você continua acompanhando até 5 voos neste aparelho.</p>
+    <ul class="vantagens">
+      <li><svg aria-hidden="true"><use href="#i-check"/></svg>"Meus voos" no celular e no computador</li>
+      <li><svg aria-hidden="true"><use href="#i-check"/></svg>Até 15 voos ao mesmo tempo</li>
+      <li><svg aria-hidden="true"><use href="#i-check"/></svg>Os 3 voos deste aparelho vão junto</li>
+    </ul>
+    <button class="botao botao--google" type="button" id="entrar-google">
+      <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Continuar com o Google
+    </button>
+    <p class="dica">Protótipo: o botão simula o login. No app, ele abre a janela oficial do Google.</p>
+    <p class="privacidade">Guardamos só seu nome e e-mail do Google. Dá para apagar a conta quando quiser.</p>
+  </div>
+  <div id="conta-dentro" hidden style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <h1 class="pergunta">Minha conta</h1>
+    <div class="cartao-conta">
+      <span class="avatar" aria-hidden="true">V</span>
+      <span><b>Você (conta de teste)</b><br><span class="apoio">voce@exemplo.com, entrou com Google</span></span>
+    </div>
+    <p class="apoio">Seus 3 voos estão na conta. Você pode acompanhar até 15 ao mesmo tempo e fazer 10 buscas por rota por dia.</p>
+    <button class="botao botao--secundario" type="button" id="sair">Sair deste aparelho</button>
+    <button class="botao botao--texto botao--perigo" type="button" id="apagar-conta">Apagar minha conta</button>
+  </div>
+</section>
+
 <section class="tela" data-tela="meus-voos" aria-labelledby="t-meus">
   <div style="display:flex;flex-direction:column;gap:var(--e-2)">
     <h1 id="t-meus">Meus voos</h1>
-    <p class="limite num">3 de 5 voos neste aparelho. Passe o mouse num voo para vê-lo no globo.</p>
+    <p class="limite num"><span id="limite-voos">3 de 5 voos neste aparelho.</span> Passe o mouse num voo para vê-lo no globo.</p>
   </div>
   <ul class="lista-voos">
     <li class="item-voo" data-voo="mae">
@@ -614,6 +718,14 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const AERO = {
   LIS: [38.77, -9.13, 'Lisboa'], GRU: [-23.43, -46.47, 'Guarulhos'], OPO: [41.24, -8.68, 'Porto'],
   REC: [-8.13, -34.92, 'Recife'], CGH: [-23.63, -46.66, 'Congonhas'], SDU: [-22.91, -43.16, 'Santos Dumont'],
+  FAO: [37.01, -7.97, 'Faro'], GIG: [-22.81, -43.25, 'Rio, Galeão'], BSB: [-15.87, -47.92, 'Brasília'],
+  FOR: [-3.78, -38.53, 'Fortaleza'], SSA: [-12.91, -38.33, 'Salvador'], MAD: [40.47, -3.56, 'Madri'],
+  BCN: [41.30, 2.08, 'Barcelona'], MIA: [25.79, -80.29, 'Miami'], JFK: [40.64, -73.78, 'Nova York'], MCO: [28.43, -81.31, 'Orlando'],
+};
+// Busca por rota: o país é só um filtro; a AeroAPI busca de aeroporto a aeroporto (docs/12).
+const PAISES = {
+  Portugal: ['LIS', 'OPO', 'FAO'], Brasil: ['GRU', 'GIG', 'BSB', 'REC', 'FOR', 'SSA'],
+  Espanha: ['MAD', 'BCN'], 'Estados Unidos': ['MIA', 'JFK', 'MCO'],
 };
 const VOOS = {
   mae:   { cod: 'TP103',  quem: 'Mãe',    de: 'LIS', para: 'GRU', t: .62, estado: 'voo',       chega: '18:52',
@@ -631,6 +743,8 @@ const TELAS = {
   'status-atraso':    { voos: ['vo'], foco: 'vo', modo: 'aviao', hud: 'vo', globoCelular: true },
   'status-cancelado': { voos: ['pedro'], camera: { lat: -23, lon: -45, dist: 3.2 } },
   'meus-voos':        { voos: ['mae', 'vo', 'pedro'], camera: { lat: -12, lon: -32, dist: 4.0 } },
+  'rota':             { voos: [], rotuloRota: true, camera: { lat: 8, lon: -24, dist: 4.4 } },
+  'entrar':           { voos: ['mae', 'vo', 'pedro'], camera: { lat: -2, lon: -28, dist: 4.6 }, girar: true },
 };
 // Hora simulada da tela (15:02 em Brasília, 13/11): define o lado do dia no globo.
 const AGORA_UTC = Date.UTC(2026, 10, 13, 18, 2);
@@ -829,8 +943,17 @@ function montarRotulos(cfg) {
   if (cfg.foco || cfg.voos.length === 1) {
     const v = VOOS[cfg.foco || cfg.voos[0]], o = objetos[cfg.foco || cfg.voos[0]];
     rotulo(`<span class="placa placa--mini"><span class="placa__local num">${v.de}</span></span>`, o.origem, 'rotulo--aero');
-    const chegada = v.estado === 'cancelado' ? placaMini(v.para, 'Cancelado', 'critico') : placaMini(v.para, `chega ${v.chega}`);
+    const chegada = v.estado === 'cancelado' ? placaMini(v.para, 'Cancelado', 'critico')
+      : v.estado === 'opcao' ? placaMini(v.para, AERO[v.para][2]) : placaMini(v.para, `chega ${v.chega}`);
     rotulo(chegada, o.destino);
+  } else if (cfg.voos.every(id => id.startsWith('par-'))) {
+    // busca por rota: um rótulo por aeroporto (origens em placa de posição, destinos com o nome)
+    const vistos = new Set();
+    for (const id of cfg.voos) {
+      const v = VOOS[id], o = objetos[id];
+      if (!vistos.has(v.de)) { vistos.add(v.de); rotulo(`<span class="placa placa--mini"><span class="placa__local num">${v.de}</span></span>`, o.origem, 'rotulo--aero'); }
+      if (!vistos.has(v.para)) { vistos.add(v.para); rotulo(placaMini(v.para, AERO[v.para][2]), o.destino); }
+    }
   } else {
     for (const id of cfg.voos) {
       const v = VOOS[id], o = objetos[id];
@@ -1018,6 +1141,145 @@ document.querySelectorAll('[data-compartilhar]').forEach(b => b.addEventListener
 const folha = document.getElementById('parar');
 document.querySelectorAll('[data-abrir="parar"]').forEach(b => b.addEventListener('click', () => folha.showModal()));
 folha.addEventListener('close', () => { if (folha.returnValue === 'parar') { avisar('Você não recebe mais avisos deste voo'); location.hash = 'meus-voos'; } });
+
+/* ============================================================
+   CONTA GOOGLE (simulada) — docs/12. Opcional: nada do app exige login.
+   ============================================================ */
+const guardar = { ler(k) { try { return localStorage.getItem(k); } catch { return null; } },
+                  gravar(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+let logado = guardar.ler('voa-conta') === '1';
+function pintarConta() {
+  const link = document.getElementById('link-conta');
+  link.innerHTML = logado ? '<span class="avatar">V</span><span>Minha conta</span>' : 'Entrar';
+  document.getElementById('conta-fora').hidden = logado;
+  document.getElementById('conta-dentro').hidden = !logado;
+  document.getElementById('limite-voos').textContent = logado ? '3 de 15 voos na sua conta.' : '3 de 5 voos neste aparelho.';
+  pintarBuscas();
+}
+document.getElementById('entrar-google').addEventListener('click', () => {
+  logado = true; guardar.gravar('voa-conta', '1'); pintarConta();
+  avisar('Você entrou. Seus 3 voos agora estão na conta.'); location.hash = 'meus-voos';
+});
+document.getElementById('sair').addEventListener('click', () => {
+  logado = false; guardar.gravar('voa-conta', null); pintarConta(); avisar('Você saiu deste aparelho. Os voos continuam aqui.');
+});
+document.getElementById('apagar-conta').addEventListener('click', () => {
+  logado = false; guardar.gravar('voa-conta', null); pintarConta(); avisar('Conta apagada (simulação). Os voos deste aparelho continuam.');
+});
+
+/* ============================================================
+   BUSCA POR ROTA (simulada) — país → aeroportos → até 3 pares → voos sem escala
+   ============================================================ */
+const selDe = document.getElementById('pais-de'), selPara = document.getElementById('pais-para');
+const MAX_PARES = 3;
+for (const s of [selDe, selPara]) s.innerHTML = Object.keys(PAISES).map(p => `<option>${p}</option>`).join('');
+selDe.value = 'Portugal'; selPara.value = 'Brasil';
+function pintarChips(sel, alvo, marcados) {
+  alvo.innerHTML = PAISES[sel.value].map(c =>
+    `<label><input type="checkbox" value="${c}" ${marcados.includes(c) ? 'checked' : ''}><span><b>${c}</b><small>${AERO[c][2]}</small></span></label>`).join('');
+}
+const chipsDe = document.getElementById('aero-de'), chipsPara = document.getElementById('aero-para');
+const marcados = alvo => [...alvo.querySelectorAll('input:checked')].map(i => i.value);
+function pares() { const d = marcados(chipsDe), p = marcados(chipsPara); return d.flatMap(a => p.map(b => [a, b])); }
+const paresDica = document.getElementById('pares-dica');
+function atualizarPares(ev) {
+  if (pares().length > MAX_PARES && ev?.target?.checked) {
+    ev.target.checked = false;
+    paresDica.textContent = `No máximo ${MAX_PARES} combinações por busca: cada uma custa uma consulta. Desmarque um aeroporto para trocar.`;
+    paresDica.classList.add('atrasou');
+  } else {
+    const n = pares().length;
+    paresDica.textContent = n ? `${n} ${n === 1 ? 'combinação' : 'combinações'} de aeroportos (máximo ${MAX_PARES}).` : `Escolha pelo menos um aeroporto de cada lado.`;
+    paresDica.classList.remove('atrasou');
+  }
+  if (telaAtual === 'rota') cenaRota();
+}
+pintarChips(selDe, chipsDe, ['LIS']); pintarChips(selPara, chipsPara, ['GRU']);
+selDe.addEventListener('change', () => { pintarChips(selDe, chipsDe, [PAISES[selDe.value][0]]); atualizarPares(); });
+selPara.addEventListener('change', () => { pintarChips(selPara, chipsPara, [PAISES[selPara.value][0]]); atualizarPares(); });
+chipsDe.addEventListener('change', atualizarPares); chipsPara.addEventListener('change', atualizarPares);
+
+// Cada par vira um arco "opção" no globo, criado na primeira vez que aparece.
+function idPar([a, b]) { const id = `par-${a}-${b}`; if (!VOOS[id]) { VOOS[id] = { cod: `${a}-${b}`, quem: '', de: a, para: b, t: 0, estado: 'opcao' }; montarVoo(id); } return id; }
+function cenaRota() {
+  const ids = pares().map(idPar);
+  TELAS.rota.voos = ids;
+  if (ids.length) {
+    const c = new THREE.Vector3();
+    for (const id of ids) c.add(objetos[id].origem).add(objetos[id].destino);
+    const [lat, lon] = latLon(c);
+    const abertura = Math.max(...ids.map(id => objetos[id].origem.angleTo(objetos[id].destino)));
+    TELAS.rota.camera = { lat, lon, dist: Math.min(5.2, 2.6 + abertura * 1.6) };
+  }
+  aplicarCena('rota');
+}
+
+// Voos simulados por par: horários fixos por par, duração pela distância (830 km/h + 35 min).
+const CIAS = { Portugal: [['TAP Air Portugal', 'TP']], Brasil: [['LATAM', 'LA'], ['GOL', 'G3'], ['Azul', 'AD']], Espanha: [['Iberia', 'IB']], 'Estados Unidos': [['American Airlines', 'AA']] };
+const paisDe = c => Object.keys(PAISES).find(p => PAISES[p].includes(c));
+const hhmm = m => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+function voosDoPar(a, b) {
+  if (a === 'LIS' && b === 'GRU') return [['TAP Air Portugal', 'TP103', 510, 610], ['TAP Air Portugal', 'TP87', 725, 615], ['LATAM', 'LA8147', 1420, 615]];
+  const km = vetor(...AERO[a].slice(0, 2)).angleTo(vetor(...AERO[b].slice(0, 2))) * 6371;
+  const dur = Math.round((km / 830 * 60 + 35) / 5) * 5;
+  const h = [...(a + b)].reduce((s, ch) => (s * 31 + ch.charCodeAt(0)) >>> 0, 7);     // inteiro sem sinal de 32 bits
+  const cias = CIAS[paisDe(a)], n = 1 + (h % 2), out = [];
+  for (let i = 0; i < n; i++) {
+    const [cia, sig] = cias[(h >>> (i + 2)) % cias.length];
+    const sai = 360 + 5 * (((h >>> (5 * i + 3)) % 180));                             // entre 06:00 e 20:55, de 5 em 5 min
+    out.push([cia, `${sig}${100 + (h >>> (4 * i)) % 8800}`, sai, dur]);
+  }
+  return out.sort((x, y) => x[2] - y[2]);
+}
+
+let buscasFeitas = 0; const cacheRota = new Set();
+const limiteBuscas = () => (logado ? 10 : 3);
+function pintarBuscas() {
+  const resto = Math.max(0, limiteBuscas() - buscasFeitas), nota = document.getElementById('rota-nota');
+  if (nota && !document.getElementById('rota-resultados').hidden) nota.dataset.resto = resto;
+}
+const erroRota = document.getElementById('rota-erro');
+document.getElementById('form-rota').addEventListener('submit', e => {
+  e.preventDefault();
+  const ps = pares(), data = document.querySelector('input[name="data-rota"]:checked').value;
+  const mostrarErro = txt => { erroRota.querySelector('span').innerHTML = txt; erroRota.hidden = false; };
+  erroRota.hidden = true;
+  if (!ps.length) return mostrarErro('Escolha pelo menos um aeroporto de saída e um de chegada.');
+  const chave = ps.map(p => p.join('-')).sort().join(',') + '@' + data, doCache = cacheRota.has(chave);
+  if (!doCache && buscasFeitas >= limiteBuscas())
+    return mostrarErro(logado ? 'Você já fez as 10 buscas por rota de hoje. Amanhã libera de novo, ou <a href="#inicio">busque pelo número do voo</a>.'
+      : 'Você já fez as 3 buscas por rota de hoje neste aparelho. <a href="#entrar">Entre com Google</a> para ter 10 por dia, ou <a href="#inicio">busque pelo número do voo</a>.');
+  if (!doCache) { buscasFeitas++; cacheRota.add(chave); }
+  const dias = ['hoje', 'amanhã', 'sábado'][data];
+  const lista = ps.flatMap(([a, b]) => voosDoPar(a, b).map(v => [a, b, ...v])).sort((x, y) => x[4] - y[4]);
+  document.getElementById('t-res').textContent = `${lista.length} ${lista.length === 1 ? 'voo sem escala' : 'voos sem escala'} ${dias}`;
+  document.getElementById('lista-rota').innerHTML = lista.map(([a, b, cia, cod, sai, dur]) =>
+    `<button class="resultado" type="button" data-cod="${cod}" data-par="${a}-${b}">
+      <span class="resultado__cia"><span>${cia}</span><b>${cod}</b></span>
+      <span class="ponta"><span class="ponta__codigo">${a}</span><span class="ponta__hora num">sai ${hhmm(sai)}</span></span>
+      <span class="resultado__meio">${Math.floor(dur / 60)} h ${String(dur % 60).padStart(2, '0')}<br>sem escala</span>
+      <span class="ponta ponta--fim"><span class="ponta__codigo">${b}</span><span class="ponta__hora num">chega ${hhmm(sai + dur)}</span></span>
+    </button>`).join('');
+  const resto = Math.max(0, limiteBuscas() - buscasFeitas);
+  document.getElementById('rota-nota').textContent = `Horários de Brasília. Toque num voo para acompanhar. ${doCache ? 'Esta busca veio do cache e não gastou nada. ' : ''}`
+    + `Você ainda tem ${resto} ${resto === 1 ? 'busca' : 'buscas'} hoje. Dados simulados.`;
+  document.getElementById('rota-resultados').hidden = false;
+  document.getElementById('t-res').setAttribute('tabindex', '-1'); document.getElementById('t-res').focus();
+});
+document.getElementById('lista-rota').addEventListener('click', e => {
+  const b = e.target.closest('.resultado'); if (!b) return;
+  if (b.dataset.cod === 'TP103') location.hash = 'confirmacao';
+  else avisar('Protótipo: só o TP103 de Lisboa a Guarulhos abre a confirmação.');
+});
+document.getElementById('lista-rota').addEventListener('mouseover', e => {
+  const b = e.target.closest('.resultado'); if (!b) return;
+  const id = 'par-' + b.dataset.par; TELAS.rota.voos.forEach(v => realce(v, v === id ? 1 : .3));
+});
+document.getElementById('lista-rota').addEventListener('mouseleave', () => TELAS.rota.voos.forEach(v => realce(v, 1)));
+
+addEventListener('hashchange', () => { if (location.hash === '#rota') cenaRota(); });
+pintarConta(); atualizarPares();
+if (telaAtual === 'rota') cenaRota();
 </script>
 </body>
 </html>
