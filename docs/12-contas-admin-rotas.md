@@ -156,6 +156,15 @@ erDiagram
 | `SESSAO_SEGREDO` | 32 bytes aleatórios | Assinar o cookie |
 | `CREDITO_MENSAL_USD` | `5` | Base das barras e alertas de gasto |
 
+### Cliente OAuth no Google Cloud
+
+Configurado em 14/11/2026:
+
+- **Projeto:** "Voa Ai" (`meuprojeto-2f905`), Google Auth Platform com público **Externo**, ainda em modo de teste. Só as contas incluídas em "Público-alvo → Usuários de teste" conseguem entrar até o app ser publicado.
+- **Cliente:** do tipo "Aplicativo da Web". O Client ID é público e vai no front; o fluxo de ID token não usa o Client Secret.
+- **Origens JavaScript:** `http://localhost:8741`, `http://localhost` e o domínio do Railway. Este último precisa ser `https://` (o Railway só serve HTTPS e o Google recusa origem `http://` fora do localhost).
+- **Segredos:** os valores ficam no `.env`, que está no `.gitignore`. No Railway, eles entram como variáveis do serviço.
+
 ## Segurança
 
 | Risco | Medida |
