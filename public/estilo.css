@@ -64,7 +64,6 @@ a { color: inherit; }
 .topo > * { pointer-events: auto; }
 .marca { font: 800 1.5rem/1 var(--f-marca); letter-spacing: -.02em; text-decoration: none; display: inline-flex; align-items: center;
   min-height: 44px; gap: 10px; border-radius: var(--r-campo); padding-right: 4px; }
-.marca svg { width: 30px; height: 22px; overflow: visible; }
 /* o acento do "í" é a luz que espera o avião */
 .marca__i { position: relative; }
 .marca__i::after { content: ""; position: absolute; left: 50%; top: -.02em; width: .26em; height: .26em; margin-left: -.1em; border-radius: 50%;
@@ -395,3 +394,9 @@ dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
   .link-conta__texto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .link-topo { padding: 0 var(--e-2); }
 }
+
+/* Logo da prancha (Identidade): o arco tracejado em céu passa sobre a palavra e pousa no ponto âmbar, que é o acento do "í". */
+.logo { position: relative; display: inline-block; padding-top: .47em; letter-spacing: -.033em; line-height: .9; }
+.logo__arco { position: absolute; left: 0; top: 0; width: 100%; height: .58em; overflow: visible; pointer-events: none; }
+.logo__arco path { fill: none; stroke: var(--c-ceu); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1.2 4.2; vector-effect: non-scaling-stroke; }
+.logo .marca__i::after { top: -.05em; width: max(.18em, 6px); height: max(.18em, 6px); margin-left: min(-.09em, -3px); box-shadow: 0 0 0 .067em rgba(255, 181, 71, .18); }
