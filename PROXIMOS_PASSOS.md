@@ -26,7 +26,11 @@ A [09 · Direção visual](docs/09-direcao-visual.md) (`/visual-frontend`) e a [
 ## Próximos passos
 
 - [x] Atualizar a prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) com a junção da 11 (fontes, placa, trajeto, capturas da v2)
-- [ ] Backend: login Google real (precisa de um Client ID no Google Cloud), rotas `/api/admin/*` e tabela `CHAMADA_API`
+- [x] Client ID do Google criado no projeto "Voa Ai" (`meuprojeto-2f905`); valores no `.env` (fora do git)
+- [x] Google Cloud: origem do Railway trocada para `https://voaai.up.railway.app`; usuário de teste incluído (o dono)
+- [x] Google Cloud: secret antigo desativado e um novo criado (fica só no console; o fluxo de ID token não usa secret, e o `.env` não guarda nenhum)
+- [ ] Incluir em "Público-alvo → Usuários de teste" quem mais for testar o login, ou publicar o app (pede logo e política de privacidade no Branding)
+- [ ] Backend: login Google real com o `GOOGLE_CLIENT_ID`, rotas `/api/admin/*` e tabela `CHAMADA_API`
 - [ ] Prancha Admin · Visão geral: trocar "dia 25" por "dia 24" (o cálculo do protótipo dá 24)
 - [ ] Levar a placa mini para a prancha de Meus voos (v1), que ainda usa pílulas
 - [ ] Levar a v1 (`prototipo/index.html`) para a paleta unificada, ou marcá-la como histórica
