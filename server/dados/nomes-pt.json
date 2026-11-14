@@ -1,0 +1,1169 @@
+{
+ "descricao": "Nomes em português (cidade e nome curto do aeroporto) por IATA. Aplicado por scripts/gerar-aeroportos.js.",
+ "nomes": {
+  "AAX": {
+   "cidade": "Araxá",
+   "nome": "Araxá"
+  },
+  "ACC": {
+   "cidade": "Acra",
+   "nome": "Acra"
+  },
+  "ADD": {
+   "cidade": "Adis Abeba",
+   "nome": "Adis Abeba"
+  },
+  "AEP": {
+   "cidade": "Buenos Aires",
+   "nome": "Aeroparque"
+  },
+  "AFL": {
+   "cidade": "Alta Floresta",
+   "nome": "Alta Floresta"
+  },
+  "AGP": {
+   "cidade": "Málaga",
+   "nome": "Málaga"
+  },
+  "AJU": {
+   "cidade": "Aracaju",
+   "nome": "Aracaju"
+  },
+  "AKL": {
+   "cidade": "Auckland",
+   "nome": "Auckland"
+  },
+  "AMM": {
+   "cidade": "Amã",
+   "nome": "Amã"
+  },
+  "AMS": {
+   "cidade": "Amsterdã",
+   "nome": "Schiphol"
+  },
+  "AQA": {
+   "cidade": "Araraquara",
+   "nome": "Araraquara"
+  },
+  "ARN": {
+   "cidade": "Estocolmo",
+   "nome": "Arlanda"
+  },
+  "ARU": {
+   "cidade": "Araçatuba",
+   "nome": "Araçatuba"
+  },
+  "ASU": {
+   "cidade": "Assunção",
+   "nome": "Assunção"
+  },
+  "ATH": {
+   "cidade": "Atenas",
+   "nome": "Atenas"
+  },
+  "ATL": {
+   "cidade": "Atlanta",
+   "nome": "Atlanta"
+  },
+  "ATM": {
+   "cidade": "Altamira",
+   "nome": "Altamira"
+  },
+  "AUA": {
+   "cidade": "Aruba",
+   "nome": "Aruba"
+  },
+  "AUH": {
+   "cidade": "Abu Dhabi",
+   "nome": "Abu Dhabi"
+  },
+  "AUX": {
+   "cidade": "Araguaína",
+   "nome": "Araguaína"
+  },
+  "BCN": {
+   "cidade": "Barcelona",
+   "nome": "Barcelona"
+  },
+  "BEL": {
+   "cidade": "Belém",
+   "nome": "Belém"
+  },
+  "BER": {
+   "cidade": "Berlim",
+   "nome": "Berlim"
+  },
+  "BGC": {
+   "cidade": "Bragança",
+   "nome": "Bragança"
+  },
+  "BGY": {
+   "cidade": "Bérgamo",
+   "nome": "Bérgamo"
+  },
+  "BIO": {
+   "cidade": "Bilbau",
+   "nome": "Bilbau"
+  },
+  "BKK": {
+   "cidade": "Bangcoc",
+   "nome": "Suvarnabhumi"
+  },
+  "BLQ": {
+   "cidade": "Bolonha",
+   "nome": "Bolonha"
+  },
+  "BNE": {
+   "cidade": "Brisbane",
+   "nome": "Brisbane"
+  },
+  "BOD": {
+   "cidade": "Bordéus",
+   "nome": "Bordéus"
+  },
+  "BOG": {
+   "cidade": "Bogotá",
+   "nome": "El Dorado"
+  },
+  "BOM": {
+   "cidade": "Mumbai",
+   "nome": "Mumbai"
+  },
+  "BOS": {
+   "cidade": "Boston",
+   "nome": "Logan"
+  },
+  "BPS": {
+   "cidade": "Porto Seguro",
+   "nome": "Porto Seguro"
+  },
+  "BRC": {
+   "cidade": "Bariloche",
+   "nome": "Bariloche"
+  },
+  "BRU": {
+   "cidade": "Bruxelas",
+   "nome": "Bruxelas"
+  },
+  "BSB": {
+   "cidade": "Brasília",
+   "nome": "Brasília"
+  },
+  "BSL": {
+   "cidade": "Basileia",
+   "nome": "Basileia"
+  },
+  "BUD": {
+   "cidade": "Budapeste",
+   "nome": "Budapeste"
+  },
+  "BVB": {
+   "cidade": "Boa Vista",
+   "nome": "Boa Vista"
+  },
+  "BVH": {
+   "cidade": "Vilhena",
+   "nome": "Vilhena"
+  },
+  "CAC": {
+   "cidade": "Cascavel",
+   "nome": "Cascavel"
+  },
+  "CAI": {
+   "cidade": "Cairo",
+   "nome": "Cairo"
+  },
+  "CAN": {
+   "cidade": "Cantão",
+   "nome": "Cantão"
+  },
+  "CAT": {
+   "cidade": "Cascais",
+   "nome": "Cascais"
+  },
+  "CAW": {
+   "cidade": "Campos dos Goytacazes",
+   "nome": "Campos dos Goytacazes"
+  },
+  "CAY": {
+   "cidade": "Caiena",
+   "nome": "Caiena"
+  },
+  "CCS": {
+   "cidade": "Caracas",
+   "nome": "Caracas"
+  },
+  "CDG": {
+   "cidade": "Paris",
+   "nome": "Charles de Gaulle"
+  },
+  "CGB": {
+   "cidade": "Cuiabá",
+   "nome": "Cuiabá"
+  },
+  "CGH": {
+   "cidade": "São Paulo",
+   "nome": "Congonhas"
+  },
+  "CGK": {
+   "cidade": "Jacarta",
+   "nome": "Jacarta"
+  },
+  "CGN": {
+   "cidade": "Colônia",
+   "nome": "Colônia/Bonn"
+  },
+  "CGR": {
+   "cidade": "Campo Grande",
+   "nome": "Campo Grande"
+  },
+  "CIA": {
+   "cidade": "Roma",
+   "nome": "Ciampino"
+  },
+  "CKS": {
+   "cidade": "Parauapebas",
+   "nome": "Parauapebas"
+  },
+  "CLT": {
+   "cidade": "Charlotte",
+   "nome": "Charlotte"
+  },
+  "CMG": {
+   "cidade": "Corumbá",
+   "nome": "Corumbá"
+  },
+  "CMN": {
+   "cidade": "Casablanca",
+   "nome": "Casablanca"
+  },
+  "CNF": {
+   "cidade": "Belo Horizonte",
+   "nome": "Confins"
+  },
+  "COR": {
+   "cidade": "Córdoba",
+   "nome": "Córdoba"
+  },
+  "CPH": {
+   "cidade": "Copenhague",
+   "nome": "Copenhague"
+  },
+  "CPT": {
+   "cidade": "Cidade do Cabo",
+   "nome": "Cidade do Cabo"
+  },
+  "CPV": {
+   "cidade": "Campina Grande",
+   "nome": "Campina Grande"
+  },
+  "CTA": {
+   "cidade": "Catânia",
+   "nome": "Catânia"
+  },
+  "CTG": {
+   "cidade": "Cartagena",
+   "nome": "Cartagena"
+  },
+  "CUN": {
+   "cidade": "Cancún",
+   "nome": "Cancún"
+  },
+  "CUR": {
+   "cidade": "Curaçao",
+   "nome": "Curaçao"
+  },
+  "CUZ": {
+   "cidade": "Cusco",
+   "nome": "Cusco"
+  },
+  "CWB": {
+   "cidade": "Curitiba",
+   "nome": "Afonso Pena"
+  },
+  "CXJ": {
+   "cidade": "Caxias do Sul",
+   "nome": "Caxias do Sul"
+  },
+  "CZS": {
+   "cidade": "Cruzeiro do Sul",
+   "nome": "Cruzeiro do Sul"
+  },
+  "DCA": {
+   "cidade": "Washington",
+   "nome": "Reagan"
+  },
+  "DEL": {
+   "cidade": "Nova Délhi",
+   "nome": "Délhi"
+  },
+  "DEN": {
+   "cidade": "Denver",
+   "nome": "Denver"
+  },
+  "DFW": {
+   "cidade": "Dallas",
+   "nome": "Dallas/Fort Worth"
+  },
+  "DME": {
+   "cidade": "Moscou",
+   "nome": "Domodedovo"
+  },
+  "DOH": {
+   "cidade": "Doha",
+   "nome": "Doha"
+  },
+  "DPS": {
+   "cidade": "Bali",
+   "nome": "Bali"
+  },
+  "DSS": {
+   "cidade": "Dacar",
+   "nome": "Dacar"
+  },
+  "DTW": {
+   "cidade": "Detroit",
+   "nome": "Detroit"
+  },
+  "DUB": {
+   "cidade": "Dublin",
+   "nome": "Dublin"
+  },
+  "DUS": {
+   "cidade": "Düsseldorf",
+   "nome": "Düsseldorf"
+  },
+  "DXB": {
+   "cidade": "Dubai",
+   "nome": "Dubai"
+  },
+  "EDI": {
+   "cidade": "Edimburgo",
+   "nome": "Edimburgo"
+  },
+  "EWR": {
+   "cidade": "Newark",
+   "nome": "Newark"
+  },
+  "EZE": {
+   "cidade": "Buenos Aires",
+   "nome": "Ezeiza"
+  },
+  "FAO": {
+   "cidade": "Faro",
+   "nome": "Faro"
+  },
+  "FCO": {
+   "cidade": "Roma",
+   "nome": "Fiumicino"
+  },
+  "FEN": {
+   "cidade": "Fernando de Noronha",
+   "nome": "Noronha"
+  },
+  "FLL": {
+   "cidade": "Fort Lauderdale",
+   "nome": "Fort Lauderdale"
+  },
+  "FLN": {
+   "cidade": "Florianópolis",
+   "nome": "Florianópolis"
+  },
+  "FLR": {
+   "cidade": "Florença",
+   "nome": "Florença"
+  },
+  "FLW": {
+   "cidade": "Flores",
+   "nome": "Flores"
+  },
+  "FNC": {
+   "cidade": "Funchal",
+   "nome": "Madeira"
+  },
+  "FOR": {
+   "cidade": "Fortaleza",
+   "nome": "Fortaleza"
+  },
+  "FRA": {
+   "cidade": "Frankfurt",
+   "nome": "Frankfurt"
+  },
+  "FTE": {
+   "cidade": "El Calafate",
+   "nome": "El Calafate"
+  },
+  "GDL": {
+   "cidade": "Guadalajara",
+   "nome": "Guadalajara"
+  },
+  "GEL": {
+   "cidade": "Santo Ângelo",
+   "nome": "Santo Ângelo"
+  },
+  "GEO": {
+   "cidade": "Georgetown",
+   "nome": "Georgetown"
+  },
+  "GIG": {
+   "cidade": "Rio de Janeiro",
+   "nome": "Galeão"
+  },
+  "GRU": {
+   "cidade": "São Paulo",
+   "nome": "Guarulhos"
+  },
+  "GRW": {
+   "cidade": "Graciosa",
+   "nome": "Graciosa"
+  },
+  "GVA": {
+   "cidade": "Genebra",
+   "nome": "Genebra"
+  },
+  "GVR": {
+   "cidade": "Governador Valadares",
+   "nome": "Governador Valadares"
+  },
+  "GYE": {
+   "cidade": "Guayaquil",
+   "nome": "Guayaquil"
+  },
+  "GYN": {
+   "cidade": "Goiânia",
+   "nome": "Goiânia"
+  },
+  "HAM": {
+   "cidade": "Hamburgo",
+   "nome": "Hamburgo"
+  },
+  "HAN": {
+   "cidade": "Hanói",
+   "nome": "Hanói"
+  },
+  "HAV": {
+   "cidade": "Havana",
+   "nome": "Havana"
+  },
+  "HEL": {
+   "cidade": "Helsinque",
+   "nome": "Helsinque"
+  },
+  "HKG": {
+   "cidade": "Hong Kong",
+   "nome": "Hong Kong"
+  },
+  "HND": {
+   "cidade": "Tóquio",
+   "nome": "Haneda"
+  },
+  "HNL": {
+   "cidade": "Honolulu",
+   "nome": "Honolulu"
+  },
+  "HOR": {
+   "cidade": "Horta",
+   "nome": "Horta"
+  },
+  "IAD": {
+   "cidade": "Washington",
+   "nome": "Dulles"
+  },
+  "IAH": {
+   "cidade": "Houston",
+   "nome": "Houston"
+  },
+  "ICN": {
+   "cidade": "Seul",
+   "nome": "Incheon"
+  },
+  "IGR": {
+   "cidade": "Puerto Iguazú",
+   "nome": "Iguazú"
+  },
+  "IGU": {
+   "cidade": "Foz do Iguaçu",
+   "nome": "Foz do Iguaçu"
+  },
+  "IMP": {
+   "cidade": "Imperatriz",
+   "nome": "Imperatriz"
+  },
+  "IOS": {
+   "cidade": "Ilhéus",
+   "nome": "Ilhéus"
+  },
+  "IPN": {
+   "cidade": "Ipatinga",
+   "nome": "Ipatinga"
+  },
+  "IST": {
+   "cidade": "Istambul",
+   "nome": "Istambul"
+  },
+  "ITB": {
+   "cidade": "Itaituba",
+   "nome": "Itaituba"
+  },
+  "IZA": {
+   "cidade": "Juiz de Fora",
+   "nome": "Zona da Mata"
+  },
+  "JDF": {
+   "cidade": "Juiz de Fora",
+   "nome": "Juiz de Fora"
+  },
+  "JED": {
+   "cidade": "Jidá",
+   "nome": "Jidá"
+  },
+  "JFK": {
+   "cidade": "Nova York",
+   "nome": "JFK"
+  },
+  "JJD": {
+   "cidade": "Jijoca de Jericoacoara",
+   "nome": "Jericoacoara"
+  },
+  "JNB": {
+   "cidade": "Joanesburgo",
+   "nome": "O. R. Tambo"
+  },
+  "JOI": {
+   "cidade": "Joinville",
+   "nome": "Joinville"
+  },
+  "JPA": {
+   "cidade": "João Pessoa",
+   "nome": "João Pessoa"
+  },
+  "JTC": {
+   "cidade": "Bauru",
+   "nome": "Bauru"
+  },
+  "KEF": {
+   "cidade": "Reykjavík",
+   "nome": "Keflavík"
+  },
+  "KIX": {
+   "cidade": "Osaka",
+   "nome": "Kansai"
+  },
+  "KRK": {
+   "cidade": "Cracóvia",
+   "nome": "Cracóvia"
+  },
+  "KUL": {
+   "cidade": "Kuala Lumpur",
+   "nome": "Kuala Lumpur"
+  },
+  "LAJ": {
+   "cidade": "Lages",
+   "nome": "Lages"
+  },
+  "LAS": {
+   "cidade": "Las Vegas",
+   "nome": "Las Vegas"
+  },
+  "LAX": {
+   "cidade": "Los Angeles",
+   "nome": "Los Angeles"
+  },
+  "LCA": {
+   "cidade": "Lárnaca",
+   "nome": "Lárnaca"
+  },
+  "LCY": {
+   "cidade": "Londres",
+   "nome": "London City"
+  },
+  "LDB": {
+   "cidade": "Londrina",
+   "nome": "Londrina"
+  },
+  "LED": {
+   "cidade": "São Petersburgo",
+   "nome": "Pulkovo"
+  },
+  "LGA": {
+   "cidade": "Nova York",
+   "nome": "LaGuardia"
+  },
+  "LGW": {
+   "cidade": "Londres",
+   "nome": "Gatwick"
+  },
+  "LHR": {
+   "cidade": "Londres",
+   "nome": "Heathrow"
+  },
+  "LIM": {
+   "cidade": "Lima",
+   "nome": "Lima"
+  },
+  "LIN": {
+   "cidade": "Milão",
+   "nome": "Linate"
+  },
+  "LIS": {
+   "cidade": "Lisboa",
+   "nome": "Lisboa"
+  },
+  "LOS": {
+   "cidade": "Lagos",
+   "nome": "Lagos"
+  },
+  "LPB": {
+   "cidade": "La Paz",
+   "nome": "El Alto"
+  },
+  "LTN": {
+   "cidade": "Londres",
+   "nome": "Luton"
+  },
+  "LUX": {
+   "cidade": "Luxemburgo",
+   "nome": "Luxemburgo"
+  },
+  "LYS": {
+   "cidade": "Lyon",
+   "nome": "Lyon"
+  },
+  "MAB": {
+   "cidade": "Marabá",
+   "nome": "Marabá"
+  },
+  "MAD": {
+   "cidade": "Madri",
+   "nome": "Barajas"
+  },
+  "MAN": {
+   "cidade": "Manchester",
+   "nome": "Manchester"
+  },
+  "MAO": {
+   "cidade": "Manaus",
+   "nome": "Manaus"
+  },
+  "MBJ": {
+   "cidade": "Montego Bay",
+   "nome": "Montego Bay"
+  },
+  "MCO": {
+   "cidade": "Orlando",
+   "nome": "Orlando"
+  },
+  "MCP": {
+   "cidade": "Macapá",
+   "nome": "Macapá"
+  },
+  "MCZ": {
+   "cidade": "Maceió",
+   "nome": "Maceió"
+  },
+  "MDE": {
+   "cidade": "Medellín",
+   "nome": "Medellín"
+  },
+  "MDZ": {
+   "cidade": "Mendoza",
+   "nome": "Mendoza"
+  },
+  "MEL": {
+   "cidade": "Melbourne",
+   "nome": "Melbourne"
+  },
+  "MEX": {
+   "cidade": "Cidade do México",
+   "nome": "Cidade do México"
+  },
+  "MGF": {
+   "cidade": "Maringá",
+   "nome": "Maringá"
+  },
+  "MIA": {
+   "cidade": "Miami",
+   "nome": "Miami"
+  },
+  "MII": {
+   "cidade": "Marília",
+   "nome": "Marília"
+  },
+  "MLA": {
+   "cidade": "Malta",
+   "nome": "Malta"
+  },
+  "MLE": {
+   "cidade": "Malé",
+   "nome": "Maldivas"
+  },
+  "MNL": {
+   "cidade": "Manila",
+   "nome": "Manila"
+  },
+  "MNX": {
+   "cidade": "Manicoré",
+   "nome": "Manicoré"
+  },
+  "MOC": {
+   "cidade": "Montes Claros",
+   "nome": "Montes Claros"
+  },
+  "MPM": {
+   "cidade": "Maputo",
+   "nome": "Maputo"
+  },
+  "MRS": {
+   "cidade": "Marselha",
+   "nome": "Marselha"
+  },
+  "MSP": {
+   "cidade": "Minneapolis",
+   "nome": "Minneapolis"
+  },
+  "MTY": {
+   "cidade": "Monterrey",
+   "nome": "Monterrey"
+  },
+  "MUC": {
+   "cidade": "Munique",
+   "nome": "Munique"
+  },
+  "MVD": {
+   "cidade": "Montevidéu",
+   "nome": "Carrasco"
+  },
+  "MVF": {
+   "cidade": "Mossoró",
+   "nome": "Mossoró"
+  },
+  "MXP": {
+   "cidade": "Milão",
+   "nome": "Malpensa"
+  },
+  "NAP": {
+   "cidade": "Nápoles",
+   "nome": "Nápoles"
+  },
+  "NAT": {
+   "cidade": "Natal",
+   "nome": "Natal"
+  },
+  "NBO": {
+   "cidade": "Nairóbi",
+   "nome": "Nairóbi"
+  },
+  "NCE": {
+   "cidade": "Nice",
+   "nome": "Nice"
+  },
+  "NRT": {
+   "cidade": "Tóquio",
+   "nome": "Narita"
+  },
+  "NVT": {
+   "cidade": "Navegantes",
+   "nome": "Navegantes"
+  },
+  "OPO": {
+   "cidade": "Porto",
+   "nome": "Porto"
+  },
+  "ORD": {
+   "cidade": "Chicago",
+   "nome": "O’Hare"
+  },
+  "ORY": {
+   "cidade": "Paris",
+   "nome": "Orly"
+  },
+  "OSL": {
+   "cidade": "Oslo",
+   "nome": "Oslo"
+  },
+  "OTP": {
+   "cidade": "Bucareste",
+   "nome": "Bucareste"
+  },
+  "PAV": {
+   "cidade": "Paulo Afonso",
+   "nome": "Paulo Afonso"
+  },
+  "PBM": {
+   "cidade": "Paramaribo",
+   "nome": "Paramaribo"
+  },
+  "PDL": {
+   "cidade": "Ponta Delgada",
+   "nome": "Ponta Delgada"
+  },
+  "PDP": {
+   "cidade": "Punta del Este",
+   "nome": "Punta del Este"
+  },
+  "PEK": {
+   "cidade": "Pequim",
+   "nome": "Pequim"
+  },
+  "PER": {
+   "cidade": "Perth",
+   "nome": "Perth"
+  },
+  "PET": {
+   "cidade": "Pelotas",
+   "nome": "Pelotas"
+  },
+  "PFB": {
+   "cidade": "Passo Fundo",
+   "nome": "Passo Fundo"
+  },
+  "PGZ": {
+   "cidade": "Ponta Grossa",
+   "nome": "Ponta Grossa"
+  },
+  "PHB": {
+   "cidade": "Parnaíba",
+   "nome": "Parnaíba"
+  },
+  "PHL": {
+   "cidade": "Filadélfia",
+   "nome": "Filadélfia"
+  },
+  "PHX": {
+   "cidade": "Phoenix",
+   "nome": "Phoenix"
+  },
+  "PIX": {
+   "cidade": "Pico",
+   "nome": "Pico"
+  },
+  "PKX": {
+   "cidade": "Pequim",
+   "nome": "Daxing"
+  },
+  "PMG": {
+   "cidade": "Ponta Porã",
+   "nome": "Ponta Porã"
+  },
+  "PMI": {
+   "cidade": "Palma de Maiorca",
+   "nome": "Palma de Maiorca"
+  },
+  "PMO": {
+   "cidade": "Palermo",
+   "nome": "Palermo"
+  },
+  "PMW": {
+   "cidade": "Palmas",
+   "nome": "Palmas"
+  },
+  "PNZ": {
+   "cidade": "Petrolina",
+   "nome": "Petrolina"
+  },
+  "POA": {
+   "cidade": "Porto Alegre",
+   "nome": "Salgado Filho"
+  },
+  "PPB": {
+   "cidade": "Presidente Prudente",
+   "nome": "Presidente Prudente"
+  },
+  "PRG": {
+   "cidade": "Praga",
+   "nome": "Praga"
+  },
+  "PRM": {
+   "cidade": "Portimão",
+   "nome": "Portimão"
+  },
+  "PTY": {
+   "cidade": "Cidade do Panamá",
+   "nome": "Tocumen"
+  },
+  "PUJ": {
+   "cidade": "Punta Cana",
+   "nome": "Punta Cana"
+  },
+  "PUQ": {
+   "cidade": "Punta Arenas",
+   "nome": "Punta Arenas"
+  },
+  "PVG": {
+   "cidade": "Xangai",
+   "nome": "Pudong"
+  },
+  "PVH": {
+   "cidade": "Porto Velho",
+   "nome": "Porto Velho"
+  },
+  "PXO": {
+   "cidade": "Porto Santo",
+   "nome": "Porto Santo"
+  },
+  "RAI": {
+   "cidade": "Praia",
+   "nome": "Praia"
+  },
+  "RAK": {
+   "cidade": "Marraquexe",
+   "nome": "Marraquexe"
+  },
+  "RAO": {
+   "cidade": "Ribeirão Preto",
+   "nome": "Ribeirão Preto"
+  },
+  "RBR": {
+   "cidade": "Rio Branco",
+   "nome": "Rio Branco"
+  },
+  "REC": {
+   "cidade": "Recife",
+   "nome": "Guararapes"
+  },
+  "RIA": {
+   "cidade": "Santa Maria",
+   "nome": "Santa Maria"
+  },
+  "ROO": {
+   "cidade": "Rondonópolis",
+   "nome": "Rondonópolis"
+  },
+  "ROS": {
+   "cidade": "Rosário",
+   "nome": "Rosário"
+  },
+  "RUH": {
+   "cidade": "Riad",
+   "nome": "Riad"
+  },
+  "SAW": {
+   "cidade": "Istambul",
+   "nome": "Sabiha Gökçen"
+  },
+  "SCL": {
+   "cidade": "Santiago",
+   "nome": "Santiago"
+  },
+  "SCQ": {
+   "cidade": "Santiago de Compostela",
+   "nome": "Santiago de Compostela"
+  },
+  "SDQ": {
+   "cidade": "Santo Domingo",
+   "nome": "Santo Domingo"
+  },
+  "SDU": {
+   "cidade": "Rio de Janeiro",
+   "nome": "Santos Dumont"
+  },
+  "SEA": {
+   "cidade": "Seattle",
+   "nome": "Seattle"
+  },
+  "SFO": {
+   "cidade": "São Francisco",
+   "nome": "São Francisco"
+  },
+  "SGN": {
+   "cidade": "Cidade de Ho Chi Minh",
+   "nome": "Tan Son Nhat"
+  },
+  "SHA": {
+   "cidade": "Xangai",
+   "nome": "Hongqiao"
+  },
+  "SID": {
+   "cidade": "Sal",
+   "nome": "Sal"
+  },
+  "SIN": {
+   "cidade": "Cingapura",
+   "nome": "Changi"
+  },
+  "SJK": {
+   "cidade": "São José dos Campos",
+   "nome": "São José dos Campos"
+  },
+  "SJL": {
+   "cidade": "São Gabriel da Cachoeira",
+   "nome": "São Gabriel da Cachoeira"
+  },
+  "SJO": {
+   "cidade": "San José",
+   "nome": "San José"
+  },
+  "SJP": {
+   "cidade": "São José do Rio Preto",
+   "nome": "Rio Preto"
+  },
+  "SJU": {
+   "cidade": "San Juan",
+   "nome": "San Juan"
+  },
+  "SJZ": {
+   "cidade": "São Jorge",
+   "nome": "São Jorge"
+  },
+  "SLZ": {
+   "cidade": "São Luís",
+   "nome": "São Luís"
+  },
+  "SMA": {
+   "cidade": "Santa Maria (Açores)",
+   "nome": "Santa Maria"
+  },
+  "SOF": {
+   "cidade": "Sófia",
+   "nome": "Sófia"
+  },
+  "SSA": {
+   "cidade": "Salvador",
+   "nome": "Salvador"
+  },
+  "STM": {
+   "cidade": "Santarém",
+   "nome": "Santarém"
+  },
+  "STN": {
+   "cidade": "Londres",
+   "nome": "Stansted"
+  },
+  "STR": {
+   "cidade": "Stuttgart",
+   "nome": "Stuttgart"
+  },
+  "SVO": {
+   "cidade": "Moscou",
+   "nome": "Sheremetievo"
+  },
+  "SVQ": {
+   "cidade": "Sevilha",
+   "nome": "Sevilha"
+  },
+  "SYD": {
+   "cidade": "Sydney",
+   "nome": "Sydney"
+  },
+  "TBT": {
+   "cidade": "Tabatinga",
+   "nome": "Tabatinga"
+  },
+  "TER": {
+   "cidade": "Praia da Vitória",
+   "nome": "Lajes"
+  },
+  "TFF": {
+   "cidade": "Tefé",
+   "nome": "Tefé"
+  },
+  "THE": {
+   "cidade": "Teresina",
+   "nome": "Teresina"
+  },
+  "TLS": {
+   "cidade": "Toulouse",
+   "nome": "Toulouse"
+  },
+  "TLV": {
+   "cidade": "Tel Aviv",
+   "nome": "Ben Gurion"
+  },
+  "TMT": {
+   "cidade": "Oriximiná",
+   "nome": "Oriximiná"
+  },
+  "TPA": {
+   "cidade": "Tampa",
+   "nome": "Tampa"
+  },
+  "TPE": {
+   "cidade": "Taipé",
+   "nome": "Taoyuan"
+  },
+  "TUR": {
+   "cidade": "Tucuruí",
+   "nome": "Tucuruí"
+  },
+  "UBA": {
+   "cidade": "Uberaba",
+   "nome": "Uberaba"
+  },
+  "UDI": {
+   "cidade": "Uberlândia",
+   "nome": "Uberlândia"
+  },
+  "UIO": {
+   "cidade": "Quito",
+   "nome": "Quito"
+  },
+  "URG": {
+   "cidade": "Uruguaiana",
+   "nome": "Uruguaiana"
+  },
+  "USH": {
+   "cidade": "Ushuaia",
+   "nome": "Ushuaia"
+  },
+  "VCE": {
+   "cidade": "Veneza",
+   "nome": "Veneza"
+  },
+  "VCP": {
+   "cidade": "Campinas",
+   "nome": "Viracopos"
+  },
+  "VDC": {
+   "cidade": "Vitória da Conquista",
+   "nome": "Vitória da Conquista"
+  },
+  "VIE": {
+   "cidade": "Viena",
+   "nome": "Viena"
+  },
+  "VIX": {
+   "cidade": "Vitória",
+   "nome": "Vitória"
+  },
+  "VLC": {
+   "cidade": "Valência",
+   "nome": "Valência"
+  },
+  "VRL": {
+   "cidade": "Vila Real",
+   "nome": "Vila Real"
+  },
+  "VSE": {
+   "cidade": "Viseu",
+   "nome": "Viseu"
+  },
+  "VVI": {
+   "cidade": "Santa Cruz de la Sierra",
+   "nome": "Viru Viru"
+  },
+  "WAW": {
+   "cidade": "Varsóvia",
+   "nome": "Varsóvia"
+  },
+  "XAP": {
+   "cidade": "Chapecó",
+   "nome": "Chapecó"
+  },
+  "YUL": {
+   "cidade": "Montreal",
+   "nome": "Montreal"
+  },
+  "YVR": {
+   "cidade": "Vancouver",
+   "nome": "Vancouver"
+  },
+  "YYZ": {
+   "cidade": "Toronto",
+   "nome": "Pearson"
+  },
+  "ZRH": {
+   "cidade": "Zurique",
+   "nome": "Zurique"
+  }
+ }
+}

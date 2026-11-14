@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Voa Aí</title>
+<meta name="description" content="Digite o número do voo e receba no celular quando decolar, atrasar, estiver chegando e pousar.">
+<meta name="theme-color" content="#0B1426">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icones/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Voa Aí">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/estilo.css">
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js" defer></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="/app.js"></script>
+</head>
+<body data-tela="inicio">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-aviao" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
+  <symbol id="i-sino" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-sino-off" viewBox="0 0 24 24"><path d="M20 18.69 7.84 6.14 5.27 3.49 4 4.76l2.8 2.8v.01c-.52.99-.8 2.16-.8 3.42v5l-2 2v1h13.73l2 2L21 19.72l-1-1.03zM12 22c1.11 0 2-.89 2-2h-4c0 1.11.89 2 2 2zm6-7.32V11c0-3.08-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68c-.15.03-.29.08-.42.12-.1.03-.2.07-.3.11h-.01c-.01 0-.01 0-.02.01-.23.09-.46.2-.68.31L18 14.68z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></symbol>
+  <symbol id="i-lixo" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-mais" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-painel" viewBox="0 0 24 24"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></symbol>
+  <symbol id="i-lista" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></symbol>
+  <!-- ícone do app (10): arco tracejado em céu chegando ao ponto aceso -->
+  <symbol id="i-marca" viewBox="0 0 30 22"><path d="M2 20 Q 10 2 24 6" fill="none" stroke="#5CC8FF" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 4.5"/><circle cx="25" cy="6" r="4" fill="#FFB547"/></symbol>
+</svg>
+
+<div class="palco" aria-hidden="true"><canvas id="globo"></canvas><div class="rotulos" id="rotulos"></div></div>
+
+<header class="topo">
+  <a class="marca" href="#inicio" aria-label="Voa Aí, início"><svg aria-hidden="true"><use href="#i-marca"/></svg><span aria-hidden="true">Voa A<span class="marca__i">ı</span></span></a>
+  <nav class="topo__direita" aria-label="Conta e voos">
+    <a class="link-topo" href="#meus-voos">Meus voos <span class="contador num" id="contador" hidden></span></a>
+    <a class="link-topo link-conta" href="#entrar" id="link-conta">Entrar</a>
+  </nav>
+</header>
+
+<button class="botao botao--secundario mostrar-painel" type="button" data-recolher="nao"><svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-painel"/></svg>Mostrar detalhes do voo</button>
+
+<div class="camera" role="group" aria-label="Câmera do globo">
+  <span>Câmera</span>
+  <div class="camera__opcoes">
+    <button type="button" data-cam="aviao" aria-pressed="true">Avião</button>
+    <button type="button" data-cam="destino" aria-pressed="false">Destino</button>
+    <button type="button" data-cam="livre" aria-pressed="false">Livre</button>
+  </div>
+</div>
+
+<dl class="hud" id="hud" aria-label="Dados do voo"></dl>
+<p class="legenda estimada" id="legenda">Arraste o globo para girar. Posição do avião estimada pelos horários da companhia.</p>
+
+<main class="painel" id="painel">
+
+<!-- ======================= INÍCIO ======================= -->
+<section class="tela" data-tela="inicio" aria-labelledby="t-inicio">
+  <h1 id="t-inicio" class="pergunta">Quem você está esperando?</h1>
+  <p class="apoio">Digite o número do voo. A gente avisa no celular quando decolar, atrasar, estiver chegando e pousar.</p>
+  <form id="form-inicio" novalidate style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <div class="campo">
+      <label for="ident">Número do voo</label>
+      <input id="ident" class="ident" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+             placeholder="TP103" maxlength="10" aria-describedby="ident-dica ident-erro">
+      <p id="ident-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg><span></span></p>
+      <p id="ident-dica" class="dica">Está no cartão de embarque ou na mensagem da companhia. Ex.: LA3054, G31450, TP103.</p>
+    </div>
+    <fieldset class="grupo">
+      <legend>Data do voo</legend>
+      <div class="segmentado" data-dias="data"></div>
+      <p class="dica">Dá para acompanhar voos de hoje até daqui a 2 dias.</p>
+    </fieldset>
+    <button class="botao" type="submit" id="acompanhar">Acompanhar voo</button>
+  </form>
+  <a class="botao botao--secundario" href="#rota"><svg aria-hidden="true"><use href="#i-aviao"/></svg>Não sabe o número? Buscar pela rota</a>
+  <p class="privacidade">Sem cadastro e sem senha. Os dados do voo são apagados 7 dias depois do pouso.</p>
+</section>
+
+<!-- ======================= CONFIRMAÇÃO ======================= -->
+<section class="tela" data-tela="confirmacao" aria-labelledby="t-conf">
+  <a class="voltar" href="#inicio"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-conf">É um destes?</h1>
+    <p class="apoio" id="conf-apoio"></p>
+  </div>
+  <div id="conf-estado" aria-live="polite"></div>
+  <div id="conf-escolha" style="display:contents">
+    <fieldset class="grupo opcoes">
+      <legend class="sr">Voos encontrados</legend>
+      <div class="opcoes" id="conf-opcoes"></div>
+      <p class="fuso" id="conf-fuso"></p>
+    </fieldset>
+    <div class="campo">
+      <label for="apelido">Como chamar quem vem? <span class="apoio" style="font-weight:400">(opcional)</span></label>
+      <input id="apelido" type="text" placeholder="Mãe, Ana, Vô Zé…" maxlength="24" autocomplete="off" aria-describedby="apelido-dica">
+      <p id="apelido-dica" class="sr">O apelido aparece nos avisos. Fica só neste aparelho e no aviso do voo.</p>
+    </div>
+    <div>
+      <p class="previa-titulo">Os avisos vão chegar assim:</p>
+      <div class="previa" aria-live="polite">
+        <span class="previa__icone" aria-hidden="true"><svg><use href="#i-marca"/></svg></span>
+        <span class="previa__app"><span>Voa Aí</span><span>agora</span></span>
+        <span class="previa__texto" id="previa-texto"></span>
+      </div>
+    </div>
+    <div class="aviso-ios" data-so-ios hidden>
+      <h2>No iPhone, falta um passo</h2>
+      <p>Os avisos só chegam com o Voa Aí na Tela de Início:</p>
+      <ol>
+        <li>Toque em <b>Compartilhar</b> no Safari.</li>
+        <li>Escolha <b>Adicionar à Tela de Início</b>.</li>
+        <li>Abra o Voa Aí por lá e toque em <b>Me avisar</b>.</li>
+      </ol>
+    </div>
+    <p id="conf-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg><span></span></p>
+    <div class="acoes">
+      <button class="botao" type="button" id="me-avisar"><svg aria-hidden="true"><use href="#i-sino"/></svg>Me avisar</button>
+      <p class="dica" style="text-align:center">O celular vai pedir permissão para mostrar notificações.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= STATUS (todos os estados) ======================= -->
+<section class="tela" data-tela="status" aria-labelledby="t-status">
+  <div class="cabeca">
+    <a class="voltar" href="#meus-voos"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Meus voos</a>
+    <button class="botao botao--icone recolher" type="button" data-recolher="sim" aria-label="Esconder detalhes e ver só o globo" hidden><svg aria-hidden="true"><use href="#i-painel"/></svg></button>
+  </div>
+  <div id="st-cabeca" class="cabeca-status"></div>
+  <div id="st-corpo" style="display:contents"></div>
+  <div id="st-avisos" style="display:contents"></div>
+  <div id="st-acoes" style="display:contents"></div>
+</section>
+
+<!-- ======================= BUSCAR PELA ROTA ======================= -->
+<section class="tela" data-tela="rota" aria-labelledby="t-rota">
+  <a class="voltar" href="#inicio"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-rota">Buscar pela rota</h1>
+    <p class="apoio">Não sabe o número do voo? Escolha de onde sai e para onde vai.</p>
+  </div>
+  <form id="form-rota" novalidate style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <fieldset class="grupo">
+      <legend>De</legend>
+      <label class="sr" for="pais-de">País de origem</label>
+      <select class="seletor" id="pais-de" data-lado="de"><option value="">Carregando países…</option></select>
+      <div class="chips" id="aero-de" role="group" aria-label="Aeroportos de origem"></div>
+    </fieldset>
+    <fieldset class="grupo">
+      <legend>Para</legend>
+      <label class="sr" for="pais-para">País de destino</label>
+      <select class="seletor" id="pais-para" data-lado="para"><option value="">Carregando países…</option></select>
+      <div class="chips" id="aero-para" role="group" aria-label="Aeroportos de destino"></div>
+      <p class="dica" id="pares-dica">Até 3 combinações de aeroportos por busca.</p>
+    </fieldset>
+    <fieldset class="grupo">
+      <legend>Data do voo</legend>
+      <div class="segmentado" data-dias="data-rota"></div>
+    </fieldset>
+    <p id="rota-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg><span></span></p>
+    <button class="botao" type="submit" id="buscar-rota">Buscar voos</button>
+  </form>
+  <section id="rota-resultados" aria-labelledby="t-res" aria-live="polite" hidden style="display:flex;flex-direction:column;gap:var(--e-3)">
+    <h2 id="t-res" style="font-size:var(--fs-p)" tabindex="-1"></h2>
+    <div class="resultados" id="lista-rota"></div>
+    <p class="fuso" id="rota-nota"></p>
+  </section>
+</section>
+
+<!-- ======================= ENTRAR / MINHA CONTA ======================= -->
+<section class="tela" data-tela="entrar" aria-labelledby="t-entrar">
+  <a class="voltar" href="#inicio"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
+  <div id="conta-fora" style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <h1 id="t-entrar" class="pergunta">Seus voos em qualquer aparelho</h1>
+    <p class="apoio" id="entrar-apoio">Entrar é opcional. Sem conta você continua acompanhando seus voos neste aparelho.</p>
+    <ul class="vantagens" id="vantagens"></ul>
+    <div class="google-botao" id="google-botao"></div>
+    <p id="entrar-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg><span></span></p>
+    <p class="privacidade">Guardamos só seu nome, e-mail e foto do Google. Dá para apagar a conta quando quiser.</p>
+  </div>
+  <div id="conta-dentro" hidden style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <h1 class="pergunta" id="t-conta">Minha conta</h1>
+    <div class="cartao-conta">
+      <span class="avatar" aria-hidden="true" id="conta-avatar"></span>
+      <span><b id="conta-nome"></b><br><span class="apoio" id="conta-email"></span></span>
+    </div>
+    <p class="apoio" id="conta-resumo"></p>
+    <a class="botao botao--secundario" href="/admin/" id="link-admin" hidden>Abrir o painel de admin</a>
+    <button class="botao botao--secundario" type="button" id="sair">Sair deste aparelho</button>
+    <button class="botao botao--texto botao--perigo" type="button" id="apagar-conta">Apagar minha conta</button>
+  </div>
+</section>
+
+<!-- ======================= MEUS VOOS ======================= -->
+<section class="tela" data-tela="meus-voos" aria-labelledby="t-meus">
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-meus">Meus voos</h1>
+    <p class="limite num"><span id="limite-voos"></span> <span id="dica-globo">Passe o mouse num voo para vê-lo no globo.</span></p>
+  </div>
+  <div id="meus-estado" aria-live="polite"></div>
+  <ul class="lista-voos" id="lista-voos"></ul>
+  <a class="botao botao--secundario" href="#inicio" id="outro-voo"><svg aria-hidden="true"><use href="#i-mais"/></svg>Acompanhar outro voo</a>
+</section>
+
+</main>
+
+<dialog class="folha" id="folha" aria-labelledby="folha-titulo">
+  <form method="dialog" class="folha__corpo">
+    <h2 id="folha-titulo"></h2>
+    <p class="apoio" id="folha-texto"></p>
+    <button class="botao" value="sim" id="folha-sim" style="background:var(--c-cancelado)"></button>
+    <button class="botao botao--secundario" value="nao" id="folha-nao" autofocus></button>
+  </form>
+</dialog>
+<p class="toast" id="toast" role="status" hidden></p>
+<noscript><p class="painel">O Voa Aí precisa de JavaScript ligado para buscar e acompanhar voos.</p></noscript>
+</body>
+</html>
