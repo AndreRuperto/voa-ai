@@ -1,39 +1,36 @@
 # Próximos passos
 
-**Data:** 13/11/2026 · **Branch:** `main` (com o PR #1 `/design` e o PR #2 `/visual-frontend` mergeados)
+**Data:** 14/11/2026 · **Branch:** `claude/prototipo-v2` (a partir da `main` com os PRs #1, #2 e #3)
 
-## Decisão pendente: há duas direções visuais
+## Decisão tomada: as duas direções visuais foram unidas
 
-Duas sessões paralelas desenharam a interface, e as duas estão na `main`:
+A [09 · Direção visual](docs/09-direcao-visual.md) (`/visual-frontend`) e a [10 · Design](docs/10-design.md) (`/design`) foram juntadas na [11 · Visual da v2](docs/11-v2-visual.md):
 
-| | [09 · Direção visual](docs/09-direcao-visual.md) (`/visual-frontend`) | [10 · Design](docs/10-design.md) (`/design`) |
-|---|---|---|
-| Ideia central | Placa de status na gramática das placas de pista | "Céu noturno, luz de pista" |
-| Tema padrão | Segue o sistema (claro "céu de dia" / escuro "céu de noite") | Escuro |
-| Cores de estado | Amarelo normal, laranja atraso, vermelho cancelado | Âmbar = ação/destino, azul-céu = em voo |
-| Entregável | Protótipo HTML navegável (`prototipo/index.html`) + capturas em `docs/visual/` | Canvas de design (artifact privado) |
-
-Em comum: escolha de data com 3 botões (limite de +2 dias da AeroAPI), passo explicado para o iPhone antes de pedir permissão e o globo da v2 nos mesmos tons noturnos.
+- **Da 10:** a marca em Bricolage com o ponto âmbar, a paleta "céu noturno, luz de pista" e o tema escuro.
+- **Da 09:** a placa de pista como elemento de estado, o Atkinson no texto e no campo, o Barlow na placa e nos horários, e todos os textos da v1.
 
 ## Feito
 
-- **/visual-frontend:** [docs/09-direcao-visual.md](docs/09-direcao-visual.md) com tokens, tipografia (Barlow Semi Condensed + Atkinson Hyperlegible Next), componentes, textos e ponte para a v2. Protótipo navegável com início, erro, confirmação, status (em voo, atrasado, cancelado), link compartilhado e meus voos. Contrastes medidos (texto ≥ 5,46:1, controles ≥ 3,84:1). Sem rolagem lateral em 375 px nem com zoom de 200%.
-- **/design:** canvas **[Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14)** (privado) com identidade, componentes, 6 telas da v1 e 1 tela da v2. Resumo em [docs/10-design.md](docs/10-design.md).
+- **v1:** protótipo em [`prototipo/index.html`](prototipo/index.html) (direção 09) e prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) (direção 10).
+- **v2 (esta sessão):** protótipo em [`prototipo/v2/index.html`](prototipo/v2/index.html), com globo 3D em three.js (continentes low-poly, dia e noite, rotas, avião, destino aceso, rótulos em placa, câmera Avião/Destino/Livre, HUD). No desktop, o globo ocupa a tela toda e o painel flutua à esquerda, podendo ser recolhido. No celular, a coluna da v1 continua, com o globo em faixa no status. Telas: início, confirmação, status (em voo, atrasado, cancelado) e meus voos. Capturas em `docs/visual/v2-*.png`.
 
 ## Estado
 
-- Nenhuma das duas direções foi validada em aparelho real nem com leitor de tela.
+- Testado no navegador em 1600×900 e 375×812: as telas carregam sem erro no console, o painel recolhe e volta, e a câmera troca de modo.
+- Não testado: desempenho em celular real, leitor de tela, zoom de 200% na v2.
+- Prancha de design ainda desatualizada: mostra Inter e JetBrains Mono e não tem a placa.
 - O código do app ainda não existe.
 
 ## Próximos passos
 
-- [ ] Escolher entre o `09` e o `10`, ou juntar os dois, e marcar o outro como substituído
+- [ ] Atualizar a prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) com a junção da 11 (fontes, placa, trajeto)
+- [ ] Levar a v1 (`prototipo/index.html`) para a paleta unificada, ou marcá-la como histórica
+- [ ] Testar o globo num celular intermediário (meta de 60 fps)
 - [ ] Decidir se "Me avisar" substitui "Avisar-me" na [02-v1-alertas.md](docs/02-v1-alertas.md)
-- [ ] Desenhar os estados que faltam: desviado, offline, permissão de notificação negada
-- [ ] v2: usar a largura toda no desktop (globo de fundo e painéis), sem coluna estreita no centro. Ver [06-v2-3d.md](docs/06-v2-3d.md#aproveitar-a-tela-grande)
-- [ ] Exportar os ícones da PWA (192/512 maskable, badge Android)
+- [ ] Desenhar os estados que faltam: desviado, offline, permissão de notificação negada, pousou/no portão na v2
+- [ ] Exportar os ícones da PWA (192/512 maskable, badge Android) a partir da marca da 10
 - [ ] Marco 1 do roadmap: conta AeroAPI e script `scripts/buscar-voo.js`
-- [ ] Marco 3: levar os tokens escolhidos para `public/tokens.css`
+- [ ] Marco 3: levar os tokens da 11 para `public/tokens.css`
 
 ## Comandos úteis
 
@@ -41,4 +38,7 @@ Em comum: escolha de data com 3 botões (limite de +2 dias da AeroAPI), passo ex
 python -m http.server 8741 --directory prototipo
 ```
 
-Abrir `http://localhost:8741/#status` (as portas 5173 e 8765 costumam estar ocupadas nesta máquina; no app, use a configuração `prototipo` em `.claude/launch.json`). Use `?tema=escuro` ou `?tema=claro` para forçar o tema e `?ios=1` para ver o passo do iPhone.
+- v1: `http://localhost:8741/#status` (`?tema=escuro|claro`, `?ios=1`)
+- v2: `http://localhost:8741/v2/#status` (telas: `inicio`, `confirmacao`, `status`, `status-atraso`, `status-cancelado`, `meus-voos`)
+- As portas 5173 e 8765 costumam estar ocupadas nesta máquina. No app, use a configuração `prototipo` em `.claude/launch.json`.
+- Capturas da v2, com o servidor no ar: `python prototipo/v2/capturas.py docs/visual`. O script usa Playwright com `--use-angle=swiftshader` para o WebGL rodar sem GPU.

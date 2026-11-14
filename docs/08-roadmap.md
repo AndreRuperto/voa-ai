@@ -42,7 +42,7 @@
 
 ## Marco 5: v2 3D
 
-- [ ] Protótipo do globo Three.js com a rota de um voo fixo (dados mockados)
+- [x] Protótipo do globo Three.js com a rota de um voo fixo (dados mockados): [`prototipo/v2/`](../prototipo/v2/index.html)
 - [ ] Integração com `/track` + interpolação
 - [ ] Animações de decolagem e pouso disparadas pelos eventos
 - [ ] Testes de desempenho em celular

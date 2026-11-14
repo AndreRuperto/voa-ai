@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Voa Aí · protótipo v2</title>
+<meta name="theme-color" content="#0B1426">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS v2 — junção de docs/09-direcao-visual.md (placa de pista,
+   Atkinson + Barlow) com docs/10-design.md (céu noturno, luz de pista,
+   marca em Bricolage). Fonte da verdade: docs/11-v2-visual.md
+   ============================================================ */
+:root {
+  /* céu noturno (10) */
+  --c-espaco: #05090F;        /* fundo da cena 3D */
+  --c-fundo: #0B1426;         /* noite-950 */
+  --c-superficie: #12203A;    /* noite-900: painéis, cartões */
+  --c-campo: #1B2D4F;         /* noite-800: campos */
+  --c-linha: #2A3F66;         /* divisórias decorativas */
+  --c-linha-forte: #6E83A8;   /* borda de controle: 4,23:1 sobre a superfície */
+  --c-tinta: #F2F5FA;
+  --c-tinta-suave: #A9B6CC;   /* 7,9:1 sobre a superfície */
+  --c-painel: rgba(18, 32, 58, .9);
+
+  /* luz de pista e céu (10) com a gramática das placas (09) */
+  --c-pista: #FFB547;         /* placa de direção, ação primária, destino */
+  --c-placa-tinta: #0B1426;   /* texto sobre qualquer placa colorida: ≥ 6,7:1 */
+  --c-ceu: #5CC8FF;           /* em voo, trecho voado, avião */
+  --c-pousou: #5EE6A8;
+  --c-atraso: #FF8A65;        /* placa temporária */
+  --c-cancelado: #FF6B7A;     /* placa obrigatória */
+  --c-halo: rgba(255, 181, 71, .4);
+  --c-foco: #FFB547;
+
+  --f-marca: "Bricolage Grotesque", system-ui, sans-serif;
+  --f-texto: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --f-placa: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --fs-pp: .875rem;  --fs-p: 1.0625rem;  --fs-m: 1.328rem;  --fs-g: 1.66rem;  --fs-gg: 2.075rem;  --fs-ggg: 2.6rem;
+
+  --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-5: 24px; --e-6: 32px; --e-7: 48px;
+  --r-placa: 4px; --r-campo: 12px; --r-cartao: 16px; --r-painel: 20px;
+  --m-dur: 200ms; --m-curva: cubic-bezier(.2, .7, .2, 1);
+
+  --painel-l: 440px;          /* largura do painel no desktop */
+  --faixa-globo: 44vh;        /* altura do globo no celular */
+  color-scheme: dark;
+}
+
+/* ============================================================ BASE */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--c-fundo); color: var(--c-tinta); font: 400 var(--fs-p)/1.5 var(--f-texto); overflow-wrap: break-word; }
+h1, h2, h3, p, ol, ul, figure { margin: 0; }
+h1 { font: 700 var(--fs-g)/1.15 var(--f-marca); letter-spacing: -.01em; }
+h2 { font-size: var(--fs-m); line-height: 1.25; font-weight: 700; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+:focus-visible { outline: 3px solid var(--c-foco); outline-offset: 3px; }
+[tabindex="-1"]:focus { outline: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+a { color: inherit; }
+
+/* ============================================================ PALCO (globo) */
+.palco { position: fixed; inset: 0; background: radial-gradient(120% 90% at 65% 45%, #0A1426 0%, var(--c-espaco) 70%); z-index: 0; overflow: hidden; }
+.palco canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.palco canvas:active { cursor: grabbing; }
+.rotulos { position: absolute; inset: 0; pointer-events: none; }
+.rotulo { position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap; transition: opacity var(--m-dur); }
+.rotulo[data-oculto] { opacity: 0; }
+.rotulo--aero { transform: translate(-50%, 12px); }
+
+/* ============================================================ TOPO */
+.topo { position: fixed; top: 0; left: 0; right: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--e-4); min-height: 64px; pointer-events: none;
+  background: linear-gradient(var(--c-fundo) 0%, rgba(11, 20, 38, .7) 60%, transparent); }
+.topo > * { pointer-events: auto; }
+.marca { font: 800 1.5rem/1 var(--f-marca); letter-spacing: -.02em; text-decoration: none; display: inline-flex; align-items: center;
+  min-height: 44px; gap: 10px; border-radius: var(--r-campo); padding-right: 4px; }
+.marca svg { width: 30px; height: 22px; overflow: visible; }
+/* o acento do "í" é a luz que espera o avião */
+.marca__i { position: relative; }
+.marca__i::after { content: ""; position: absolute; left: 50%; top: -.02em; width: .26em; height: .26em; margin-left: -.1em; border-radius: 50%;
+  background: var(--c-pista); box-shadow: 0 0 10px var(--c-halo); }
+.link-topo { font-weight: 600; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; gap: var(--e-2);
+  padding: 0 var(--e-3); border-radius: var(--r-campo); }
+.link-topo:hover { text-decoration: underline; text-underline-offset: 3px; }
+.contador { font: 700 var(--fs-pp)/1.5 var(--f-placa); background: var(--c-fundo); color: var(--c-pista); box-shadow: inset 0 0 0 2px var(--c-pista);
+  border-radius: var(--r-placa); padding: 0 7px; }
+
+/* ============================================================ PAINEL */
+.painel { position: relative; z-index: 2; padding: calc(64px + var(--e-3)) var(--e-4) calc(var(--e-6) + env(safe-area-inset-bottom)); max-width: 520px; margin: 0 auto; }
+.tela { display: none; flex-direction: column; gap: var(--e-5); }
+.tela.ativa { display: flex; }
+.voltar { display: inline-flex; align-items: center; gap: var(--e-1); min-height: 44px; font-weight: 600; text-decoration: none;
+  padding-right: var(--e-2); border-radius: var(--r-campo); align-self: flex-start; }
+.voltar svg { width: 22px; height: 22px; fill: currentColor; }
+.cabeca { display: flex; justify-content: space-between; align-items: center; gap: var(--e-3); margin-bottom: calc(var(--e-2) * -1); }
+
+/* ============================================================ PLACA (09) — o único elemento ousado do painel */
+.placa { display: flex; align-items: stretch; font-family: var(--f-placa); font-weight: 700; border-radius: var(--r-placa); overflow: hidden; line-height: 1.1; width: 100%; }
+.placa > * { padding: var(--e-3) var(--e-4); display: flex; flex-direction: column; justify-content: center; }
+.placa__local { background: var(--c-fundo); color: var(--c-pista); box-shadow: inset 0 0 0 3px var(--c-pista); border-radius: var(--r-placa);
+  font-size: var(--fs-g); letter-spacing: .01em; flex: none; }
+.placa__direcao { background: var(--c-pista); color: var(--c-placa-tinta); flex: 1; }
+.placa__atencao { background: var(--c-atraso); color: var(--c-placa-tinta); flex: none; }
+.placa__critico { background: var(--c-cancelado); color: var(--c-placa-tinta); flex: 1; }
+.placa__estado { font-size: var(--fs-gg); }
+.placa__detalhe { font-size: var(--fs-m); font-weight: 600; margin-top: 2px; }
+.placa--mini { width: auto; }
+.placa--mini > * { padding: 3px var(--e-2); font-size: var(--fs-p); flex: none; }
+.placa--mini .placa__local { box-shadow: inset 0 0 0 2px var(--c-pista); font-size: var(--fs-p); }
+
+/* ============================================================ FORMULÁRIO */
+.pergunta { font: 800 var(--fs-gg)/1.1 var(--f-marca); letter-spacing: -.015em; }
+.apoio { color: var(--c-tinta-suave); }
+.campo { display: flex; flex-direction: column; gap: var(--e-2); }
+.campo > label, .grupo > legend { font-weight: 700; }
+.campo input[type="text"] { font: inherit; color: inherit; background: var(--c-campo); min-height: 56px; padding: 0 var(--e-4);
+  border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); width: 100%; }
+/* digitação em Atkinson: distingue O/0 e I/1 (decisão da 09) */
+.campo input.ident { font-weight: 700; font-size: var(--fs-m); letter-spacing: .06em; text-transform: uppercase; }
+.campo input::placeholder { color: var(--c-tinta-suave); opacity: .75; }
+.campo input:focus-visible { outline-offset: 0; border-color: var(--c-foco); }
+.campo input[aria-invalid="true"] { border-color: var(--c-cancelado); }
+.dica { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.erro { font-size: var(--fs-pp); color: var(--c-cancelado); font-weight: 600; display: flex; gap: var(--e-2); }
+.erro svg { flex: none; width: 18px; height: 18px; margin-top: 2px; fill: currentColor; }
+.erro[hidden] { display: none; }
+.grupo { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--e-2); }
+.segmentado { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: var(--e-2); }
+.segmentado label { position: relative; }
+.segmentado input { position: absolute; opacity: 0; inset: 0; }
+.segmentado span { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; text-align: center; line-height: 1.2;
+  border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); background: var(--c-campo); cursor: pointer; transition: border-color var(--m-dur) var(--m-curva); }
+.segmentado small { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.segmentado input:checked + span { border-color: var(--c-pista); box-shadow: inset 0 0 0 1px var(--c-pista); }
+.segmentado input:focus-visible + span { outline: 3px solid var(--c-foco); outline-offset: 2px; }
+
+.botao { font: 700 var(--fs-p)/1.2 var(--f-texto); min-height: 56px; padding: 0 var(--e-5); border-radius: var(--r-campo); border: 2px solid transparent;
+  background: var(--c-pista); color: var(--c-placa-tinta); cursor: pointer; width: 100%; display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--e-2); text-decoration: none; transition: transform var(--m-dur) var(--m-curva); }
+.botao:active { transform: scale(.98); }
+.botao svg { width: 20px; height: 20px; fill: currentColor; }
+.botao--secundario { background: transparent; color: var(--c-tinta); border-color: var(--c-linha-forte); }
+.botao--texto { background: none; color: var(--c-tinta); width: auto; min-height: 44px; padding: 0 var(--e-2); text-decoration: underline; text-underline-offset: 3px; }
+.botao--perigo { color: var(--c-cancelado); }
+.botao--icone { width: 44px; min-height: 44px; padding: 0; background: transparent; color: var(--c-tinta); border-color: var(--c-linha); }
+.privacidade { font-size: var(--fs-pp); color: var(--c-tinta-suave); border-top: 1px solid var(--c-linha); padding-top: var(--e-4); }
+
+/* ============================================================ CONFIRMAÇÃO */
+.opcoes { display: flex; flex-direction: column; gap: var(--e-3); }
+.cartao-voo { position: relative; display: block; }
+.cartao-voo input { position: absolute; opacity: 0; inset: 0; }
+.cartao-voo__corpo { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: var(--e-1) var(--e-3); align-items: start;
+  background: var(--c-superficie); border: 2px solid var(--c-linha-forte); border-radius: var(--r-cartao); padding: var(--e-4); cursor: pointer;
+  transition: border-color var(--m-dur) var(--m-curva); }
+.cartao-voo input:checked + .cartao-voo__corpo { border-color: var(--c-pista); box-shadow: inset 0 0 0 1px var(--c-pista); }
+.cartao-voo input:focus-visible + .cartao-voo__corpo { outline: 3px solid var(--c-foco); outline-offset: 2px; }
+.cartao-voo__cia { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-pp); color: var(--c-tinta-suave); margin-bottom: var(--e-2); }
+.cartao-voo__marca { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--c-linha-forte); display: grid; place-items: center; flex: none; }
+.cartao-voo input:checked + .cartao-voo__corpo .cartao-voo__marca { border-color: var(--c-pista); background: var(--c-pista); }
+.cartao-voo input:checked + .cartao-voo__corpo .cartao-voo__marca::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c-placa-tinta); }
+.ponta { display: flex; flex-direction: column; }
+.ponta--fim { text-align: right; }
+.ponta__codigo { font: 700 var(--fs-g)/1 var(--f-placa); }
+.ponta__cidade { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.ponta__hora { font: 700 var(--fs-m)/1.2 var(--f-placa); margin-top: var(--e-1); }
+.cartao-voo__aviao { align-self: center; width: 24px; height: 24px; fill: var(--c-tinta-suave); transform: rotate(90deg); }
+.previa { background: var(--c-superficie); border: 1px solid var(--c-linha); border-radius: var(--r-cartao); padding: var(--e-3) var(--e-4);
+  display: grid; grid-template-columns: 36px 1fr; gap: 2px var(--e-3); }
+.previa__icone { grid-row: span 2; width: 36px; height: 36px; border-radius: 9px; background: var(--c-fundo); display: grid; place-items: center; }
+.previa__icone svg { width: 26px; height: 20px; overflow: visible; }
+.previa__app { font-size: var(--fs-pp); color: var(--c-tinta-suave); display: flex; justify-content: space-between; }
+.previa__texto { font-weight: 600; }
+.previa-titulo { font-size: var(--fs-pp); color: var(--c-tinta-suave); margin-bottom: var(--e-2); }
+.aviso-ios { border: 2px solid var(--c-linha-forte); border-radius: var(--r-cartao); padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-3); }
+.aviso-ios[hidden] { display: none; }
+.aviso-ios ol { padding-left: 1.4em; display: flex; flex-direction: column; gap: var(--e-1); }
+.aviso-ios h2 { font-size: var(--fs-p); }
+
+/* ============================================================ STATUS */
+.quem { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e-3); }
+.quem small { color: var(--c-tinta-suave); font-size: var(--fs-pp); }
+.cabeca-status { display: flex; flex-direction: column; gap: var(--e-3); }
+/* o trajeto em 1D: mesma codificação do arco no globo (voado sólido em céu, restante tracejado, destino aceso) */
+.trajeto { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--e-3); }
+.trajeto__barra { position: relative; height: 16px; }
+.trajeto__barra::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 2px;
+  background: repeating-linear-gradient(90deg, rgba(242, 245, 250, .7) 0 3px, transparent 3px 9px); }
+.trajeto__barra i { position: absolute; left: 0; top: 6px; height: 4px; border-radius: 2px; width: calc(var(--t) * 100%); background: var(--c-ceu); }
+.trajeto__barra::after { content: ""; position: absolute; right: -4px; top: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--c-pista); box-shadow: 0 0 0 4px var(--c-halo); }
+.trajeto__barra[data-cancelado]::before { background: repeating-linear-gradient(90deg, var(--c-cancelado) 0 3px, transparent 3px 9px); }
+.trajeto__barra[data-cancelado]::after { background: var(--c-cancelado); box-shadow: none; }
+.trajeto__resto { color: var(--c-tinta-suave); font-size: var(--fs-pp); margin-top: calc(var(--e-3) * -1); }
+
+.linha-tempo { list-style: none; padding: 0; display: flex; flex-direction: column; }
+.linha-tempo li { display: grid; grid-template-columns: 28px 1fr auto; gap: 0 var(--e-3); position: relative; padding-bottom: var(--e-4); }
+.linha-tempo li:last-child { padding-bottom: 0; }
+.linha-tempo li::before { content: ""; position: absolute; left: 13px; top: 26px; bottom: -2px; width: 2px;
+  background: repeating-linear-gradient(var(--c-linha-forte) 0 3px, transparent 3px 7px); }
+.linha-tempo li:last-child::before { display: none; }
+.linha-tempo li.feito::before { background: var(--c-ceu); }
+.marco { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--c-linha-forte); background: var(--c-superficie); display: grid; place-items: center; position: relative; z-index: 1; }
+.marco svg { width: 16px; height: 16px; fill: var(--c-placa-tinta); }
+.feito .marco { background: var(--c-ceu); border-color: var(--c-ceu); }
+.agora .marco { background: var(--c-ceu); border-color: var(--c-ceu); box-shadow: 0 0 0 5px rgba(92, 200, 255, .25); }
+.agora .marco svg { transform: rotate(90deg); }
+.chegada .marco { border-color: var(--c-pista); }
+.marco__nome { font-weight: 700; line-height: 28px; }
+.marco__nota { grid-column: 2 / 3; font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.marco__hora { text-align: right; font: 700 var(--fs-m)/28px var(--f-placa); }
+.marco__hora small { display: block; font-weight: 600; font-size: var(--fs-p); color: var(--c-tinta-suave); line-height: 1.2; }
+.previsto .marco__nome, .previsto .marco__hora { color: var(--c-tinta-suave); }
+.riscado { text-decoration: line-through; }
+.atrasou { color: var(--c-atraso); }
+.nota-aviso { display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-3) var(--e-4); border-radius: var(--r-cartao);
+  background: var(--c-campo); border: 1px solid var(--c-linha); }
+.nota-aviso svg { flex: none; width: 22px; height: 22px; fill: var(--c-pista); margin-top: 1px; }
+.fuso { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.acoes { display: flex; flex-direction: column; gap: var(--e-3); align-items: center; }
+
+/* ============================================================ MEUS VOOS */
+.lista-voos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--e-3); }
+.item-voo { background: var(--c-superficie); border: 1px solid var(--c-linha); border-radius: var(--r-cartao); display: flex; align-items: stretch;
+  transition: border-color var(--m-dur) var(--m-curva); }
+.item-voo[data-destaque] { border-color: var(--c-linha-forte); }
+.item-voo__link { flex: 1; display: flex; flex-direction: column; gap: var(--e-2); padding: var(--e-4); text-decoration: none; border-radius: var(--r-cartao) 0 0 var(--r-cartao); min-width: 0; }
+.item-voo__link:hover .item-voo__nome { text-decoration: underline; }
+.item-voo__nome { font-weight: 700; font-size: var(--fs-m); }
+.item-voo__trecho { color: var(--c-tinta-suave); font-size: var(--fs-pp); }
+.item-voo__remover { border: 0; border-left: 1px solid var(--c-linha); background: none; color: var(--c-tinta-suave); width: 56px; cursor: pointer;
+  border-radius: 0 var(--r-cartao) var(--r-cartao) 0; display: grid; place-items: center; }
+.item-voo__remover svg { width: 22px; height: 22px; fill: currentColor; }
+.item-voo__remover:hover { color: var(--c-cancelado); }
+.limite { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+
+/* ============================================================ HUD E CÂMERA (só nas telas de voo) */
+.hud, .camera, .legenda, .mostrar-painel { display: none; }
+body[data-hud] .hud { display: flex; }
+body[data-camera] .camera { display: flex; }
+.hud { position: fixed; z-index: 3; gap: 1px; background: var(--c-linha); border-radius: var(--r-cartao); overflow: hidden; border: 1px solid var(--c-linha); }
+.hud > div { background: var(--c-painel); padding: var(--e-2) var(--e-4); display: flex; flex-direction: column; min-width: 0; }
+.hud dt { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.hud dd { margin: 0; font: 700 var(--fs-m)/1.15 var(--f-placa); white-space: nowrap; }
+.hud dd small { font-size: var(--fs-p); color: var(--c-tinta-suave); font-weight: 600; }
+.hud .hud__chegada dd { color: var(--c-pista); }
+.camera { position: fixed; z-index: 3; align-items: center; gap: var(--e-2); }
+.camera > span { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+.camera__opcoes { display: flex; background: var(--c-painel); border: 1px solid var(--c-linha); border-radius: var(--r-campo); padding: 3px; gap: 2px; }
+.camera button { font: 600 var(--fs-pp)/1 var(--f-texto); color: var(--c-tinta); background: none; border: 0; min-height: 40px; padding: 0 var(--e-3);
+  border-radius: 9px; cursor: pointer; }
+.camera button[aria-pressed="true"] { background: var(--c-tinta); color: var(--c-placa-tinta); }
+.estimada { font-size: var(--fs-pp); color: var(--c-tinta-suave); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ------------------------------------------------------------
+   CELULAR: coluna única da v1. O globo só aparece nas telas de voo,
+   como faixa no topo; o painel sobe por cima dele ao rolar.
+   ------------------------------------------------------------ */
+@media (max-width: 959.98px) {
+  body:not([data-globo-celular]) .palco { display: none; }
+  body[data-globo-celular] .palco { bottom: auto; height: var(--faixa-globo); }
+  body[data-globo-celular] .painel { margin-top: calc(var(--faixa-globo) - 64px - var(--e-5)); background: var(--c-fundo);
+    border-radius: var(--r-painel) var(--r-painel) 0 0; padding-top: var(--e-5); min-height: 60vh; }
+  body[data-globo-celular] .topo { background: linear-gradient(rgba(5, 9, 15, .85), transparent); }
+  body[data-globo-celular] .camera { top: 64px; right: var(--e-3); }
+  body[data-globo-celular] .camera > span { display: none; }
+  body[data-hud] .hud { position: static; margin: 0; }
+  .hud { display: none; }
+  body[data-globo-celular] .hud-celular { display: flex; }
+  .recolher { display: none; }
+}
+
+/* ------------------------------------------------------------
+   DESKTOP (≥ 960 px): o globo ocupa a tela toda e o painel flutua
+   à esquerda. Nenhuma tela fica numa coluna estreita no meio
+   (docs/06-v2-3d.md, "Aproveitar a tela grande").
+   ------------------------------------------------------------ */
+@media (min-width: 960px) {
+  .topo { padding: 0 var(--e-6); min-height: 72px; background: linear-gradient(rgba(5, 9, 15, .75), transparent); }
+  .painel { position: fixed; left: var(--e-5); top: 84px; bottom: var(--e-5); width: var(--painel-l); max-width: none; margin: 0;
+    padding: var(--e-6) var(--e-6) var(--e-6); overflow-y: auto; overscroll-behavior: contain;
+    background: var(--c-painel); border: 1px solid var(--c-linha); border-radius: var(--r-painel);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    transition: transform 320ms var(--m-curva), opacity 320ms var(--m-curva); scrollbar-width: thin; scrollbar-color: var(--c-linha) transparent; }
+  body[data-recolhido] .painel { transform: translateX(calc(-100% - 40px)); opacity: 0; visibility: hidden; transition: transform 320ms var(--m-curva), opacity 320ms, visibility 0s 320ms; }
+  body[data-recolhido] .mostrar-painel { display: inline-flex; }
+  .mostrar-painel { position: fixed; z-index: 3; left: var(--e-5); top: 84px; width: auto; min-height: 48px; background: var(--c-painel); }
+  .pergunta { font-size: var(--fs-ggg); }
+  .hud { right: var(--e-5); bottom: var(--e-5); }
+  .hud > div { padding: var(--e-3) var(--e-5); }
+  .hud dd { font-size: var(--fs-g); }
+  .camera { right: var(--e-5); top: 84px; }
+  .legenda { display: block; position: fixed; z-index: 3; right: var(--e-5); bottom: var(--e-5); max-width: 34ch; text-align: right; }
+  body[data-hud] .legenda { bottom: calc(var(--e-5) + 92px); }
+  .hud-celular { display: none !important; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body data-tela="inicio">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-aviao" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
+  <symbol id="i-sino" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></symbol>
+  <symbol id="i-lixo" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+  <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+  <symbol id="i-mais" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+  <symbol id="i-painel" viewBox="0 0 24 24"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></symbol>
+  <symbol id="i-lista" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></symbol>
+  <!-- ícone do app (10): arco tracejado em céu chegando ao ponto aceso -->
+  <symbol id="i-marca" viewBox="0 0 30 22"><path d="M2 20 Q 10 2 24 6" fill="none" stroke="#5CC8FF" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 4.5"/><circle cx="25" cy="6" r="4" fill="#FFB547"/></symbol>
+</svg>
+
+<div class="palco" aria-hidden="true"><canvas id="globo"></canvas><div class="rotulos" id="rotulos"></div></div>
+
+<header class="topo">
+  <a class="marca" href="#inicio" aria-label="Voa Aí, início"><svg aria-hidden="true"><use href="#i-marca"/></svg><span aria-hidden="true">Voa A<span class="marca__i">ı</span></span></a>
+  <a class="link-topo" href="#meus-voos">Meus voos <span class="contador num" aria-label="3 voos">3</span></a>
+</header>
+
+<button class="botao botao--secundario mostrar-painel" type="button" data-recolher="nao"><svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-painel"/></svg>Mostrar detalhes do voo</button>
+
+<div class="camera" role="group" aria-label="Câmera do globo">
+  <span>Câmera</span>
+  <div class="camera__opcoes">
+    <button type="button" data-cam="aviao" aria-pressed="true">Avião</button>
+    <button type="button" data-cam="destino" aria-pressed="false">Destino</button>
+    <button type="button" data-cam="livre" aria-pressed="false">Livre</button>
+  </div>
+</div>
+
+<dl class="hud" id="hud" aria-label="Dados do voo"></dl>
+<p class="legenda estimada" id="legenda">Arraste o globo para girar. Posições estimadas a partir do último dado da companhia.</p>
+
+<main class="painel" id="painel">
+
+<!-- ======================= INÍCIO ======================= -->
+<section class="tela" data-tela="inicio" aria-labelledby="t-inicio">
+  <h1 id="t-inicio" class="pergunta">Quem você está esperando?</h1>
+  <p class="apoio">Digite o número do voo. A gente avisa no celular quando decolar, atrasar, estiver chegando e pousar.</p>
+  <form id="form-inicio" novalidate style="display:flex;flex-direction:column;gap:var(--e-5)">
+    <div class="campo">
+      <label for="ident">Número do voo</label>
+      <input id="ident" class="ident" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+             placeholder="TP103" aria-describedby="ident-dica ident-erro">
+      <p id="ident-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg>
+        <span>Faltou o número do voo. Ele está no cartão de embarque, com as letras da companhia na frente.</span></p>
+      <p id="ident-dica" class="dica">Está no cartão de embarque ou na mensagem da companhia. Ex.: LA3054, G31450, TP103.</p>
+    </div>
+    <fieldset class="grupo">
+      <legend>Data do voo</legend>
+      <div class="segmentado">
+        <label><input type="radio" name="data" value="0" checked><span><b>Hoje</b><small class="num">13 nov</small></span></label>
+        <label><input type="radio" name="data" value="1"><span><b>Amanhã</b><small class="num">14 nov</small></span></label>
+        <label><input type="radio" name="data" value="2"><span><b>Sábado</b><small class="num">15 nov</small></span></label>
+      </div>
+      <p class="dica">Dá para acompanhar voos de hoje até daqui a 2 dias.</p>
+    </fieldset>
+    <button class="botao" type="submit">Acompanhar voo</button>
+  </form>
+  <p class="privacidade">Sem cadastro e sem senha. Os dados do voo são apagados 7 dias depois do pouso.</p>
+</section>
+
+<!-- ======================= CONFIRMAÇÃO ======================= -->
+<section class="tela" data-tela="confirmacao" aria-labelledby="t-conf">
+  <a class="voltar" href="#inicio"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-conf">É um destes?</h1>
+    <p class="apoio">Achamos 2 voos TP103 hoje. Escolha o de quem você espera.</p>
+  </div>
+  <fieldset class="grupo opcoes">
+    <legend class="sr">Voos encontrados</legend>
+    <label class="cartao-voo">
+      <input type="radio" name="voo" value="mae" checked>
+      <span class="cartao-voo__corpo">
+        <span class="cartao-voo__cia"><span>TAP Air Portugal, Airbus A330-900</span><span class="cartao-voo__marca" aria-hidden="true"></span></span>
+        <span class="ponta"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span><span class="ponta__hora num">sai 08:30</span></span>
+        <svg class="cartao-voo__aviao" aria-hidden="true"><use href="#i-aviao"/></svg>
+        <span class="ponta ponta--fim"><span class="ponta__codigo">GRU</span><span class="ponta__cidade">São Paulo</span><span class="ponta__hora num">chega 18:40</span></span>
+      </span>
+    </label>
+    <label class="cartao-voo">
+      <input type="radio" name="voo" value="opo">
+      <span class="cartao-voo__corpo">
+        <span class="cartao-voo__cia"><span>TAP Air Portugal, Airbus A321neo</span><span class="cartao-voo__marca" aria-hidden="true"></span></span>
+        <span class="ponta"><span class="ponta__codigo">OPO</span><span class="ponta__cidade">Porto</span><span class="ponta__hora num">sai 06:10</span></span>
+        <svg class="cartao-voo__aviao" aria-hidden="true"><use href="#i-aviao"/></svg>
+        <span class="ponta ponta--fim"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span><span class="ponta__hora num">chega 07:05</span></span>
+      </span>
+    </label>
+    <p class="fuso">Horários de Brasília, o fuso de quem espera em São Paulo. A rota escolhida aparece acesa no globo.</p>
+  </fieldset>
+  <div class="campo">
+    <label for="apelido">Como chamar quem vem? <span class="apoio" style="font-weight:400">(opcional)</span></label>
+    <input id="apelido" type="text" placeholder="Mãe, Ana, Vô Zé…" maxlength="24" autocomplete="off" aria-describedby="apelido-dica">
+    <p id="apelido-dica" class="sr">O apelido aparece nos avisos. Fica só neste aparelho e no aviso do voo.</p>
+  </div>
+  <div>
+    <p class="previa-titulo">Os avisos vão chegar assim:</p>
+    <div class="previa" aria-live="polite">
+      <span class="previa__icone" aria-hidden="true"><svg><use href="#i-marca"/></svg></span>
+      <span class="previa__app"><span>Voa Aí</span><span>agora</span></span>
+      <span class="previa__texto" id="previa-texto">🛫 O voo TP103 decolou de Lisboa. Chegada prevista às 18:40</span>
+    </div>
+  </div>
+  <div class="aviso-ios" data-so-ios>
+    <h2>No iPhone, falta um passo</h2>
+    <p>Os avisos só chegam com o Voa Aí na Tela de Início:</p>
+    <ol>
+      <li>Toque em <b>Compartilhar</b> no Safari.</li>
+      <li>Escolha <b>Adicionar à Tela de Início</b>.</li>
+      <li>Abra o Voa Aí por lá e toque em <b>Me avisar</b>.</li>
+    </ol>
+  </div>
+  <div class="acoes">
+    <a class="botao" href="#status" data-toast="Pronto! Vamos te avisar."><svg aria-hidden="true"><use href="#i-sino"/></svg>Me avisar</a>
+    <p class="dica" style="text-align:center">O celular vai pedir permissão para mostrar notificações.</p>
+  </div>
+</section>
+
+<!-- ======================= STATUS · EM VOO ======================= -->
+<section class="tela" data-tela="status" aria-labelledby="t-status">
+  <div class="cabeca">
+    <a class="voltar" href="#meus-voos"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Meus voos</a>
+    <button class="botao botao--icone recolher" type="button" data-recolher="sim" aria-label="Esconder detalhes e ver só o globo"><svg aria-hidden="true"><use href="#i-painel"/></svg></button>
+  </div>
+  <div class="cabeca-status">
+    <div class="quem"><h1 id="t-status">Voo da Mãe</h1><small>TAP Air Portugal</small></div>
+    <div class="placa" role="status" aria-label="TP103: em voo, chega às 18:52 em Guarulhos">
+      <span class="placa__local num">TP103</span>
+      <span class="placa__direcao"><span class="placa__estado">Em voo</span><span class="placa__detalhe num">chega 18:52 em GRU</span></span>
+    </div>
+  </div>
+  <div class="trajeto" role="img" aria-label="De Lisboa a Guarulhos. O avião já fez 62% do caminho; faltam 3 h 50 min.">
+    <span class="ponta"><span class="ponta__codigo">LIS</span><span class="ponta__cidade">Lisboa</span></span>
+    <span class="trajeto__barra" style="--t:.62"><i></i></span>
+    <span class="ponta ponta--fim"><span class="ponta__codigo">GRU</span><span class="ponta__cidade">Guarulhos</span></span>
+  </div>
+  <p class="trajeto__resto num">Faltam 3 h 50 min de voo</p>
+  <dl class="hud hud-celular" aria-label="Dados do voo" data-hud-de="mae"></dl>
+  <section aria-labelledby="t-linha">
+    <h2 id="t-linha" class="sr">Etapas do voo</h2>
+    <ol class="linha-tempo">
+      <li class="feito"><span class="marco"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+        <span class="marco__nome">Saiu do portão</span><span class="marco__hora num">08:41<small>previsto 08:30</small></span></li>
+      <li class="feito"><span class="marco"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+        <span class="marco__nome">Decolou</span><span class="marco__hora num">08:58</span></li>
+      <li class="agora" aria-current="step"><span class="marco"><svg aria-hidden="true"><use href="#i-aviao"/></svg></span>
+        <span class="marco__nome">Em voo</span><span class="marco__hora num">agora</span>
+        <span class="marco__nota">Sobre o Atlântico, a 11.300 m</span></li>
+      <li class="previsto chegada"><span class="marco"></span>
+        <span class="marco__nome">Pousa</span><span class="marco__hora num">18:52<small>previsto 18:40</small></span></li>
+      <li class="previsto"><span class="marco"></span>
+        <span class="marco__nome">Chega ao portão</span><span class="marco__hora num">19:05</span></li>
+    </ol>
+  </section>
+  <p class="nota-aviso"><svg aria-hidden="true"><use href="#i-sino"/></svg>
+    <span>Vamos te avisar <b>40 min antes do pouso</b>, a hora de sair para o aeroporto.</span></p>
+  <p class="fuso">Horários de Brasília. Atualizado às 15:02.</p>
+  <div class="acoes">
+    <button class="botao botao--secundario" type="button" data-compartilhar><svg aria-hidden="true"><use href="#i-share"/></svg>Compartilhar voo</button>
+    <button class="botao botao--texto botao--perigo" type="button" data-abrir="parar">Parar de acompanhar</button>
+  </div>
+</section>
+
+<!-- ======================= STATUS · ATRASADO ======================= -->
+<section class="tela" data-tela="status-atraso" aria-labelledby="t-status-a">
+  <div class="cabeca">
+    <a class="voltar" href="#meus-voos"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Meus voos</a>
+    <button class="botao botao--icone recolher" type="button" data-recolher="sim" aria-label="Esconder detalhes e ver só o globo"><svg aria-hidden="true"><use href="#i-painel"/></svg></button>
+  </div>
+  <div class="cabeca-status">
+    <div class="quem"><h1 id="t-status-a">Voo do Vô Zé</h1><small>GOL</small></div>
+    <div class="placa" role="status" aria-label="G31450: atrasado 50 minutos, nova saída 16:40, chega 19:55 em Congonhas">
+      <span class="placa__local num">G31450</span>
+      <span class="placa__direcao"><span class="placa__estado">Atrasado</span><span class="placa__detalhe num">sai 16:40</span></span>
+      <span class="placa__atencao"><span class="placa__estado num">+50</span><span class="placa__detalhe">min</span></span>
+    </div>
+  </div>
+  <div class="trajeto" role="img" aria-label="De Recife a Congonhas. O avião ainda está no portão em Recife.">
+    <span class="ponta"><span class="ponta__codigo">REC</span><span class="ponta__cidade">Recife</span></span>
+    <span class="trajeto__barra" style="--t:0"><i></i></span>
+    <span class="ponta ponta--fim"><span class="ponta__codigo">CGH</span><span class="ponta__cidade">Congonhas</span></span>
+  </div>
+  <p class="trajeto__resto num">Ainda no solo. Nova saída às 16:40</p>
+  <dl class="hud hud-celular" aria-label="Dados do voo" data-hud-de="vo"></dl>
+  <ol class="linha-tempo">
+    <li class="agora" aria-current="step"><span class="marco"><svg aria-hidden="true"><use href="#i-aviao"/></svg></span>
+      <span class="marco__nome">No portão</span><span class="marco__hora num">agora</span>
+      <span class="marco__nota atrasou">A companhia adiou a saída em 50 min</span></li>
+    <li class="previsto"><span class="marco"></span>
+      <span class="marco__nome">Decola</span><span class="marco__hora num"><span class="atrasou">16:55</span><small class="riscado">16:05</small></span></li>
+    <li class="previsto chegada"><span class="marco"></span>
+      <span class="marco__nome">Pousa</span><span class="marco__hora num"><span class="atrasou">19:55</span><small class="riscado">19:05</small></span></li>
+    <li class="previsto"><span class="marco"></span>
+      <span class="marco__nome">Chega ao portão</span><span class="marco__hora num">20:05</span></li>
+  </ol>
+  <p class="nota-aviso"><svg aria-hidden="true"><use href="#i-sino"/></svg>
+    <span>Se o horário mudar de novo, você recebe outro aviso. Não precisa ficar conferindo.</span></p>
+  <p class="fuso">Horários de Brasília. Atualizado às 15:02.</p>
+  <div class="acoes">
+    <button class="botao botao--secundario" type="button" data-compartilhar><svg aria-hidden="true"><use href="#i-share"/></svg>Compartilhar voo</button>
+    <button class="botao botao--texto botao--perigo" type="button" data-abrir="parar">Parar de acompanhar</button>
+  </div>
+</section>
+
+<!-- ======================= STATUS · CANCELADO ======================= -->
+<section class="tela" data-tela="status-cancelado" aria-labelledby="t-status-c">
+  <a class="voltar" href="#meus-voos"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Meus voos</a>
+  <div class="cabeca-status">
+    <div class="quem"><h1 id="t-status-c">Voo do Pedro</h1><small>LATAM</small></div>
+    <div class="placa" role="status" aria-label="LA3054: cancelado pela companhia">
+      <span class="placa__local num">LA3054</span>
+      <span class="placa__critico"><span class="placa__estado">Cancelado</span><span class="placa__detalhe">pela companhia</span></span>
+    </div>
+  </div>
+  <div class="trajeto" role="img" aria-label="De Congonhas ao Santos Dumont. Voo cancelado, o avião não saiu.">
+    <span class="ponta"><span class="ponta__codigo">CGH</span><span class="ponta__cidade">Congonhas</span></span>
+    <span class="trajeto__barra" style="--t:0" data-cancelado><i></i></span>
+    <span class="ponta ponta--fim"><span class="ponta__codigo">SDU</span><span class="ponta__cidade">Santos Dumont</span></span>
+  </div>
+  <div class="nota-aviso" style="flex-direction:column;gap:var(--e-2)">
+    <h2 style="font-size:var(--fs-p)">E agora?</h2>
+    <p>A LATAM costuma remarcar quem estava no voo. Pergunte ao Pedro qual é o novo voo e acompanhe por aqui.</p>
+  </div>
+  <div class="acoes">
+    <a class="botao" href="#inicio"><svg aria-hidden="true"><use href="#i-mais"/></svg>Acompanhar o novo voo</a>
+    <button class="botao botao--texto" type="button" data-abrir="parar">Tirar da lista</button>
+  </div>
+  <p class="fuso">Saída prevista às 14:20. Cancelado às 11:58, horário de Brasília.</p>
+</section>
+
+<!-- ======================= MEUS VOOS ======================= -->
+<section class="tela" data-tela="meus-voos" aria-labelledby="t-meus">
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-meus">Meus voos</h1>
+    <p class="limite num">3 de 5 voos neste aparelho. Passe o mouse num voo para vê-lo no globo.</p>
+  </div>
+  <ul class="lista-voos">
+    <li class="item-voo" data-voo="mae">
+      <a class="item-voo__link" href="#status">
+        <span class="item-voo__nome">Mãe</span>
+        <span class="placa placa--mini"><span class="placa__local num">TP103</span><span class="placa__direcao num">Em voo, chega 18:52</span></span>
+        <span class="item-voo__trecho">Lisboa a Guarulhos, hoje</span>
+      </a>
+      <button class="item-voo__remover" type="button" aria-label="Parar de acompanhar o voo da Mãe" data-abrir="parar"><svg aria-hidden="true"><use href="#i-lixo"/></svg></button>
+    </li>
+    <li class="item-voo" data-voo="vo">
+      <a class="item-voo__link" href="#status-atraso">
+        <span class="item-voo__nome">Vô Zé</span>
+        <span class="placa placa--mini"><span class="placa__local num">G31450</span><span class="placa__direcao num">Atrasado, sai 16:40</span><span class="placa__atencao num">+50 min</span></span>
+        <span class="item-voo__trecho">Recife a Congonhas, hoje</span>
+      </a>
+      <button class="item-voo__remover" type="button" aria-label="Parar de acompanhar o voo do Vô Zé" data-abrir="parar"><svg aria-hidden="true"><use href="#i-lixo"/></svg></button>
+    </li>
+    <li class="item-voo" data-voo="pedro">
+      <a class="item-voo__link" href="#status-cancelado">
+        <span class="item-voo__nome">Pedro</span>
+        <span class="placa placa--mini"><span class="placa__local num">LA3054</span><span class="placa__critico">Cancelado</span></span>
+        <span class="item-voo__trecho">Congonhas ao Santos Dumont, hoje</span>
+      </a>
+      <button class="item-voo__remover" type="button" aria-label="Tirar o voo do Pedro da lista" data-abrir="parar"><svg aria-hidden="true"><use href="#i-lixo"/></svg></button>
+    </li>
+  </ul>
+  <a class="botao botao--secundario" href="#inicio"><svg aria-hidden="true"><use href="#i-mais"/></svg>Acompanhar outro voo</a>
+</section>
+
+</main>
+
+<dialog class="folha" id="parar" aria-labelledby="t-parar">
+  <form method="dialog" class="folha__corpo">
+    <h2 id="t-parar">Parar de acompanhar o voo da Mãe?</h2>
+    <p class="apoio">Você não vai mais receber avisos do TP103. Quem recebeu o link continua recebendo.</p>
+    <button class="botao" value="parar" style="background:var(--c-cancelado)">Parar avisos</button>
+    <button class="botao botao--secundario" value="manter" autofocus>Continuar acompanhando</button>
+  </form>
+</dialog>
+<p class="toast" id="toast" role="status" hidden></p>
+
+<style>
+dialog.folha { border: 1px solid var(--c-linha); padding: var(--e-5) var(--e-4) calc(var(--e-5) + env(safe-area-inset-bottom)); margin: auto auto 0; width: 100%; max-width: 440px;
+  border-radius: var(--r-painel) var(--r-painel) 0 0; background: var(--c-superficie); color: var(--c-tinta); }
+dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
+.folha__corpo { display: flex; flex-direction: column; gap: var(--e-4); }
+@media (min-width: 960px) { dialog.folha { margin: auto; border-radius: var(--r-painel); padding: var(--e-6); } }
+.toast { position: fixed; z-index: 5; left: 50%; bottom: calc(var(--e-5) + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--c-fundo); color: var(--c-pista); box-shadow: inset 0 0 0 2px var(--c-pista); border-radius: var(--r-placa);
+  font: 700 var(--fs-p)/1.2 var(--f-placa); padding: var(--e-3) var(--e-4); max-width: calc(100% - 32px); }
+.toast[hidden] { display: none; }
+</style>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ============================================================
+   DADOS SIMULADOS (no app real vêm do servidor: /track + webhooks)
+   ============================================================ */
+const AERO = {
+  LIS: [38.77, -9.13, 'Lisboa'], GRU: [-23.43, -46.47, 'Guarulhos'], OPO: [41.24, -8.68, 'Porto'],
+  REC: [-8.13, -34.92, 'Recife'], CGH: [-23.63, -46.66, 'Congonhas'], SDU: [-22.91, -43.16, 'Santos Dumont'],
+};
+const VOOS = {
+  mae:   { cod: 'TP103',  quem: 'Mãe',    de: 'LIS', para: 'GRU', t: .62, estado: 'voo',       chega: '18:52',
+           hud: [['Altitude', '11.300', 'm'], ['Velocidade', '890', 'km/h'], ['Falta', '3 h 50', ''], ['Chega em GRU', '18:52', '', true]] },
+  vo:    { cod: 'G31450', quem: 'Vô Zé',  de: 'REC', para: 'CGH', t: 0,   estado: 'atraso',    chega: '19:55',
+           hud: [['Onde está', 'No portão', ''], ['Nova saída', '16:40', ''], ['Chega em CGH', '19:55', '', true]] },
+  pedro: { cod: 'LA3054', quem: 'Pedro',  de: 'CGH', para: 'SDU', t: 0,   estado: 'cancelado' },
+  opo:   { cod: 'TP103',  quem: '',       de: 'OPO', para: 'LIS', t: 0,   estado: 'opcao',     chega: '07:05' },
+};
+// Cada tela diz quais voos aparecem e para onde a câmera vai.
+const TELAS = {
+  'inicio':           { voos: ['mae', 'vo', 'pedro'], camera: { lat: -2, lon: -28, dist: 4.6 }, girar: true },
+  'confirmacao':      { voos: ['mae', 'opo'], destaque: 'mae', rotuloRota: true, camera: { lat: 8, lon: -24, dist: 4.4 } },
+  'status':           { voos: ['mae'], foco: 'mae', modo: 'aviao', hud: 'mae', globoCelular: true },
+  'status-atraso':    { voos: ['vo'], foco: 'vo', modo: 'aviao', hud: 'vo', globoCelular: true },
+  'status-cancelado': { voos: ['pedro'], camera: { lat: -23, lon: -45, dist: 3.2 } },
+  'meus-voos':        { voos: ['mae', 'vo', 'pedro'], camera: { lat: -12, lon: -32, dist: 4.0 } },
+};
+// Hora simulada da tela (15:02 em Brasília, 13/11): define o lado do dia no globo.
+const AGORA_UTC = Date.UTC(2026, 10, 13, 18, 2);
+
+const COR = { ceu: 0x5CC8FF, pista: 0xFFB547, tinta: 0xF2F5FA, cancelado: 0xFF6B7A, atraso: 0xFF8A65,
+  oceano: new THREE.Color('#0A152B'), terra: new THREE.Color('#33507F'), espaco: 0x05090F };
+const reduzir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const desktop = matchMedia('(min-width: 960px)');
+
+/* ============================================================ CENA */
+const canvas = document.getElementById('globo');
+const palco = canvas.parentElement;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const cena = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, .01, 200);
+const controles = new OrbitControls(camera, canvas);
+Object.assign(controles, { enablePan: false, enableDamping: true, dampingFactor: .08, minDistance: 1.6, maxDistance: 9, rotateSpeed: .5, autoRotateSpeed: .35 });
+
+const grau = Math.PI / 180;
+function vetor(lat, lon, r = 1) {
+  const phi = (90 - lat) * grau, theta = (lon + 180) * grau;
+  return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+}
+function latLon(v) {
+  const n = v.clone().normalize();
+  const lat = 90 - Math.acos(n.y) / grau;
+  let lon = Math.atan2(n.z, -n.x) / grau - 180;
+  if (lon < -180) lon += 360;
+  return [lat, lon];
+}
+
+// Sol: ponto subsolar aproximado para a hora simulada (declinação de novembro ≈ -18°).
+function ponteSolar(ms) {
+  const d = new Date(ms), dia = (ms - Date.UTC(d.getUTCFullYear(), 0, 0)) / 864e5;
+  const decl = -23.44 * Math.cos(2 * Math.PI / 365 * (dia + 10));
+  const horas = d.getUTCHours() + d.getUTCMinutes() / 60;
+  return [decl, -(horas - 12) * 15];
+}
+const sol = new THREE.DirectionalLight(0xffffff, 2.1);
+sol.position.copy(vetor(...ponteSolar(AGORA_UTC), 10));
+cena.add(sol, new THREE.AmbientLight(0x9DB4E0, .7));
+
+// Globo low-poly: icosaedro com uma cor por face (terra ou oceano), sombreado plano.
+const geoGlobo = new THREE.IcosahedronGeometry(1, 22);
+const nFaces = geoGlobo.attributes.position.count / 3;
+geoGlobo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nFaces * 9), 3));
+function pintarGlobo(ehTerra) {
+  const pos = geoGlobo.attributes.position, cor = geoGlobo.attributes.color, c = new THREE.Color(), v = new THREE.Vector3();
+  for (let f = 0; f < nFaces; f++) {
+    v.set(0, 0, 0);
+    for (let k = 0; k < 3; k++) v.add(new THREE.Vector3().fromBufferAttribute(pos, f * 3 + k));
+    const [lat, lon] = latLon(v);
+    const terra = ehTerra ? ehTerra(lat, lon) : false;
+    const ruido = (Math.sin(f * 12.9898) * 43758.5453) % 1;           // variação fixa por face
+    c.copy(terra ? COR.terra : COR.oceano).offsetHSL(0, 0, ruido * (terra ? .035 : .015));
+    for (let k = 0; k < 3; k++) cor.setXYZ(f * 3 + k, c.r, c.g, c.b);
+  }
+  cor.needsUpdate = true;
+}
+pintarGlobo();
+const globo = new THREE.Mesh(geoGlobo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+cena.add(globo);
+
+// Continentes: Natural Earth 110m (world-atlas) desenhado num mapa de bits e amostrado por face.
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json').then(r => r.json()).then(topo => {
+  const W = 1440, H = 720, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'); g.fillStyle = '#fff';
+  const terra = window.topojson.feature(topo, topo.objects.land);
+  for (const f of terra.features) {
+    const polis = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+    for (const p of polis) {
+      g.beginPath();
+      for (const anel of p) anel.forEach(([lo, la], i) => { const x = (lo + 180) / 360 * W, y = (90 - la) / 180 * H; i ? g.lineTo(x, y) : g.moveTo(x, y); });
+      g.fill('evenodd');
+    }
+  }
+  const px = g.getImageData(0, 0, W, H).data;
+  pintarGlobo((lat, lon) => {
+    const x = Math.min(W - 1, Math.max(0, Math.round((lon + 180) / 360 * W))), y = Math.min(H - 1, Math.max(0, Math.round((90 - lat) / 180 * H)));
+    return px[(y * W + x) * 4] > 127;
+  });
+}).catch(e => console.warn('Mapa dos continentes não carregou; o globo fica só com o oceano.', e));
+
+// Atmosfera: brilho em céu na borda do globo.
+const atmosfera = new THREE.Mesh(new THREE.SphereGeometry(1.1, 64, 64), new THREE.ShaderMaterial({
+  side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+  vertexShader: 'varying vec3 n; void main(){ n = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader: 'varying vec3 n; void main(){ float i = pow(0.62 - dot(n, vec3(0.0,0.0,1.0)), 3.0); gl_FragColor = vec4(0.36,0.78,1.0,1.0) * i; }',
+}));
+cena.add(atmosfera);
+
+// Estrelas discretas.
+{
+  const n = 1400, p = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { const v = new THREE.Vector3().randomDirection().multiplyScalar(60 + Math.random() * 30); p.set([v.x, v.y, v.z], i * 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  cena.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xA9B6CC, size: 1.4, sizeAttenuation: false, transparent: true, opacity: .55 })));
+}
+
+/* ============================================================ ROTAS
+   Mesma codificação da linha do tempo e do trajeto no painel:
+   voado sólido em céu, restante tracejado em branco 70%, destino aceso em âmbar. */
+function avião() {
+  const m = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true });
+  const g = new THREE.Group();
+  const corpo = new THREE.Mesh(new THREE.CylinderGeometry(.0045, .0035, .046, 6).rotateX(Math.PI / 2), m);
+  const nariz = new THREE.Mesh(new THREE.ConeGeometry(.0045, .012, 6).rotateX(Math.PI / 2).translate(0, 0, .029), m);
+  const asa = new THREE.Mesh(new THREE.BoxGeometry(.05, .0015, .011).translate(0, 0, .002), m);
+  const cauda = new THREE.Mesh(new THREE.BoxGeometry(.018, .0015, .006).translate(0, 0, -.02), m);
+  const leme = new THREE.Mesh(new THREE.BoxGeometry(.0015, .009, .007).translate(0, .005, -.02), m);
+  g.add(corpo, nariz, asa, cauda, leme);
+  g.userData.material = m;
+  return g;
+}
+const objetos = {};
+function montarVoo(id) {
+  const v = VOOS[id], a = vetor(AERO[v.de][0], AERO[v.de][1]), b = vetor(AERO[v.para][0], AERO[v.para][1]);
+  const ang = a.angleTo(b), h = .012 + .16 * ang / Math.PI, pts = [];
+  for (let i = 0; i <= 80; i++) {
+    const u = i / 80, p = new THREE.Vector3().copy(a).lerp(b, u).normalize();   // aproximação do grande círculo
+    const s = Math.sin(ang * (1 - u)), e = Math.sin(ang * u);
+    if (ang > 1e-4) p.copy(a).multiplyScalar(s / Math.sin(ang)).add(b.clone().multiplyScalar(e / Math.sin(ang)));
+    pts.push(p.normalize().multiplyScalar(1.003 + h * Math.sin(Math.PI * u)));
+  }
+  const curva = new THREE.CatmullRomCurve3(pts);
+  const grupo = new THREE.Group(), mats = [];
+  const cancelado = v.estado === 'cancelado';
+  if (v.t > 0) {
+    const sub = []; for (let i = 0; i <= 60; i++) sub.push(curva.getPoint(v.t * i / 60));
+    const m = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true }); mats.push(m);
+    grupo.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sub), 60, .0042, 6), m));
+  }
+  // tracejado: pontinhos ao longo do que falta
+  const passo = .012 / Math.max(ang, .05), qtd = Math.max(4, Math.floor((1 - v.t) / passo));
+  const mPonto = new THREE.MeshBasicMaterial({ color: cancelado ? COR.cancelado : COR.tinta, transparent: true, opacity: .7 }); mats.push(mPonto);
+  const pontos = new THREE.InstancedMesh(new THREE.SphereGeometry(.0028, 6, 4), mPonto, qtd), mx = new THREE.Matrix4();
+  for (let i = 0; i < qtd; i++) { mx.setPosition(curva.getPoint(v.t + (1 - v.t) * (i + .5) / qtd)); pontos.setMatrixAt(i, mx); }
+  grupo.add(pontos);
+  // origem e destino
+  const mOrigem = new THREE.MeshBasicMaterial({ color: COR.tinta, transparent: true }); mats.push(mOrigem);
+  const origem = new THREE.Mesh(new THREE.SphereGeometry(.007, 10, 8), mOrigem); origem.position.copy(a).multiplyScalar(1.003);
+  const mDest = new THREE.MeshBasicMaterial({ color: cancelado ? COR.cancelado : COR.pista, transparent: true }); mats.push(mDest);
+  const destino = new THREE.Mesh(new THREE.SphereGeometry(.011, 12, 10), mDest); destino.position.copy(b).multiplyScalar(1.004);
+  const mHalo = new THREE.MeshBasicMaterial({ color: COR.pista, transparent: true, opacity: .45, side: THREE.DoubleSide, depthWrite: false }); mats.push(mHalo);
+  const halo = new THREE.Mesh(new THREE.RingGeometry(.016, .03, 32), mHalo);
+  halo.position.copy(b).multiplyScalar(1.004); halo.lookAt(b.clone().multiplyScalar(2)); halo.visible = !cancelado;
+  grupo.add(origem, destino, halo);
+  // avião orientado pela tangente da rota (no solo, fica na origem apontando para o destino)
+  let aviao = null;
+  if (!cancelado && v.estado !== 'opcao') {
+    aviao = avião(); mats.push(aviao.userData.material);
+    const t = Math.min(v.t, .995), p = curva.getPoint(t), frente = curva.getPoint(Math.min(1, t + .01)).sub(p).normalize();
+    const cima = p.clone().normalize(), direita = new THREE.Vector3().crossVectors(cima, frente).normalize();
+    frente.crossVectors(direita, cima);
+    aviao.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(direita, cima, frente));
+    aviao.position.copy(v.t > 0 ? p : a.clone().multiplyScalar(1.006));
+    grupo.add(aviao);
+  }
+  cena.add(grupo);
+  return objetos[id] = { grupo, mats, halo, aviao, curva, origem: a, destino: b, cancelado,
+    base: mats.map(m => m.opacity) };
+}
+Object.keys(VOOS).forEach(montarVoo);
+
+function realce(id, nivel) {           // 1 = aceso, .3 = em segundo plano
+  const o = objetos[id]; o.mats.forEach((m, i) => m.opacity = o.base[i] * nivel);
+}
+
+/* ============================================================ RÓTULOS (HTML sobre o 3D) */
+const camadaRotulos = document.getElementById('rotulos');
+let rotulos = [];
+function rotulo(html, pos, classe = '') {
+  const el = document.createElement('div'); el.className = 'rotulo ' + classe; el.innerHTML = html;
+  camadaRotulos.append(el); rotulos.push({ el, pos }); return el;
+}
+function placaMini(cod, texto, tipo = 'direcao') {
+  return `<span class="placa placa--mini"><span class="placa__local num">${cod}</span><span class="placa__${tipo} num">${texto}</span></span>`;
+}
+function montarRotulos(cfg) {
+  camadaRotulos.textContent = ''; rotulos = [];
+  if (cfg.foco || cfg.voos.length === 1) {
+    const v = VOOS[cfg.foco || cfg.voos[0]], o = objetos[cfg.foco || cfg.voos[0]];
+    rotulo(`<span class="placa placa--mini"><span class="placa__local num">${v.de}</span></span>`, o.origem, 'rotulo--aero');
+    const chegada = v.estado === 'cancelado' ? placaMini(v.para, 'Cancelado', 'critico') : placaMini(v.para, `chega ${v.chega}`);
+    rotulo(chegada, o.destino);
+  } else {
+    for (const id of cfg.voos) {
+      const v = VOOS[id], o = objetos[id];
+      const pos = o.aviao ? o.aviao.position : o.curva.getPoint(.5);
+      const txt = cfg.rotuloRota ? placaMini(v.cod, `${AERO[v.de][2]} a ${AERO[v.para][2]}`)
+        : v.estado === 'cancelado' ? placaMini(v.cod, v.quem + ', cancelado', 'critico')
+        : v.estado === 'atraso' ? placaMini(v.cod, v.quem + ', +50 min', 'atencao')
+        : placaMini(v.cod, `${v.quem}, em voo`);
+      const el = rotulo(txt, pos); el.dataset.voo = id;
+    }
+  }
+}
+const _v = new THREE.Vector3(), _c = new THREE.Vector3();
+function posicionarRotulos() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  for (const r of rotulos) {
+    _v.copy(r.pos).project(camera);
+    _c.copy(camera.position).sub(r.pos).normalize();
+    const visivel = _c.dot(r.pos.clone().normalize()) > .2;
+    r.el.toggleAttribute('data-oculto', !visivel);
+    r.el.style.left = ((_v.x + 1) / 2 * w) + 'px'; r.el.style.top = ((1 - _v.y) / 2 * h) + 'px';
+  }
+}
+
+/* ============================================================ CÂMERA */
+let voo = null;      // animação de câmera em curso
+function direcaoDe(cfg, modo) {
+  if (cfg.camera) return { dir: vetor(cfg.camera.lat, cfg.camera.lon), dist: cfg.camera.dist };
+  const o = objetos[cfg.foco];
+  if (modo === 'destino') return { dir: o.destino.clone(), dist: 2.8 };
+  const alvo = o.aviao ? o.aviao.position : o.origem;
+  // olha o avião de um pouco atrás e acima, para ver para onde ele vai
+  const meio = alvo.clone().normalize().lerp(o.destino, .3).normalize();
+  return { dir: meio, dist: desktop.matches ? 3.4 : 3.9 };
+}
+function voarPara({ dir, dist }) {
+  const de = camera.position.clone(), distDe = de.length(), dirDe = de.normalize();
+  const para = dir.clone().normalize();
+  if (reduzir) { camera.position.copy(para.multiplyScalar(dist)); return; }
+  voo = { dirDe, para, distDe, dist, ini: performance.now(), dur: 1300 };
+}
+function passoVoo(agora) {
+  if (!voo) return;
+  const k = Math.min(1, (agora - voo.ini) / voo.dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  const q = new THREE.Quaternion().setFromUnitVectors(voo.dirDe, voo.para), q0 = new THREE.Quaternion();
+  const d = voo.dirDe.clone().applyQuaternion(q0.slerp(q, e));
+  const arco = Math.sin(Math.PI * e) * .25 * voo.dirDe.angleTo(voo.para);   // afasta um pouco no meio do caminho
+  camera.position.copy(d.multiplyScalar(THREE.MathUtils.lerp(voo.distDe, voo.dist, e) + arco));
+  if (k === 1) voo = null;
+}
+
+// Painel no desktop empurra o centro do globo para a área livre à direita.
+let deslocamento = 0, deslocAlvo = 0;
+function medirDeslocamento() {
+  const recolhido = document.body.hasAttribute('data-recolhido');
+  deslocAlvo = desktop.matches && !recolhido ? (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--painel-l')) + 24) / 2 : 0;
+}
+function ajustarTamanho() {
+  const w = palco.clientWidth, h = palco.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; medirDeslocamento(); aplicarOffset();
+}
+function aplicarOffset() {
+  const w = palco.clientWidth, h = palco.clientHeight;
+  camera.setViewOffset(w, h, -deslocamento, 0, w, h); camera.updateProjectionMatrix();
+}
+new ResizeObserver(ajustarTamanho).observe(palco);
+desktop.addEventListener('change', () => { medirDeslocamento(); mostrar(); });
+
+/* ============================================================ LAÇO */
+let pulso = 0;
+function quadro(agora) {
+  requestAnimationFrame(quadro);
+  if (document.hidden || !palco.clientHeight) return;
+  if (Math.abs(deslocAlvo - deslocamento) > .5) { deslocamento += (deslocAlvo - deslocamento) * (reduzir ? 1 : .12); aplicarOffset(); }
+  passoVoo(agora);
+  if (voo) camera.lookAt(0, 0, 0); else controles.update();
+  if (!reduzir) {
+    pulso = agora / 1000;
+    for (const id in objetos) { const s = 1 + .45 * (.5 + .5 * Math.sin(pulso * 2.6)); objetos[id].halo.scale.setScalar(s); }
+  }
+  renderer.render(cena, camera);
+  posicionarRotulos();
+}
+camera.position.copy(vetor(-2, -28, 4.6));
+requestAnimationFrame(quadro);
+
+/* ============================================================ TELAS */
+const hudGlobal = document.getElementById('hud');
+function preencherHud(el, id) {
+  el.innerHTML = VOOS[id].hud.map(([dt, dd, un, chegada]) =>
+    `<div class="${chegada ? 'hud__chegada' : ''}"><dt>${dt}</dt><dd class="num">${dd}${un ? ` <small>${un}</small>` : ''}</dd></div>`).join('');
+}
+document.querySelectorAll('[data-hud-de]').forEach(el => preencherHud(el, el.dataset.hudDe));
+
+let telaAtual = null, modoCamera = 'aviao';
+function aplicarCena(nome) {
+  const cfg = TELAS[nome] || TELAS.inicio;
+  for (const id in objetos) objetos[id].grupo.visible = cfg.voos.includes(id);
+  cfg.voos.forEach(id => realce(id, cfg.destaque && id !== cfg.destaque ? .3 : 1));
+  controles.autoRotate = !!cfg.girar && !reduzir;
+  document.body.toggleAttribute('data-camera', !!cfg.foco);
+  document.body.toggleAttribute('data-hud', !!cfg.hud);
+  document.body.toggleAttribute('data-globo-celular', !!cfg.globoCelular);
+  if (cfg.hud) preencherHud(hudGlobal, cfg.hud);
+  modoCamera = cfg.modo || 'livre';
+  marcarModo();
+  montarRotulos(cfg);
+  ajustarTamanho();
+  voarPara(direcaoDe(cfg, modoCamera));
+}
+function marcarModo() { document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cam === modoCamera)); }
+document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => {
+  modoCamera = b.dataset.cam; marcarModo();
+  if (modoCamera !== 'livre') voarPara(direcaoDe(TELAS[telaAtual], modoCamera));
+}));
+controles.addEventListener('start', () => { voo = null; controles.autoRotate = false; if (TELAS[telaAtual]?.foco) { modoCamera = 'livre'; marcarModo(); } });
+
+function mostrar() {
+  const nome = TELAS[location.hash.slice(1)] ? location.hash.slice(1) : 'inicio';
+  document.querySelectorAll('.tela').forEach(s => s.classList.toggle('ativa', s.dataset.tela === nome));
+  document.body.dataset.tela = nome;
+  if (nome !== telaAtual) document.body.removeAttribute('data-recolhido');
+  telaAtual = nome;
+  document.querySelector('.tela.ativa h1')?.setAttribute('tabindex', '-1');
+  document.getElementById('painel').scrollTop = 0; scrollTo(0, 0);
+  aplicarCena(nome);
+}
+addEventListener('hashchange', () => { mostrar(); document.querySelector('.tela.ativa h1')?.focus({ preventScroll: true }); });
+mostrar();
+
+/* ---- painel recolhível (desktop, telas de voo) */
+document.querySelectorAll('[data-recolher]').forEach(b => b.addEventListener('click', () => {
+  const recolher = b.dataset.recolher === 'sim';
+  document.body.toggleAttribute('data-recolhido', recolher);
+  medirDeslocamento();
+  document.querySelector(recolher ? '.mostrar-painel' : '.tela.ativa [data-recolher]')?.focus();
+}));
+
+/* ---- confirmação: a rota escolhida acende no globo */
+document.querySelectorAll('input[name="voo"]').forEach(r => r.addEventListener('change', () => {
+  TELAS.confirmacao.destaque = r.value;
+  TELAS.confirmacao.camera = r.value === 'opo' ? { lat: 38, lon: -12, dist: 2.6 } : { lat: 8, lon: -24, dist: 4.4 };
+  aplicarCena('confirmacao');
+}));
+
+/* ---- meus voos: passar o mouse (ou o foco do teclado) num voo leva a câmera até ele */
+const lista = document.querySelector('.lista-voos');
+function focarItem(id) {
+  lista.querySelectorAll('.item-voo').forEach(li => li.toggleAttribute('data-destaque', li.dataset.voo === id));
+  TELAS['meus-voos'].voos.forEach(v => realce(v, !id || v === id ? 1 : .3));
+  if (id) { const o = objetos[id], p = o.aviao ? o.aviao.position : o.curva.getPoint(.5); voarPara({ dir: p.clone(), dist: 3.0 }); }
+  else voarPara(direcaoDe(TELAS['meus-voos']));
+}
+lista.querySelectorAll('.item-voo').forEach(li => {
+  li.addEventListener('mouseenter', () => focarItem(li.dataset.voo));
+  li.addEventListener('focusin', () => focarItem(li.dataset.voo));
+});
+lista.addEventListener('mouseleave', () => focarItem(null));
+
+/* ---- início: número vazio mostra o erro; preenchido vai para a confirmação */
+const ident = document.getElementById('ident'), erro = document.getElementById('ident-erro');
+document.getElementById('form-inicio').addEventListener('submit', e => {
+  e.preventDefault();
+  const vazio = !ident.value.trim();
+  erro.hidden = !vazio; ident.setAttribute('aria-invalid', vazio);
+  if (vazio) ident.focus(); else location.hash = 'confirmacao';
+});
+ident.addEventListener('input', () => { erro.hidden = true; ident.removeAttribute('aria-invalid'); });
+
+/* ---- iOS: passo de instalação só no iPhone fora da Tela de Início (ou ?ios=1) */
+const ehIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || new URLSearchParams(location.search).get('ios') === '1';
+const instalado = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+document.querySelectorAll('[data-so-ios]').forEach(el => el.hidden = !(ehIOS && !instalado));
+
+/* ---- prévia do aviso, toast, compartilhar, folha */
+const apelido = document.getElementById('apelido'), previa = document.getElementById('previa-texto');
+apelido.addEventListener('input', () => { const n = apelido.value.trim(); previa.textContent = `🛫 O voo ${n ? 'de ' + n : 'TP103'} decolou de Lisboa. Chegada prevista às 18:40`; });
+const toast = document.getElementById('toast');
+function avisar(msg) { toast.textContent = msg; toast.hidden = false; clearTimeout(avisar.t); avisar.t = setTimeout(() => toast.hidden = true, 3200); }
+document.querySelectorAll('[data-toast]').forEach(a => a.addEventListener('click', () => setTimeout(() => avisar(a.dataset.toast), 50)));
+document.querySelectorAll('[data-compartilhar]').forEach(b => b.addEventListener('click', async () => {
+  const dados = { title: 'Voo · Voa Aí', text: 'Acompanhe este voo comigo no Voa Aí', url: location.origin + '/v/TAP103-1734567890' };
+  if (navigator.share) { try { await navigator.share(dados); } catch {} } else avisar('Link do voo copiado');
+}));
+const folha = document.getElementById('parar');
+document.querySelectorAll('[data-abrir="parar"]').forEach(b => b.addEventListener('click', () => folha.showModal()));
+folha.addEventListener('close', () => { if (folha.returnValue === 'parar') { avisar('Você não recebe mais avisos deste voo'); location.hash = 'meus-voos'; } });
+</script>
+</body>
+</html>

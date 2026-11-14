@@ -2,6 +2,7 @@
 
 > Status: **proposta para a v1**, com o caminho da v2 (3D) já previsto.
 > Protótipo navegável: [`prototipo/index.html`](../prototipo/index.html). Capturas verificadas em [`docs/visual/`](visual/).
+> Na v2, esta direção foi unida à [10 · Design](10-design.md): ver [11 · Visual da v2](11-v2-visual.md).
 
 ## O assunto
 

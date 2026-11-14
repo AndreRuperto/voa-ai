@@ -1,6 +1,7 @@
 # 10 · Design visual
 
 > Canvas com a identidade, os componentes e as telas: **[Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14)** (Artifact privado; só abre para quem tiver acesso compartilhado pelo menu Share).
+> Na v2, esta direção foi unida à [09](09-direcao-visual.md): ver [11 · Visual da v2](11-v2-visual.md).
 > Feito em 13/11/2026 com `/design`, a partir de todos os docs de `01` a `08`. A direção visual da sessão paralela (`/visual-frontend`) fica em [09-direcao-visual.md](09-direcao-visual.md).
 
 ## Conceito: "Céu noturno, luz de pista"
