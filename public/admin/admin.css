@@ -179,3 +179,9 @@ dialog .acoes { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: 
 .botao[aria-busy="true"] { cursor: progress; opacity: .7; }
 .conteudo { min-width: 0; }
 .rolagem { position: relative; }   /* prende os textos .sr (absolutos) dentro da rolagem da tabela */
+
+/* Logo da prancha (Identidade): o arco tracejado em céu passa sobre a palavra e pousa no ponto âmbar, que é o acento do "í". */
+.logo { position: relative; display: inline-block; padding-top: .47em; letter-spacing: -.033em; line-height: .9; }
+.logo__arco { position: absolute; left: 0; top: 0; width: 100%; height: .58em; overflow: visible; pointer-events: none; }
+.logo__arco path { fill: none; stroke: #5CC8FF; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1.2 4.2; vector-effect: non-scaling-stroke; }
+.logo .marca__i::after { top: -.05em; width: max(.18em, 6px); height: max(.18em, 6px); margin-left: min(-.09em, -3px); box-shadow: 0 0 0 .067em rgba(255, 181, 71, .18); }
