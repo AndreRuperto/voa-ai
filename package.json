@@ -1,0 +1,21 @@
+{
+  "name": "voa-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voa Aí: avisa quando o voo de quem você espera decola, atrasa, está chegando e pousa.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch --env-file=.env server/index.js",
+    "test": "node --test",
+    "gerar:aeroportos": "node scripts/gerar-aeroportos.js",
+    "buscar-voo": "node scripts/buscar-voo.js"
+  },
+  "dependencies": {
+    "google-auth-library": "^11.3.4",
+    "web-push": "^4.0.0"
+  }
+}

@@ -2,9 +2,25 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "app",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--env-file=.env",
+        "server/index.js"
+      ],
+      "port": 3000,
+      "autoPort": false
+    },
+    {
       "name": "prototipo",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8741", "--directory", "prototipo"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8741",
+        "--directory",
+        "prototipo"
+      ],
       "port": 8741,
       "autoPort": false
     }

@@ -5,33 +5,33 @@
 - [x] Repositório criado
 - [x] Documentação da AeroAPI (PDF + spec OpenAPI)
 - [x] Visão, especificação da v1, arquitetura, custos e decisões
-- [ ] Conta AeroAPI (plano Personal) e chave gerada
+- [ ] Conta AeroAPI (plano Personal) e chave gerada — plano assinado em 14/11/2026; chave pendente (portal da FlightAware com erro 500)
 - [ ] Projeto no Railway com volume persistente
 
 ## Marco 1: Prova de conceito da AeroAPI
 
-- [ ] Script `node scripts/buscar-voo.js TAP103` que busca e imprime o voo
+- [x] Script `node scripts/buscar-voo.js TAP103` que busca e imprime o voo
 - [ ] Criar um alerta real de teste e receber o webhook (pode usar a [interface de teste de push](https://www.flightaware.com/aeroapi/portal/) da FlightAware)
 - [ ] Confirmar se o `change` chega quando há atraso
 - [ ] Medir o custo real de 1 voo completo em `GET /account/usage`
 
 ## Marco 2: Servidor v1
 
-- [ ] `aeroapi.js`: cliente com retry/backoff e log de custo estimado por chamada
-- [ ] SQLite + migrações (`VOO`, `INSCRICAO`, `EVENTO`)
-- [ ] Rotas `/api/*` e `/webhook/aeroapi/:segredo`
-- [ ] `mensagens.js` com testes para cada `event_code`
-- [ ] Agendador de checagens de atraso e limpeza de alertas
-- [ ] Web Push (VAPID) com remoção de inscrições mortas
+- [x] `aeroapi.js`: cliente com retry/backoff e log de custo estimado por chamada
+- [x] SQLite + migrações (`VOO`, `INSCRICAO`, `EVENTO`)
+- [x] Rotas `/api/*` e `/webhook/aeroapi/:segredo`
+- [x] `mensagens.js` com testes para cada `event_code`
+- [x] Agendador de checagens de atraso e limpeza de alertas
+- [x] Web Push (VAPID) com remoção de inscrições mortas
 
 ## Marco 3: PWA v1
 
 - [x] Direção visual e protótipo das telas ([09-direcao-visual.md](09-direcao-visual.md))
-- [ ] Tela de início, confirmação, status e "Meus voos"
-- [ ] Service worker (push + cache offline da casca do app)
-- [ ] Manifest e ícones ✈️
-- [ ] Fluxo de instalação explicado para iOS
-- [ ] Link de compartilhamento `/v/:fa_flight_id`
+- [x] Tela de início, confirmação, status e "Meus voos"
+- [x] Service worker (push + cache offline da casca do app)
+- [x] Manifest e ícones ✈️
+- [x] Fluxo de instalação explicado para iOS
+- [x] Link de compartilhamento `/v/:fa_flight_id`
 
 ## Marco 4: Lançamento fechado (família e amigos)
 

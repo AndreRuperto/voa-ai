@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Voa Aí · admin</title>
+<meta name="theme-color" content="#0B1426">
+<link rel="icon" href="/icones/icone.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/admin.css">
+<script type="module" src="/admin/admin.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14l-3-3"/></symbol>
+  <symbol id="i-bloq" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM4.9 4.9l14.2 14.2"/></symbol>
+</svg>
+
+<!-- ======================= PORTA (sem sessão de admin) ======================= -->
+<div class="porta" id="porta" hidden>
+  <div class="porta__caixa">
+    <a class="marca" href="/"><b>Voa A<span class="marca__i">ı</span></b><span class="selo">ADMIN</span></a>
+    <h1 tabindex="-1" id="porta-titulo">Área restrita</h1>
+    <p class="apoio" id="porta-texto">Entre com a conta Google que está na lista de administradores do Voa Aí.</p>
+    <div class="google-botao" id="google-botao"></div>
+    <p class="pequeno" id="porta-erro" role="alert" hidden></p>
+    <button class="botao botao--sec" type="button" id="porta-sair" hidden>Sair desta conta</button>
+  </div>
+</div>
+
+<!-- ======================= PAINEL ======================= -->
+<div class="casca" id="painel" hidden>
+  <aside class="lateral">
+    <a class="marca" href="#visao"><b>Voa A<span class="marca__i">ı</span></b><span class="selo">ADMIN</span></a>
+    <nav class="nav" aria-label="Seções do admin">
+      <a href="#visao"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Visão geral</a>
+      <a href="#voos"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M14 5l7 7-7 7"/></svg>Voos</a>
+      <a href="#contas"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Contas</a>
+      <a href="#rotas"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h6l3 6 3-6h6M3 18h18"/></svg>Rotas</a>
+      <a href="#limites"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Limites</a>
+    </nav>
+    <div class="quem">
+      <span class="avatar" aria-hidden="true" id="quem-avatar"></span>
+      <span><b id="quem-nome"></b><br><span class="pequeno" id="quem-email"></span></span>
+      <button type="button" id="sair">Sair</button>
+    </div>
+  </aside>
+
+  <main class="conteudo">
+
+    <!-- ===== VISÃO GERAL ===== -->
+    <section class="secao" data-secao="visao" aria-labelledby="t-visao">
+      <header class="cabeca">
+        <div><h1 id="t-visao" tabindex="-1">Visão geral</h1><p class="apoio" id="periodo-texto"></p></div>
+        <div class="segmentado" role="group" aria-label="Período">
+          <button type="button" data-periodo="7" aria-pressed="false">7 dias</button>
+          <button type="button" data-periodo="mes" aria-pressed="true">Este mês</button>
+          <button type="button" data-periodo="passado" aria-pressed="false">Mês passado</button>
+        </div>
+      </header>
+      <div id="visao-erro" hidden></div>
+      <div id="visao-conteudo" style="display:contents">
+        <section class="cartao gasto" aria-labelledby="t-gasto">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <h2 id="t-gasto" class="apoio" style="font:600 .9375rem var(--f-texto)">Gasto estimado na AeroAPI</h2>
+            <div class="gasto__valor"><b class="num" id="gasto-valor">…</b><span class="apoio" id="gasto-de"></span></div>
+            <div class="medidor" role="meter" aria-label="Crédito do mês usado" aria-valuemin="0" aria-valuemax="100" id="medidor">
+              <span class="medidor__usado" id="med-usado"></span><span class="medidor__proj" id="med-proj"></span><span class="medidor__teto" id="med-teto" title="Teto de gasto"></span>
+            </div>
+            <div class="legenda-medidor pequeno">
+              <span><i class="amostra" style="background:var(--c-ceu)"></i><span id="leg-usado"></span></span>
+              <span id="leg-proj-wrap"><i class="amostra" style="background:repeating-linear-gradient(135deg,rgba(255,138,101,.8) 0 3px,transparent 3px 6px)"></i>Projeção até o fim do mês</span>
+              <span id="leg-teto-wrap"><i class="amostra" style="background:var(--c-tinta);width:3px"></i>Teto de gasto</span>
+            </div>
+            <p class="pequeno">Estimativa a partir das chamadas que o servidor registrou. A fatura da FlightAware é a fonte oficial.</p>
+          </div>
+          <div class="alerta" role="status" id="alerta-gasto"></div>
+        </section>
+
+        <section class="numeros" aria-label="Números do período" id="numeros"></section>
+
+        <div class="graficos">
+          <section class="cartao" aria-labelledby="t-dia">
+            <div class="cartao__topo"><h2 id="t-dia">Gasto por dia</h2><span class="pequeno">US$</span></div>
+            <div class="barras" id="barras"></div>
+            <details class="tabela-dados"><summary>Ver como tabela</summary><div class="rolagem"><table id="tabela-dias"></table></div></details>
+          </section>
+          <section class="cartao" aria-labelledby="t-tipo">
+            <div class="cartao__topo"><h2 id="t-tipo">Para onde foi</h2><span class="pequeno" id="tipo-periodo">US$ no período</span></div>
+            <ul class="tipos" id="tipos"></ul>
+            <p class="pequeno">Os alertas pesam mais. O modo econômico (sem o aviso de chegada ao portão) corta 1 em cada 4.</p>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VOOS ===== -->
+    <section class="secao" data-secao="voos" aria-labelledby="t-voos">
+      <header class="cabeca"><div><h1 id="t-voos" tabindex="-1">Voos</h1>
+        <p class="apoio">Um alerta por voo, compartilhado por quem acompanha. Parar os avisos de um voo vale para todos os inscritos.</p></div></header>
+      <section class="cartao">
+        <div class="rolagem"><table>
+          <caption class="sr">Voos acompanhados agora</caption>
+          <thead><tr><th>Voo</th><th>Rota</th><th class="n">Inscritos</th><th class="n">Alertas</th><th class="n">Custo (US$)</th><th><span class="sr">Ações</span></th></tr></thead>
+          <tbody id="tabela-voos"></tbody>
+        </table></div>
+      </section>
+    </section>
+
+    <!-- ===== CONTAS ===== -->
+    <section class="secao" data-secao="contas" aria-labelledby="t-contas">
+      <header class="cabeca"><div><h1 id="t-contas" tabindex="-1">Contas</h1>
+        <p class="apoio">Só quem entrou com Google aparece aqui. Aparelhos sem conta são contados, não listados.</p></div></header>
+      <section class="cartao">
+        <div class="rolagem"><table>
+          <caption class="sr">Contas Google</caption>
+          <thead><tr><th>Conta</th><th>Estado</th><th class="n">Voos ativos</th><th class="n">Buscas no mês</th><th>Último acesso</th><th><span class="sr">Ações</span></th></tr></thead>
+          <tbody id="tabela-contas"></tbody>
+        </table></div>
+      </section>
+    </section>
+
+    <!-- ===== ROTAS ===== -->
+    <section class="secao" data-secao="rotas" aria-labelledby="t-rotas">
+      <header class="cabeca"><div><h1 id="t-rotas" tabindex="-1">Rotas mais buscadas</h1>
+        <p class="apoio">Cada par de aeroportos custa US$ 0,05 por busca. Buscas repetidas em até 30 min vêm do cache, de graça.</p></div></header>
+      <section class="cartao">
+        <div class="rolagem"><table>
+          <caption class="sr">Pares de aeroportos buscados no mês</caption>
+          <thead><tr><th>Rota</th><th class="n">Buscas</th><th class="n">Do cache</th><th class="n">Pagas</th><th class="n">Custo (US$)</th></tr></thead>
+          <tbody id="tabela-rotas"></tbody>
+        </table></div>
+      </section>
+    </section>
+
+    <!-- ===== LIMITES ===== -->
+    <section class="secao" data-secao="limites" aria-labelledby="t-limites">
+      <header class="cabeca"><div><h1 id="t-limites" tabindex="-1">Limites</h1>
+        <p class="apoio">Valem na hora, sem deploy. Toda mudança fica registrada com o seu e-mail e a hora.</p></div></header>
+      <div class="limites">
+        <form class="cartao" id="form-limites" novalidate>
+          <h2>Por pessoa</h2>
+          <div class="campos">
+            <div class="campo"><label for="l-voos-anon">Voos sem conta</label><input id="l-voos-anon" inputmode="numeric" data-chave="limite_voos_anonimo" data-nome="Voos sem conta"><span class="pequeno">por aparelho</span></div>
+            <div class="campo"><label for="l-voos-conta">Voos com Google</label><input id="l-voos-conta" inputmode="numeric" data-chave="limite_voos_conta" data-nome="Voos com Google"><span class="pequeno">por conta</span></div>
+            <div class="campo"><label for="l-busca-anon">Buscas sem conta</label><input id="l-busca-anon" inputmode="numeric" data-chave="limite_rota_anonimo" data-nome="Buscas sem conta"><span class="pequeno">por aparelho, por dia</span></div>
+            <div class="campo"><label for="l-busca-conta">Buscas com Google</label><input id="l-busca-conta" inputmode="numeric" data-chave="limite_rota_conta" data-nome="Buscas com Google"><span class="pequeno">por conta, por dia</span></div>
+          </div>
+          <h2 style="margin-top:8px">Gasto</h2>
+          <div class="campos">
+            <div class="campo"><label for="l-teto">Teto de gasto no mês (US$)</label><input id="l-teto" inputmode="decimal" data-chave="teto_mensal_usd" data-nome="Teto de gasto" data-decimal>
+              <span class="pequeno">Ao chegar nele, a busca por rota pausa sozinha. Acompanhar pelo número do voo continua.</span></div>
+            <div class="campo"><label for="l-alertas">Alertas criados por dia</label><input id="l-alertas" inputmode="numeric" data-chave="teto_alertas_dia" data-nome="Alertas criados por dia">
+              <span class="pequeno">Teto de voos novos acompanhados por dia, somando todo mundo.</span></div>
+          </div>
+          <div>
+            <div class="chave"><span><b id="c-rota">Busca por rota</b><span class="pequeno">Cada busca custa US$ 0,05. Desligue se o gasto disparar.</span></span>
+              <button class="interruptor" type="button" role="switch" aria-labelledby="c-rota" data-chave="rota_ligada"></button></div>
+            <div class="chave"><span><b id="c-eco">Modo econômico</b><span class="pequeno">Não manda o aviso de chegada ao portão. Economiza US$ 0,020 por voo.</span></span>
+              <button class="interruptor" type="button" role="switch" aria-labelledby="c-eco" data-chave="modo_economico"></button></div>
+          </div>
+          <p class="campo"><span class="erro" id="erro-limites" role="alert" hidden></span></p>
+          <button class="botao" type="submit" id="salvar-limites">Salvar limites</button>
+        </form>
+        <section class="cartao" aria-labelledby="t-aud">
+          <h2 id="t-aud">Últimas mudanças</h2>
+          <ol class="auditoria" id="auditoria"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="confirmar">
+  <form method="dialog">
+    <h2 id="conf-titulo"></h2>
+    <p class="apoio" id="conf-texto"></p>
+    <div class="acoes">
+      <button class="botao botao--sec" value="nao" autofocus id="conf-nao"></button>
+      <button class="botao botao--perigo" value="sim" id="conf-sim"></button>
+    </div>
+  </form>
+</dialog>
+<p class="toast" id="toast" role="status" hidden></p>
+</body>
+</html>

@@ -1,54 +1,51 @@
 # Próximos passos
 
-**Data:** 14/11/2026 · **Branch:** `claude/admin-contas-rotas` (a partir da `main` com os PRs #1 a #4)
+**Data:** 14/11/2026 · **Branch:** `claude/app-real` (a partir da `main` com os PRs #1 a #7)
 
-## Decisão tomada: as duas direções visuais foram unidas
+## O que mudou nesta sessão: o app real existe
 
-A [09 · Direção visual](docs/09-direcao-visual.md) (`/visual-frontend`) e a [10 · Design](docs/10-design.md) (`/design`) foram juntadas na [11 · Visual da v2](docs/11-v2-visual.md):
+Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguindo o contrato da [13 · API](docs/13-api.md):
 
-- **Da 10:** a marca em Bricolage com o ponto âmbar, a paleta "céu noturno, luz de pista" e o tema escuro.
-- **Da 09:** a placa de pista como elemento de estado, o Atkinson no texto e no campo, o Barlow na placa e nos horários, e todos os textos da v1.
-
-## Feito
-
-- **v1:** protótipo em [`prototipo/index.html`](prototipo/index.html) (direção 09) e prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) (direção 10).
-- **v2 (esta sessão):** protótipo em [`prototipo/v2/index.html`](prototipo/v2/index.html), com globo 3D em three.js (continentes low-poly, dia e noite, rotas, avião, destino aceso, rótulos em placa, câmera Avião/Destino/Livre, HUD). No desktop, o globo ocupa a tela toda e o painel flutua à esquerda, podendo ser recolhido. No celular, a coluna da v1 continua, com o globo em faixa no status. Telas: início, confirmação, status (em voo, atrasado, cancelado) e meus voos. Capturas em `docs/visual/v2-*.png`.
-
-- **Contas, rotas e admin:** spec em [docs/12-contas-admin-rotas.md](docs/12-contas-admin-rotas.md) (ADR-006 e ADR-007). Prancha com 4 telas novas (versão 14). Protótipo: "Entrar" e "Buscar pela rota" no v2, e painel em [`prototipo/admin/index.html`](prototipo/admin/index.html). Tudo com dados e login simulados.
+- **`server/`** (Node 22.5+, `node:sqlite`, sem framework): cliente da AeroAPI com novas tentativas e registro de custo em `CHAMADA_API`, um alerta por voo (R1–R3), webhook com deduplicação e aviso de atraso, Web Push (VAPID), agendador (checagens de atraso, rede de segurança, limpeza), login Google real (ID token) com sessão em cookie, busca por rota com cache e limites, e o admin `/api/admin/*`. São 52 testes com `node --test`.
+- **`server/dados/`**: 3.245 aeroportos com fuso (OurAirports), nomes em português para 291 aeroportos e nomes de companhias. Gerado por `scripts/gerar-aeroportos.js`.
+- **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
+- **`prototipo/`** continua como registro histórico.
 
 ## Estado
 
-- Testado no navegador em 1600×900 e 375×812: as telas carregam sem erro no console, o painel recolhe e volta, e a câmera troca de modo.
-- Não testado: desempenho em celular real, leitor de tela, zoom de 200% na v2.
-- Prancha de design atualizada (versão 12) com a junção. Meus voos (v1) ainda mostra pílulas de estado.
-- O código do app ainda não existe.
+- **Funciona sem a chave da AeroAPI:** o servidor sobe e todas as telas carregam. A busca por número e por rota mostra "O serviço de voos ainda não está configurado".
+- **Testado no localhost:3000:** início, rota (países e aeroportos reais) e entrar (botão oficial do Google) em 1440×860, sem erro no console.
+- **Não testado com dados reais:** voo real, webhook real, push real, login Google completo (a origem `http://localhost:3000` foi incluída no cliente OAuth em 14/11; o Google pode levar alguns minutos para aplicar), iOS, `/v/<id>`, desviado e no portão.
 
 ## Próximos passos
 
-- [x] Atualizar a prancha [Voa Aí · Design](https://claude.ai/artifact/6LYsBMUph2SRaWdULXAn14) com a junção da 11 (fontes, placa, trajeto, capturas da v2)
-- [x] Client ID do Google criado no projeto "Voa Ai" (`meuprojeto-2f905`); valores no `.env` (fora do git)
-- [x] Google Cloud: origem do Railway trocada para `https://voaai.up.railway.app`; usuário de teste incluído (o dono)
-- [x] Google Cloud: secret antigo desativado e um novo criado (fica só no console; o fluxo de ID token não usa secret, e o `.env` não guarda nenhum)
-- [ ] Incluir em "Público-alvo → Usuários de teste" quem mais for testar o login, ou publicar o app (pede logo e política de privacidade no Branding)
-- [ ] Backend: login Google real com o `GOOGLE_CLIENT_ID`, rotas `/api/admin/*` e tabela `CHAMADA_API`
-- [ ] Prancha Admin · Visão geral: trocar "dia 25" por "dia 24" (o cálculo do protótipo dá 24)
-- [ ] Levar a placa mini para a prancha de Meus voos (v1), que ainda usa pílulas
-- [ ] Levar a v1 (`prototipo/index.html`) para a paleta unificada, ou marcá-la como histórica
-- [ ] Testar o globo num celular intermediário (meta de 60 fps)
-- [ ] Decidir se "Me avisar" substitui "Avisar-me" na [02-v1-alertas.md](docs/02-v1-alertas.md)
-- [ ] Desenhar os estados que faltam: desviado, offline, permissão de notificação negada, pousou/no portão na v2
-- [ ] Exportar os ícones da PWA (192/512 maskable, badge Android) a partir da marca da 10
-- [ ] Marco 1 do roadmap: conta AeroAPI e script `scripts/buscar-voo.js`
-- [ ] Marco 3: levar os tokens da 11 para `public/tokens.css`
+- [ ] **Chave da AeroAPI.** O plano Personal foi assinado em 14/11/2026, mas o portal da FlightAware dá erro 500 e não mostra "API Keys". Abrir chamado no suporte da FlightAware. Com a chave, colocar em `AEROAPI_KEY` no `.env`.
+- [ ] Com a chave: `npm run buscar-voo -- TP103` e um voo real de ponta a ponta (Marco 1 e critérios de aceite da [02](docs/02-v1-alertas.md#critérios-de-aceite-da-v1))
+- [ ] Testar o login Google no localhost:3000 e o painel `/admin/` com `andreruperto@gmail.com`
+- [ ] Deploy no Railway (Marco 4): volume em `/data`, variáveis do `.env`, `URL_PUBLICA=https://voaai.up.railway.app`
+- [ ] Alertas do admin a 50% e 80% do crédito (push e e-mail) e rate limit por IP (não feitos)
+- [ ] Incluir em "Público-alvo → Usuários de teste" quem mais for testar o login
+- [ ] Prancha Admin · Visão geral: trocar "dia 25" por "dia 24"
+- [ ] Prancha: placa mini em Meus voos (v1) e os estados novos (pousou, desviado, avisos bloqueados)
+- [ ] Testar o globo num celular intermediário (meta de 60 fps) e com leitor de tela
+- [ ] Levar three.js, world-atlas e fontes do CDN para `public/` (doc 11)
 
 ## Comandos úteis
 
 ```bash
-python -m http.server 8741 --directory prototipo
+npm install
 ```
 
-- v1: `http://localhost:8741/#status` (`?tema=escuro|claro`, `?ios=1`)
-- v2: `http://localhost:8741/v2/#status` (telas: `inicio`, `confirmacao`, `status`, `status-atraso`, `status-cancelado`, `meus-voos`, `rota`, `entrar`)
-- admin: `http://localhost:8741/admin/` (o botão do Google simula o login de admin; seções `#visao`, `#voos`, `#contas`, `#rotas`, `#limites`)
-- As portas 5173 e 8765 costumam estar ocupadas nesta máquina. No app, use a configuração `prototipo` em `.claude/launch.json`.
-- Capturas da v2, com o servidor no ar: `python prototipo/v2/capturas.py docs/visual`. O script usa Playwright com `--use-angle=swiftshader` para o WebGL rodar sem GPU.
+```bash
+npm run dev
+```
+
+```bash
+npm test
+```
+
+- App: `http://localhost:3000` (no Claude, configuração `app` em `.claude/launch.json`). Admin: `http://localhost:3000/admin/`.
+- Protótipo antigo: `python -m http.server 8741 --directory prototipo` (configuração `prototipo`).
+- Buscar um voo pelo terminal: `node --env-file=.env scripts/buscar-voo.js TP103`.
+- Regerar os aeroportos: `node scripts/gerar-aeroportos.js`.
+- O `.env` (fora do git) já tem `GOOGLE_CLIENT_ID`, `ADMIN_EMAILS`, `SESSAO_SEGREDO`, VAPID e `WEBHOOK_SEGREDO`. Falta só `AEROAPI_KEY`.
