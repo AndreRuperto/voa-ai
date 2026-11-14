@@ -1,6 +1,6 @@
 # Próximos passos
 
-**Data:** 14/11/2026 · **Branch:** `claude/app-real` (a partir da `main` com os PRs #1 a #7)
+**Data:** 14/11/2026 · **Branch:** `claude/ativar` (a partir da `main` com os PRs #1 a #8)
 
 ## O que mudou nesta sessão: o app real existe
 
@@ -22,7 +22,10 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - [ ] **Chave da AeroAPI.** O plano Personal foi assinado em 14/11/2026, mas o portal da FlightAware dá erro 500 e não mostra "API Keys". Abrir chamado no suporte da FlightAware. Com a chave, colocar em `AEROAPI_KEY` no `.env`.
 - [ ] Com a chave: `npm run buscar-voo -- TP103` e um voo real de ponta a ponta (Marco 1 e critérios de aceite da [02](docs/02-v1-alertas.md#critérios-de-aceite-da-v1))
 - [ ] Testar o login Google no localhost:3000 e o painel `/admin/` com `andreruperto@gmail.com`
-- [ ] Deploy no Railway (Marco 4): volume em `/data`, variáveis do `.env`, `URL_PUBLICA=https://voaai.up.railway.app`
+- [x] Deploy no Railway em 14/11/2026: projeto `voa-ai`, serviço `voa-ai`, volume em `/data`, variáveis do `.env`, domínio **https://voaai.up.railway.app** (porta 8080)
+- [ ] Ligar o repositório GitHub ao serviço no Railway (o app do Railway no GitHub precisa de acesso ao repo `voa-ai`). Até lá, o deploy é por `railway up --service voa-ai` nesta pasta
+- [ ] Colocar a `AEROAPI_KEY` também no Railway: `railway variable set --service voa-ai AEROAPI_KEY=...`
+- [ ] Migrar `railway.json` para `.railway/railway.ts` antes de 01/12/2026 (`railway config migrate`)
 - [ ] Alertas do admin a 50% e 80% do crédito (push e e-mail) e rate limit por IP (não feitos)
 - [ ] Incluir em "Público-alvo → Usuários de teste" quem mais for testar o login
 - [ ] Prancha Admin · Visão geral: trocar "dia 25" por "dia 24"
@@ -31,6 +34,8 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - [ ] Levar three.js, world-atlas e fontes do CDN para `public/` (doc 11)
 
 ## Comandos úteis
+
+- Produção: https://voaai.up.railway.app (saúde em `/saude`). Logs: `railway logs --service voa-ai`. Deploy manual: `railway up --service voa-ai --detach`.
 
 ```bash
 npm install
