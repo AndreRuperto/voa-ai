@@ -77,7 +77,7 @@ async function botaoGoogle() {
     await gsi;
   } catch { gsi = null; erro.textContent = 'Não deu para abrir o login do Google. Confira a internet ou o bloqueador.'; erro.hidden = false; return; }
   caixa.innerHTML = '';
-  window.google.accounts.id.renderButton(caixa, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', locale: 'pt-BR', width: Math.min(356, caixa.clientWidth || 320) });
+  window.google.accounts.id.renderButton(caixa, { theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'rectangular', locale: 'pt-BR', width: Math.min(356, caixa.clientWidth || 320) });
 }
 async function aoEntrar({ credential }) {
   try { eu = await post('/api/sessao', { credential }); portao(); }

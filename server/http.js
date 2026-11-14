@@ -151,11 +151,16 @@ export function servirArquivo(req, res, arquivo) {
   if (st.isDirectory()) return servirArquivo(req, res, join(arquivo, 'index.html'));
   if (!st.isFile()) return false;
   const ext = extname(arquivo).toLowerCase();
-  const semCache = ext === '.html' || ext === '.webmanifest' || /(^|[\\/])sw\.js$/.test(arquivo);
+  // Os nomes dos arquivos não têm versão: HTML, CSS e JS sempre revalidam (ETag → 304),
+  // senão um deploy novo convive uma hora com CSS/JS velhos no navegador. Só imagens e fontes ficam em cache.
+  const estavel = ['.png', '.svg', '.ico', '.woff2', '.json'].includes(ext);
+  const etag = `W/"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
+  if (req.headers['if-none-match'] === etag) { res.writeHead(304, { etag }); res.end(); return true; }
   res.writeHead(200, {
     'content-type': MIME[ext] || 'application/octet-stream',
     'content-length': st.size,
-    'cache-control': semCache ? 'no-cache' : 'public, max-age=3600',
+    'cache-control': estavel ? 'public, max-age=86400' : 'no-cache',
+    etag,
     'x-content-type-options': 'nosniff',
   });
   if (req.method === 'HEAD') { res.end(); return true; }

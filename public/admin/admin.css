@@ -175,7 +175,10 @@ dialog .acoes { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: 
 .carregando { color: var(--c-tinta-suave); font-size: .875rem; }
 .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .avatar { overflow: hidden; }
-.google-botao { min-height: 44px; color-scheme: light; }
+/* Google Identity Services: o botão oficial (iframe) entra aqui, no tema escuro do Google ("filled_black").
+   Não recortamos nem cobrimos o iframe: o Google posiciona o botão com margens negativas e pede que ele não seja alterado. */
+.google-botao { min-height: 44px; display: flex; justify-content: flex-start; color-scheme: light; } /* light: com dark, o navegador pinta o fundo do iframe de branco */
+.google-botao iframe { max-width: 100%; }
 .botao[aria-busy="true"] { cursor: progress; opacity: .7; }
 .conteudo { min-width: 0; }
 .rolagem { position: relative; }   /* prende os textos .sr (absolutos) dentro da rolagem da tabela */
