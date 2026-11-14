@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Voa Aí · admin (protótipo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Barlow+Semi+Condensed:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+/* Tokens: os mesmos da v2 (docs/11-v2-visual.md). Admin é sempre escuro, como o app. */
+:root {
+  --c-fundo: #0B1426; --c-lateral: #0A1222; --c-superficie: #12203A; --c-campo: #1B2D4F;
+  --c-linha: #2A3F66; --c-linha-forte: #6E83A8; --c-tinta: #F2F5FA; --c-tinta-suave: #A9B6CC; --c-tinta-meia: #C9D3E3;
+  --c-pista: #FFB547; --c-placa-tinta: #0B1426; --c-ceu: #5CC8FF; --c-atraso: #FF8A65; --c-cancelado: #FF6B7A; --c-ok: #5EE6A8;
+  --f-marca: "Bricolage Grotesque", system-ui, sans-serif;
+  --f-texto: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --f-placa: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --r-placa: 4px; --r-campo: 12px; --r-cartao: 16px; --r-painel: 20px;
+  --m-dur: 200ms; --m-curva: cubic-bezier(.2, .7, .2, 1);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--c-fundo); color: var(--c-tinta); font: 400 1rem/1.5 var(--f-texto); }
+h1, h2, p, ul, ol, table { margin: 0; }
+h1 { font: 800 2.125rem/1.1 var(--f-marca); letter-spacing: -.01em; }
+h2 { font: 700 1.25rem/1.2 var(--f-marca); }
+a { color: var(--c-pista); }
+button { font: inherit; color: inherit; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+:focus-visible { outline: 3px solid var(--c-pista); outline-offset: 3px; }
+[tabindex="-1"]:focus { outline: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.apoio { color: var(--c-tinta-suave); }
+.pequeno { font-size: .8125rem; color: var(--c-tinta-suave); }
+
+/* ---------- casca ---------- */
+.casca { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100dvh; }
+.lateral { background: var(--c-lateral); border-right: 1px solid var(--c-linha); padding: 24px 16px; display: flex; flex-direction: column; gap: 24px;
+  position: sticky; top: 0; height: 100dvh; }
+.marca { display: flex; align-items: center; gap: 10px; padding: 0 6px; text-decoration: none; color: inherit; }
+.marca b { font: 800 1.5rem/1 var(--f-marca); letter-spacing: -.02em; }
+.marca__i { position: relative; }
+.marca__i::after { content: ""; position: absolute; left: 50%; top: -.02em; width: .28em; height: .28em; margin-left: -.11em; border-radius: 50%; background: var(--c-pista); }
+.selo { font: 700 .8125rem/1 var(--f-placa); color: var(--c-placa-tinta); background: var(--c-pista); border-radius: var(--r-placa); padding: 4px 6px; }
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 10px; color: var(--c-tinta-suave); text-decoration: none; font-weight: 600; }
+.nav a:hover { color: var(--c-tinta); background: rgba(27, 45, 79, .6); }
+.nav a[aria-current="page"] { background: var(--c-campo); color: var(--c-tinta); box-shadow: inset 3px 0 0 var(--c-pista); }
+.nav svg { width: 20px; height: 20px; flex: none; }
+.quem { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 12px 8px; border-top: 1px solid var(--c-linha); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--c-campo); border: 2px solid var(--c-ceu); display: grid; place-items: center; font-weight: 700; flex: none; }
+.quem button { margin-left: auto; min-height: 44px; padding: 0 8px; background: none; border: 0; color: var(--c-tinta-suave); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.conteudo { padding: 32px 40px 56px; max-width: 1280px; width: 100%; }
+.secao { display: none; flex-direction: column; gap: 28px; }
+.secao.ativa { display: flex; }
+.cabeca { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.cabeca > div:first-child { display: flex; flex-direction: column; gap: 6px; }
+.cartao { padding: 24px; border-radius: var(--r-painel); background: var(--c-superficie); border: 1px solid var(--c-linha); display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cartao__topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+
+/* ---------- controles ---------- */
+.segmentado { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-campo); background: var(--c-superficie); border: 1px solid var(--c-linha); }
+.segmentado button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; cursor: pointer; }
+.segmentado button[aria-pressed="true"] { background: var(--c-tinta); color: var(--c-placa-tinta); font-weight: 700; }
+.botao { min-height: 48px; padding: 0 18px; border-radius: var(--r-campo); border: 2px solid transparent; background: var(--c-pista); color: var(--c-placa-tinta);
+  font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+.botao--sec { background: transparent; color: var(--c-tinta); border-color: var(--c-linha-forte); }
+.botao--perigo { background: transparent; color: var(--c-cancelado); border-color: var(--c-cancelado); }
+.botao--mini { min-height: 44px; padding: 0 12px; font-size: .8125rem; font-weight: 600; }
+.botao:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---------- visão geral ---------- */
+.gasto { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; }
+.gasto__valor { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.gasto__valor b { font: 700 4rem/1 var(--f-placa); }
+.medidor { position: relative; height: 14px; border-radius: 7px; background: var(--c-campo); overflow: hidden; }
+.medidor__usado { position: absolute; inset: 0 auto 0 0; background: var(--c-ceu); border-radius: 0 4px 4px 0; }
+.medidor__proj { position: absolute; inset: 0 0 0 auto; background: repeating-linear-gradient(135deg, rgba(255, 138, 101, .6) 0 4px, transparent 4px 9px); }
+.medidor__teto { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--c-tinta); }
+.legenda-medidor { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.legenda-medidor span { display: inline-flex; align-items: center; gap: 6px; }
+.amostra { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.alerta { display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: var(--r-cartao); }
+.alerta--atencao { background: rgba(255, 138, 101, .1); border: 1px solid rgba(255, 138, 101, .45); }
+.alerta--ok { background: rgba(94, 230, 168, .08); border: 1px solid rgba(94, 230, 168, .4); }
+.alerta__titulo { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.alerta--atencao .alerta__titulo { color: var(--c-atraso); }
+.alerta--ok .alerta__titulo { color: var(--c-ok); }
+.alerta svg { width: 20px; height: 20px; flex: none; }
+.alerta b.grande { font: 700 2rem/1 var(--f-placa); }
+.numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.numero { padding: 20px; border-radius: var(--r-cartao); background: var(--c-superficie); border: 1px solid var(--c-linha); display: flex; flex-direction: column; gap: 6px; }
+.numero b { font: 700 2.5rem/1 var(--f-placa); }
+.graficos { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; }
+.barras { position: relative; }
+.barras svg { display: block; width: 100%; height: auto; overflow: visible; }
+.barras .alvo { fill: transparent; cursor: default; }
+.barras .barra { fill: var(--c-ceu); transition: opacity var(--m-dur); }
+.barras.em-foco .barra { opacity: .45; }
+.barras.em-foco .barra.foco { opacity: 1; }
+.dica-grafico { position: absolute; pointer-events: none; transform: translate(-50%, calc(-100% - 10px)); padding: 8px 10px; border-radius: 10px;
+  background: var(--c-fundo); border: 1px solid var(--c-linha-forte); font-size: .8125rem; white-space: nowrap; }
+.dica-grafico b { font: 700 1.125rem var(--f-placa); display: block; }
+.tipos { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.tipos li { display: grid; grid-template-columns: minmax(0, 1fr) 64px; gap: 6px 16px; align-items: center; }
+.tipos__nome { display: flex; justify-content: space-between; gap: 8px; font-size: .875rem; }
+.tipos__valor { grid-row: span 2; text-align: right; font: 700 1.25rem var(--f-placa); }
+.tipos__barra { height: 10px; border-radius: 0 4px 4px 0; background: var(--c-ceu); }
+details.tabela-dados summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--c-tinta-suave); font-size: .875rem; }
+
+/* ---------- tabelas ---------- */
+.rolagem { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+th { text-align: left; color: var(--c-tinta-suave); font-weight: 600; padding: 8px; white-space: nowrap; }
+td { padding: 12px 8px; border-top: 1px solid var(--c-linha); vertical-align: middle; }
+td.n, th.n { text-align: right; }
+td.n { font: 700 1.125rem var(--f-placa); }
+tr.apagado td { opacity: .45; }
+.placa { display: inline-flex; align-items: stretch; border-radius: var(--r-placa); overflow: hidden; font: 700 .9375rem/1.1 var(--f-placa); white-space: nowrap; }
+.placa > span { padding: 3px 7px; color: var(--c-placa-tinta); }
+.placa .loc { background: var(--c-fundo); color: var(--c-pista); box-shadow: inset 0 0 0 2px var(--c-pista); }
+.placa .dir { background: var(--c-pista); }
+.placa .ate { background: var(--c-atraso); }
+.placa .crit { background: var(--c-cancelado); }
+.placa .ok { background: var(--c-ok); }
+.estado-conta { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.estado-conta svg { width: 16px; height: 16px; }
+
+/* ---------- limites ---------- */
+.limites { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo label { font-weight: 700; }
+.campo input { min-height: 48px; padding: 0 14px; border-radius: var(--r-campo); border: 2px solid var(--c-linha-forte); background: var(--c-campo);
+  color: var(--c-tinta); font: 700 1.25rem var(--f-texto); width: 140px; }
+.campo input:focus-visible { outline-offset: 0; border-color: var(--c-pista); }
+.campo input[aria-invalid="true"] { border-color: var(--c-cancelado); }
+.campo .erro { color: var(--c-cancelado); font-size: .8125rem; font-weight: 600; }
+.chave { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 0; border-top: 1px solid var(--c-linha); }
+.chave > span { display: flex; flex-direction: column; gap: 4px; }
+.interruptor { flex: none; width: 56px; height: 32px; border-radius: 16px; border: 2px solid var(--c-linha-forte); background: var(--c-campo); position: relative; cursor: pointer; padding: 0; }
+.interruptor::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--c-tinta); transition: left var(--m-dur) var(--m-curva); }
+.interruptor[aria-checked="true"] { background: var(--c-pista); border-color: var(--c-pista); }
+.interruptor[aria-checked="true"]::after { left: 28px; background: var(--c-placa-tinta); }
+.auditoria { list-style: none; padding: 0; display: flex; flex-direction: column; }
+.auditoria li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--c-linha); font-size: .875rem; }
+.auditoria time { font: 700 1rem var(--f-placa); color: var(--c-tinta-suave); }
+
+/* ---------- porta de entrada ---------- */
+.porta { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+.porta__caixa { max-width: 420px; width: 100%; display: flex; flex-direction: column; gap: 18px; padding: 32px; border-radius: var(--r-painel); background: var(--c-superficie); border: 1px solid var(--c-linha); }
+.botao--google { background: #FFFFFF; color: #1F1F1F; border-color: #DADCE0; font-weight: 600; }
+.botao--google svg { width: 20px; height: 20px; }
+[hidden] { display: none !important; }
+
+.toast { position: fixed; z-index: 5; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--c-fundo); color: var(--c-pista);
+  box-shadow: inset 0 0 0 2px var(--c-pista); border-radius: var(--r-placa); font: 700 1rem/1.2 var(--f-placa); padding: 12px 16px; max-width: calc(100% - 32px); }
+dialog { border: 1px solid var(--c-linha); border-radius: var(--r-painel); background: var(--c-superficie); color: var(--c-tinta); padding: 28px; max-width: 440px; }
+dialog::backdrop { background: rgba(5, 9, 15, .6); }
+dialog form { display: flex; flex-direction: column; gap: 16px; }
+dialog .acoes { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+@media (max-width: 1100px) {
+  .gasto, .graficos, .limites { grid-template-columns: minmax(0, 1fr); }
+  .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .casca { grid-template-columns: minmax(0, 1fr); }
+  .lateral { position: static; height: auto; padding: 12px 16px; gap: 12px; border-right: 0; border-bottom: 1px solid var(--c-linha); }
+  .nav { flex-direction: row; overflow-x: auto; }
+  .nav a { white-space: nowrap; }
+  .nav a[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--c-pista); }
+  .quem { display: none; }
+  .conteudo { padding: 24px 16px 40px; }
+  .campos { grid-template-columns: minmax(0, 1fr); }
+  .gasto__valor b { font-size: 3rem; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-alerta" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14l-3-3"/></symbol>
+  <symbol id="i-bloq" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM4.9 4.9l14.2 14.2"/></symbol>
+</svg>
+
+<!-- ======================= PORTA (sem sessão de admin) ======================= -->
+<div class="porta" id="porta">
+  <div class="porta__caixa">
+    <a class="marca" href="../v2/"><b>Voa A<span class="marca__i">ı</span></b><span class="selo">ADMIN</span></a>
+    <h1>Área restrita</h1>
+    <p class="apoio">Entre com a conta Google que está na lista de administradores do Voa Aí.</p>
+    <button class="botao botao--google" type="button" id="entrar">
+      <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Continuar com o Google
+    </button>
+    <p class="pequeno">Protótipo: o botão simula o login de um administrador. No app real, quem não está em <code>ADMIN_EMAILS</code> nem vê esta página (recebe 404).</p>
+  </div>
+</div>
+
+<!-- ======================= PAINEL ======================= -->
+<div class="casca" id="painel" hidden>
+  <aside class="lateral">
+    <a class="marca" href="#visao"><b>Voa A<span class="marca__i">ı</span></b><span class="selo">ADMIN</span></a>
+    <nav class="nav" aria-label="Seções do admin">
+      <a href="#visao"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Visão geral</a>
+      <a href="#voos"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M14 5l7 7-7 7"/></svg>Voos</a>
+      <a href="#contas"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Contas</a>
+      <a href="#rotas"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h6l3 6 3-6h6M3 18h18"/></svg>Rotas</a>
+      <a href="#limites"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Limites</a>
+    </nav>
+    <div class="quem">
+      <span class="avatar" aria-hidden="true">A</span>
+      <span><b>Admin de teste</b><br><span class="pequeno">entrou com Google</span></span>
+      <button type="button" id="sair">Sair</button>
+    </div>
+  </aside>
+
+  <main class="conteudo">
+
+    <!-- ===== VISÃO GERAL ===== -->
+    <section class="secao" data-secao="visao" aria-labelledby="t-visao">
+      <header class="cabeca">
+        <div><h1 id="t-visao" tabindex="-1">Visão geral</h1><p class="apoio" id="periodo-texto"></p></div>
+        <div class="segmentado" role="group" aria-label="Período">
+          <button type="button" data-periodo="7" aria-pressed="false">7 dias</button>
+          <button type="button" data-periodo="mes" aria-pressed="true">Este mês</button>
+          <button type="button" data-periodo="passado" aria-pressed="false">Mês passado</button>
+        </div>
+      </header>
+
+      <section class="cartao gasto" aria-labelledby="t-gasto">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <h2 id="t-gasto" class="apoio" style="font:600 .9375rem var(--f-texto)">Gasto estimado na AeroAPI</h2>
+          <div class="gasto__valor"><b class="num" id="gasto-valor"></b><span class="apoio" id="gasto-de"></span></div>
+          <div class="medidor" role="meter" aria-label="Crédito do mês usado" aria-valuemin="0" aria-valuemax="100" id="medidor">
+            <span class="medidor__usado" id="med-usado"></span><span class="medidor__proj" id="med-proj"></span><span class="medidor__teto" id="med-teto" title="Teto de gasto"></span>
+          </div>
+          <div class="legenda-medidor pequeno">
+            <span><i class="amostra" style="background:var(--c-ceu)"></i><span id="leg-usado"></span></span>
+            <span id="leg-proj-wrap"><i class="amostra" style="background:repeating-linear-gradient(135deg,rgba(255,138,101,.8) 0 3px,transparent 3px 6px)"></i>Projeção até o fim do mês</span>
+            <span><i class="amostra" style="background:var(--c-tinta);width:3px"></i>Teto de gasto</span>
+          </div>
+          <p class="pequeno">Estimativa a partir das chamadas que o servidor registrou. A fatura da FlightAware é a fonte oficial.</p>
+        </div>
+        <div class="alerta" role="status" id="alerta-gasto"></div>
+      </section>
+
+      <section class="numeros" aria-label="Números do período" id="numeros"></section>
+
+      <div class="graficos">
+        <section class="cartao" aria-labelledby="t-dia">
+          <div class="cartao__topo"><h2 id="t-dia">Gasto por dia</h2><span class="pequeno">US$</span></div>
+          <div class="barras" id="barras"></div>
+          <details class="tabela-dados"><summary>Ver como tabela</summary><div class="rolagem"><table id="tabela-dias"></table></div></details>
+        </section>
+        <section class="cartao" aria-labelledby="t-tipo">
+          <div class="cartao__topo"><h2 id="t-tipo">Para onde foi</h2><span class="pequeno">US$ no período</span></div>
+          <ul class="tipos" id="tipos"></ul>
+          <p class="pequeno">Os alertas pesam mais. O modo econômico (sem o aviso de chegada ao portão) corta 1 em cada 4.</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ===== VOOS ===== -->
+    <section class="secao" data-secao="voos" aria-labelledby="t-voos">
+      <header class="cabeca"><div><h1 id="t-voos" tabindex="-1">Voos</h1>
+        <p class="apoio">Um alerta por voo, compartilhado por quem acompanha. Parar os avisos de um voo vale para todos os inscritos.</p></div></header>
+      <section class="cartao">
+        <div class="rolagem"><table>
+          <caption class="sr">Voos acompanhados agora</caption>
+          <thead><tr><th>Voo</th><th>Rota</th><th class="n">Inscritos</th><th class="n">Alertas</th><th class="n">Custo (US$)</th><th><span class="sr">Ações</span></th></tr></thead>
+          <tbody id="tabela-voos"></tbody>
+        </table></div>
+      </section>
+    </section>
+
+    <!-- ===== CONTAS ===== -->
+    <section class="secao" data-secao="contas" aria-labelledby="t-contas">
+      <header class="cabeca"><div><h1 id="t-contas" tabindex="-1">Contas</h1>
+        <p class="apoio">Só quem entrou com Google aparece aqui. Aparelhos sem conta são contados, não listados.</p></div></header>
+      <section class="cartao">
+        <div class="rolagem"><table>
+          <caption class="sr">Contas Google</caption>
+          <thead><tr><th>Conta</th><th>Estado</th><th class="n">Voos ativos</th><th class="n">Buscas no mês</th><th>Último acesso</th><th><span class="sr">Ações</span></th></tr></thead>
+          <tbody id="tabela-contas"></tbody>
+        </table></div>
+      </section>
+    </section>
+
+    <!-- ===== ROTAS ===== -->
+    <section class="secao" data-secao="rotas" aria-labelledby="t-rotas">
+      <header class="cabeca"><div><h1 id="t-rotas" tabindex="-1">Rotas mais buscadas</h1>
+        <p class="apoio">Cada par de aeroportos custa US$ 0,05 por busca. Buscas repetidas em até 30 min vêm do cache, de graça.</p></div></header>
+      <section class="cartao">
+        <div class="rolagem"><table>
+          <caption class="sr">Pares de aeroportos buscados no mês</caption>
+          <thead><tr><th>Rota</th><th class="n">Buscas</th><th class="n">Do cache</th><th class="n">Pagas</th><th class="n">Custo (US$)</th></tr></thead>
+          <tbody id="tabela-rotas"></tbody>
+        </table></div>
+      </section>
+    </section>
+
+    <!-- ===== LIMITES ===== -->
+    <section class="secao" data-secao="limites" aria-labelledby="t-limites">
+      <header class="cabeca"><div><h1 id="t-limites" tabindex="-1">Limites</h1>
+        <p class="apoio">Valem na hora, sem deploy. Toda mudança fica registrada com o seu e-mail e a hora.</p></div></header>
+      <div class="limites">
+        <form class="cartao" id="form-limites" novalidate>
+          <h2>Por pessoa</h2>
+          <div class="campos">
+            <div class="campo"><label for="l-voos-anon">Voos sem conta</label><input id="l-voos-anon" inputmode="numeric" data-chave="voosAnon" data-nome="Voos sem conta"><span class="pequeno">por aparelho</span></div>
+            <div class="campo"><label for="l-voos-conta">Voos com Google</label><input id="l-voos-conta" inputmode="numeric" data-chave="voosConta" data-nome="Voos com Google"><span class="pequeno">por conta</span></div>
+            <div class="campo"><label for="l-busca-anon">Buscas sem conta</label><input id="l-busca-anon" inputmode="numeric" data-chave="buscasAnon" data-nome="Buscas sem conta"><span class="pequeno">por aparelho, por dia</span></div>
+            <div class="campo"><label for="l-busca-conta">Buscas com Google</label><input id="l-busca-conta" inputmode="numeric" data-chave="buscasConta" data-nome="Buscas com Google"><span class="pequeno">por conta, por dia</span></div>
+          </div>
+          <h2 style="margin-top:8px">Gasto</h2>
+          <div class="campo"><label for="l-teto">Teto de gasto no mês (US$)</label><input id="l-teto" inputmode="decimal" data-chave="teto" data-nome="Teto de gasto" data-decimal>
+            <span class="pequeno">Ao chegar nele, a busca por rota pausa sozinha. Acompanhar pelo número do voo continua.</span></div>
+          <div>
+            <div class="chave"><span><b id="c-rota">Busca por rota</b><span class="pequeno">Cada busca custa US$ 0,05. Desligue se o gasto disparar.</span></span>
+              <button class="interruptor" type="button" role="switch" aria-labelledby="c-rota" data-chave="rota"></button></div>
+            <div class="chave"><span><b id="c-eco">Modo econômico</b><span class="pequeno">Não manda o aviso de chegada ao portão. Economiza US$ 0,020 por voo.</span></span>
+              <button class="interruptor" type="button" role="switch" aria-labelledby="c-eco" data-chave="eco"></button></div>
+          </div>
+          <p class="campo"><span class="erro" id="erro-limites" role="alert" hidden></span></p>
+          <button class="botao" type="submit">Salvar limites</button>
+        </form>
+        <section class="cartao" aria-labelledby="t-aud">
+          <h2 id="t-aud">Últimas mudanças</h2>
+          <ol class="auditoria" id="auditoria"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="confirmar">
+  <form method="dialog">
+    <h2 id="conf-titulo"></h2>
+    <p class="apoio" id="conf-texto"></p>
+    <div class="acoes">
+      <button class="botao botao--sec" value="nao" autofocus id="conf-nao"></button>
+      <button class="botao botao--perigo" value="sim" id="conf-sim"></button>
+    </div>
+  </form>
+</dialog>
+<p class="toast" id="toast" role="status" hidden></p>
+
+<script>
+/* ============================================================
+   DADOS SIMULADOS. No app vêm de /api/admin/* (docs/12).
+   Preços: tabela da AeroAPI em docs/aeroapi/fonte/precos.json.
+   ============================================================ */
+const PRECO = { alerta: .020, rota: .050, voo: .005, track: .012, canonico: .001 };
+const MES = [.12, .18, .09, .22, .31, .15, .11, .26, .19, .24, .14, .28, .21, .36];              // 1 a 14 de novembro
+const PASSADO = [.08, .1, .06, .12, .15, .09, .07, .11, .13, .1, .08, .14, .12, .09, .1, .11, .07, .13, .12, .1, .09, .14, .11, .08, .1, .12, .13, .09, .1, .11, .12];
+const CONTAGENS = { mes: { alerta: 81, rota: 11, voo: 94, track: 16, canonico: 30 } };
+const CREDITO = 5;
+const brl = (v, c = 2) => v.toFixed(c).replace('.', ',');
+const soma = a => a.reduce((s, x) => s + x, 0);
+
+let config = { voosAnon: 5, voosConta: 15, buscasAnon: 3, buscasConta: 10, teto: 5, rota: true, eco: false };
+const VOOS = [
+  { cod: 'TP103', rota: 'LIS a GRU', estado: ['dir', 'Em voo'], inscritos: 3, alertas: 4 },
+  { cod: 'G31450', rota: 'REC a CGH', estado: ['dir', 'Atrasado'], extra: ['ate', '+50'], inscritos: 2, alertas: 2 },
+  { cod: 'LA3054', rota: 'CGH a SDU', estado: ['crit', 'Cancelado'], inscritos: 1, alertas: 1 },
+  { cod: 'AD4521', rota: 'VCP a POA', estado: ['dir', 'Previsto'], inscritos: 4, alertas: 0 },
+  { cod: 'TP89', rota: 'LIS a GIG', estado: ['dir', 'Em voo'], inscritos: 1, alertas: 3 },
+  { cod: 'LA8084', rota: 'GRU a MAD', estado: ['dir', 'Previsto'], inscritos: 1, alertas: 0 },
+];
+const CONTAS = [
+  { nome: 'Ana S.', email: 'ana@exemplo.com', voos: 3, buscas: 4, acesso: 'hoje, 14:58', bloqueada: false },
+  { nome: 'Bruno T.', email: 'bruno@exemplo.com', voos: 1, buscas: 2, acesso: 'hoje, 09:12', bloqueada: false },
+  { nome: 'Carla M.', email: 'carla@exemplo.com', voos: 2, buscas: 0, acesso: 'ontem, 21:40', bloqueada: false },
+  { nome: 'Teste Robô', email: 'robo123@exemplo.com', voos: 15, buscas: 31, acesso: 'hoje, 03:02', bloqueada: false },
+];
+const ROTAS = [['LIS', 'GRU', 6, 4], ['REC', 'CGH', 3, 1], ['GRU', 'MAD', 3, 1], ['LIS', 'GIG', 2, 1], ['OPO', 'GRU', 2, 0], ['CGH', 'SDU', 2, 0]];
+const AUDITORIA = [{ hora: '08:14', txt: 'Modo econômico desligado' }, { hora: 'ontem', txt: 'Buscas sem conta: de 5 para 3 por dia' }];
+
+/* ============================================================ ENTRADA */
+const guardar = { ler(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+                  gravar(k, v) { try { v ? sessionStorage.setItem(k, v) : sessionStorage.removeItem(k); } catch {} } };
+function portao() {
+  const dentro = guardar.ler('voa-admin') === '1';
+  document.getElementById('porta').hidden = dentro;
+  document.getElementById('painel').hidden = !dentro;
+  if (dentro) mostrar();
+}
+document.getElementById('entrar').addEventListener('click', () => { guardar.gravar('voa-admin', '1'); if (!location.hash) location.hash = 'visao'; portao(); });
+document.getElementById('sair').addEventListener('click', () => { guardar.gravar('voa-admin', null); portao(); document.getElementById('entrar').focus(); });
+
+/* ============================================================ NAVEGAÇÃO */
+function mostrar(foco) {
+  const nome = ['visao', 'voos', 'contas', 'rotas', 'limites'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'visao';
+  document.querySelectorAll('.secao').forEach(s => s.classList.toggle('ativa', s.dataset.secao === nome));
+  document.querySelectorAll('.nav a').forEach(a => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + nome) || a.removeAttribute('aria-current'));
+  document.querySelectorAll('.nav a').forEach(a => { if (a.getAttribute('href') === '#' + nome) a.setAttribute('aria-current', 'page'); });
+  ({ visao: pintarVisao, voos: pintarVoos, contas: pintarContas, rotas: pintarRotas, limites: pintarLimites })[nome]();
+  if (foco) document.querySelector(`[data-secao="${nome}"] h1`).focus({ preventScroll: true });
+}
+addEventListener('hashchange', () => mostrar(true));
+
+/* ============================================================ VISÃO GERAL */
+let periodo = 'mes';
+document.querySelectorAll('[data-periodo]').forEach(b => b.addEventListener('click', () => {
+  periodo = b.dataset.periodo;
+  document.querySelectorAll('[data-periodo]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  pintarVisao();
+}));
+function dadosPeriodo() {
+  if (periodo === '7') return { dias: MES.slice(-7), inicio: 8, rotulo: 'Últimos 7 dias (8 a 14 de novembro).', mes: 'nov', fechado: false };
+  if (periodo === 'passado') return { dias: PASSADO, inicio: 1, rotulo: 'Outubro de 2026, mês fechado.', mes: 'out', fechado: true };
+  return { dias: MES, inicio: 1, rotulo: 'Novembro de 2026, até hoje (dia 14). Plano Personal da AeroAPI.', mes: 'nov', fechado: false };
+}
+function pintarVisao() {
+  const p = dadosPeriodo(), gasto = soma(p.dias);
+  const gastoMes = periodo === 'passado' ? soma(PASSADO) : soma(MES);
+  const proj = periodo === 'passado' ? gastoMes : gastoMes / 14 * 30;
+  document.getElementById('periodo-texto').textContent = p.rotulo;
+  document.getElementById('gasto-valor').textContent = `US$ ${brl(gasto)}`;
+  document.getElementById('gasto-de').textContent = periodo === '7' ? `nos últimos 7 dias (US$ ${brl(gastoMes)} no mês)` : `de US$ ${brl(CREDITO)} de crédito grátis`;
+  const usado = Math.min(100, gastoMes / CREDITO * 100), projPct = Math.min(100, proj / CREDITO * 100);
+  document.getElementById('medidor').setAttribute('aria-valuenow', usado.toFixed(0));
+  document.getElementById('medidor').setAttribute('aria-valuetext', `${usado.toFixed(0)}% do crédito usado; projeção de ${projPct.toFixed(0)}%`);
+  document.getElementById('med-usado').style.width = usado + '%';
+  const projEl = document.getElementById('med-proj');
+  projEl.style.left = `calc(${usado}% + 2px)`; projEl.style.width = `max(0px, calc(${projPct - usado}% - 2px))`;
+  document.getElementById('leg-proj-wrap').hidden = p.fechado;
+  document.getElementById('med-teto').style.left = `calc(${Math.min(100, config.teto / CREDITO * 100)}% - 1px)`;
+  document.getElementById('leg-usado').textContent = `${usado.toFixed(0)}% do crédito do mês usado`;
+
+  const alerta = document.getElementById('alerta-gasto');
+  const acima = proj > CREDITO;
+  alerta.className = 'alerta ' + (acima ? 'alerta--atencao' : 'alerta--ok');
+  const diaFim = Math.floor(CREDITO / (gastoMes / 14));
+  alerta.innerHTML = p.fechado
+    ? `<span class="alerta__titulo"><svg aria-hidden="true"><use href="#i-ok"/></svg>Dentro do crédito</span>
+       <b class="grande num">US$ ${brl(gastoMes)} no mês</b><span style="color:var(--c-tinta-meia)">Outubro fechou sem cobrança no cartão.</span>`
+    : acima
+    ? `<span class="alerta__titulo"><svg aria-hidden="true"><use href="#i-alerta"/></svg>Projeção acima do crédito</span>
+       <b class="grande num">US$ ${brl(proj)} no fim do mês</b>
+       <span style="color:var(--c-tinta-meia)">No ritmo atual, o crédito acaba por volta do dia ${diaFim}. Depois disso, cada chamada é cobrada no cartão.</span>
+       <a class="botao" href="#limites" style="align-self:flex-start;margin-top:auto">Ajustar limites</a>`
+    : `<span class="alerta__titulo"><svg aria-hidden="true"><use href="#i-ok"/></svg>Dentro do crédito</span><b class="grande num">US$ ${brl(proj)} no fim do mês</b>`;
+
+  const f = periodo === '7' ? 7 / 14 : periodo === 'passado' ? soma(PASSADO) / soma(MES) : 1;
+  const c = Object.fromEntries(Object.entries(CONTAGENS.mes).map(([k, v]) => [k, Math.round(v * f)]));
+  document.getElementById('numeros').innerHTML = [
+    ['Voos acompanhados agora', periodo === 'passado' ? '–' : VOOS.length, periodo === 'passado' ? 'só vale para hoje' : `${soma(VOOS.map(v => v.inscritos))} pessoas inscritas`],
+    ['Alertas entregues', c.alerta, 'US$ 0,020 cada'],
+    ['Contas Google', CONTAS.length, 'e 9 aparelhos sem conta'],
+    ['Buscas por rota', c.rota, `e ${Math.round(7 * f)} vieram do cache, de graça`],
+  ].map(([r, v, n]) => `<div class="numero"><span class="apoio" style="font-size:.875rem">${r}</span><b class="num">${v}</b><span class="pequeno">${n}</span></div>`).join('');
+
+  barras(p);
+  const tipos = [['Alertas entregues', 'alerta'], ['Busca por rota', 'rota'], ['Busca de voo por número', 'voo'], ['Trilha do voo (globo)', 'track'], ['Código canônico', 'canonico']]
+    .map(([nome, k]) => [nome, `${c[k]} × US$ ${brl(PRECO[k], 3)}`, c[k] * PRECO[k]]);
+  const max = Math.max(...tipos.map(t => t[2]));
+  document.getElementById('tipos').innerHTML = tipos.map(([n, d, v]) =>
+    `<li><span class="tipos__nome"><b style="font-weight:600">${n}</b><span class="apoio">${d}</span></span><b class="tipos__valor num">${brl(v)}</b>
+     <span class="tipos__barra" style="width:${(v / max * 100).toFixed(1)}%"></span></li>`).join('');
+}
+
+function barras(p) {
+  const el = document.getElementById('barras'), W = 760, H = 240, esq = 44, base = H - 28, topo = 14;
+  const vmax = Math.ceil(Math.max(...p.dias) * 10) / 10, n = p.dias.length, larg = (W - esq - 8) / n, bw = Math.max(4, larg * .62), r = Math.min(4, bw / 2);
+  const y = v => base - (base - topo) * v / vmax;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gasto por dia: entre US$ ${brl(Math.min(...p.dias))} e US$ ${brl(Math.max(...p.dias))}. A tabela abaixo tem os valores.">`;
+  for (let v = 0; v <= vmax + 1e-9; v += .1) s += `<line x1="${esq}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#2A3F66"/><text x="${esq - 8}" y="${y(v) + 4}" text-anchor="end" fill="#A9B6CC" font-size="12">${brl(v)}</text>`;
+  p.dias.forEach((v, i) => {
+    const x = esq + i * larg + (larg - bw) / 2, yy = y(v);
+    s += `<path class="barra" data-i="${i}" d="M${x} ${base} V${yy + r} Q${x} ${yy} ${x + r} ${yy} H${x + bw - r} Q${x + bw} ${yy} ${x + bw} ${yy + r} V${base} Z"/>`;
+    s += `<rect class="alvo" data-i="${i}" x="${esq + i * larg}" y="${topo}" width="${larg}" height="${base - topo}"/>`;
+    if (i === 0 || i === n - 1 || (n > 10 && i === Math.floor(n / 2))) s += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" fill="#A9B6CC" font-size="12">${p.inicio + i} ${p.mes}</text>`;
+  });
+  el.innerHTML = s + '</svg><div class="dica-grafico" hidden></div>';
+  const dica = el.querySelector('.dica-grafico'), svg = el.querySelector('svg');
+  const mostrarDica = i => {
+    el.classList.add('em-foco');
+    el.querySelectorAll('.barra').forEach(b => b.classList.toggle('foco', +b.dataset.i === i));
+    const b = el.querySelector(`.barra[data-i="${i}"]`).getBBox(), k = svg.clientWidth / W;
+    dica.innerHTML = `${p.inicio + i} de ${p.mes === 'nov' ? 'novembro' : 'outubro'}<b class="num">US$ ${brl(p.dias[i])}</b>`;
+    dica.style.left = (b.x + b.width / 2) * k + 'px'; dica.style.top = b.y * k + 'px'; dica.hidden = false;
+  };
+  el.querySelectorAll('.alvo').forEach(a => a.addEventListener('mouseenter', () => mostrarDica(+a.dataset.i)));
+  svg.addEventListener('mouseleave', () => { el.classList.remove('em-foco'); dica.hidden = true; });
+  document.getElementById('tabela-dias').innerHTML = `<caption class="sr">Gasto por dia</caption><thead><tr><th>Dia</th><th class="n">US$</th></tr></thead><tbody>`
+    + p.dias.map((v, i) => `<tr><td>${p.inicio + i} ${p.mes}</td><td class="n">${brl(v)}</td></tr>`).join('') + '</tbody>';
+}
+
+/* ============================================================ VOOS */
+const placa = v => `<span class="placa"><span class="loc">${v.cod}</span><span class="${v.estado[0]}">${v.estado[1]}</span>${v.extra ? `<span class="${v.extra[0]}">${v.extra[1]}</span>` : ''}</span>`;
+function pintarVoos() {
+  document.getElementById('tabela-voos').innerHTML = VOOS.map((v, i) => {
+    const custo = PRECO.voo * 4 + v.alertas * PRECO.alerta;
+    return `<tr class="${v.parado ? 'apagado' : ''}"><td>${placa(v)}</td><td>${v.rota}</td><td class="n">${v.inscritos}</td><td class="n">${v.alertas}</td><td class="n">${brl(custo)}</td>
+      <td style="text-align:right">${v.parado ? '<span class="pequeno">Avisos parados</span>'
+        : `<button class="botao botao--sec botao--mini" type="button" data-parar="${i}" aria-label="Parar os avisos do voo ${v.cod} para todos os inscritos">Parar avisos</button>`}</td></tr>`;
+  }).join('');
+}
+document.getElementById('tabela-voos').addEventListener('click', async e => {
+  const b = e.target.closest('[data-parar]'); if (!b) return;
+  const v = VOOS[b.dataset.parar];
+  if (await confirmar(`Parar os avisos do ${v.cod}?`, `${v.inscritos} ${v.inscritos === 1 ? 'pessoa deixa' : 'pessoas deixam'} de receber avisos deste voo. O alerta é apagado na AeroAPI e não volta.`, 'Parar avisos', 'Manter')) {
+    v.parado = true; registrar(`Parou os avisos do voo ${v.cod}`); pintarVoos(); avisar(`Avisos do ${v.cod} parados`);
+  }
+});
+
+/* ============================================================ CONTAS */
+function pintarContas() {
+  document.getElementById('tabela-contas').innerHTML = CONTAS.map((c, i) => `<tr class="${c.apagada ? 'apagado' : ''}">
+    <td><b>${c.nome}</b><br><span class="pequeno">${c.email}</span></td>
+    <td>${c.apagada ? '<span class="pequeno">Apagada</span>' : c.bloqueada
+      ? '<span class="estado-conta" style="color:var(--c-cancelado)"><svg aria-hidden="true"><use href="#i-bloq"/></svg>Bloqueada</span>'
+      : '<span class="estado-conta" style="color:var(--c-ok)"><svg aria-hidden="true"><use href="#i-ok"/></svg>Ativa</span>'}</td>
+    <td class="n">${c.voos}${c.voos >= config.voosConta ? ' <span class="pequeno" style="font:inherit;font-size:.75rem">no limite</span>' : ''}</td><td class="n">${c.buscas}</td><td>${c.acesso}</td>
+    <td style="text-align:right;white-space:nowrap">${c.apagada ? '' : `
+      <button class="botao botao--sec botao--mini" type="button" data-bloq="${i}">${c.bloqueada ? 'Desbloquear' : 'Bloquear'}<span class="sr"> ${c.nome}</span></button>
+      <button class="botao botao--perigo botao--mini" type="button" data-apagar="${i}">Apagar<span class="sr"> a conta de ${c.nome}</span></button>`}</td></tr>`).join('');
+}
+document.getElementById('tabela-contas').addEventListener('click', async e => {
+  const bloq = e.target.closest('[data-bloq]'), ap = e.target.closest('[data-apagar]');
+  if (bloq) {
+    const c = CONTAS[bloq.dataset.bloq]; c.bloqueada = !c.bloqueada;
+    registrar(`${c.bloqueada ? 'Bloqueou' : 'Desbloqueou'} a conta ${c.email}`); pintarContas();
+    avisar(c.bloqueada ? `${c.nome} não consegue mais acompanhar voos nem buscar rotas` : `${c.nome} desbloqueada`);
+  }
+  if (ap) {
+    const c = CONTAS[ap.dataset.apagar];
+    if (await confirmar(`Apagar a conta de ${c.nome}?`, `Apaga o login, as sessões e o vínculo dos aparelhos. Os ${c.voos} voos param de receber avisos. Não dá para desfazer.`, 'Apagar conta', 'Manter conta')) {
+      c.apagada = true; registrar(`Apagou a conta ${c.email}`); pintarContas(); avisar('Conta apagada');
+    }
+  }
+});
+
+/* ============================================================ ROTAS */
+function pintarRotas() {
+  document.getElementById('tabela-rotas').innerHTML = ROTAS.map(([a, b, n, cache]) =>
+    `<tr><td><span class="placa"><span class="loc">${a}</span><span class="dir">para ${b}</span></span></td><td class="n">${n}</td><td class="n">${cache}</td><td class="n">${n - cache}</td><td class="n">${brl((n - cache) * PRECO.rota)}</td></tr>`).join('');
+}
+
+/* ============================================================ LIMITES */
+function pintarLimites() {
+  document.querySelectorAll('#form-limites input').forEach(i => { const v = config[i.dataset.chave]; i.value = i.hasAttribute('data-decimal') ? brl(v) : v; i.removeAttribute('aria-invalid'); });
+  document.querySelectorAll('.interruptor').forEach(b => b.setAttribute('aria-checked', config[b.dataset.chave]));
+  document.getElementById('erro-limites').hidden = true;
+  document.getElementById('auditoria').innerHTML = AUDITORIA.map(a => `<li><time>${a.hora}</time><span>${a.txt}<br><span class="pequeno">admin de teste</span></span></li>`).join('');
+}
+document.querySelectorAll('.interruptor').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true')));
+document.getElementById('form-limites').addEventListener('submit', e => {
+  e.preventDefault();
+  const novo = { ...config }, erros = [], erro = document.getElementById('erro-limites');
+  document.querySelectorAll('#form-limites input').forEach(i => {
+    const v = Number(i.value.replace(',', '.'));
+    const ok = Number.isFinite(v) && v >= 0 && (i.hasAttribute('data-decimal') || Number.isInteger(v)) && v <= 1000;
+    i.setAttribute('aria-invalid', !ok);
+    if (ok) novo[i.dataset.chave] = v; else erros.push(i.dataset.nome);
+  });
+  document.querySelectorAll('.interruptor').forEach(b => novo[b.dataset.chave] = b.getAttribute('aria-checked') === 'true');
+  if (erros.length) { erro.textContent = `Confira: ${erros.join(', ')}. Use números inteiros de 0 a 1000 (o teto aceita centavos).`; erro.hidden = false; return; }
+  if (novo.voosConta < novo.voosAnon) { erro.textContent = 'Quem entra com Google deve poder acompanhar pelo menos tantos voos quanto quem não entra.'; erro.hidden = false; return; }
+  const mudou = [];
+  const nomes = { voosAnon: 'Voos sem conta', voosConta: 'Voos com Google', buscasAnon: 'Buscas sem conta', buscasConta: 'Buscas com Google', teto: 'Teto de gasto' };
+  for (const k in nomes) if (novo[k] !== config[k]) mudou.push(`${nomes[k]}: de ${k === 'teto' ? 'US$ ' + brl(config[k]) : config[k]} para ${k === 'teto' ? 'US$ ' + brl(novo[k]) : novo[k]}`);
+  if (novo.rota !== config.rota) mudou.push(`Busca por rota ${novo.rota ? 'ligada' : 'pausada'}`);
+  if (novo.eco !== config.eco) mudou.push(`Modo econômico ${novo.eco ? 'ligado' : 'desligado'}`);
+  config = novo; mudou.forEach(registrar); pintarLimites();
+  avisar(mudou.length ? 'Limites salvos. Já valem para todo mundo.' : 'Nada mudou.');
+});
+
+/* ============================================================ APOIO */
+function registrar(txt) { const d = new Date(); AUDITORIA.unshift({ hora: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`, txt }); }
+const toast = document.getElementById('toast');
+function avisar(msg) { toast.textContent = msg; toast.hidden = false; clearTimeout(avisar.t); avisar.t = setTimeout(() => toast.hidden = true, 3200); }
+const dlg = document.getElementById('confirmar');
+function confirmar(titulo, texto, sim, nao) {
+  document.getElementById('conf-titulo').textContent = titulo; document.getElementById('conf-texto').textContent = texto;
+  document.getElementById('conf-sim').textContent = sim; document.getElementById('conf-nao').textContent = nao;
+  dlg.returnValue = ''; dlg.showModal();
+  return new Promise(r => dlg.addEventListener('close', () => r(dlg.returnValue === 'sim'), { once: true }));
+}
+portao();
+</script>
+</body>
+</html>
