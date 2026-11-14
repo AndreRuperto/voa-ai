@@ -26,6 +26,7 @@ O nome é um trocadilho: *"tô indo aí"* virou *"voa aí"*.
 | 09 | [Direção visual](docs/09-direcao-visual.md) | Tokens, tipografia, componentes, telas e o [protótipo v1](prototipo/index.html) |
 | 10 | [Design](docs/10-design.md) | Identidade e prancha de design (`/design`) |
 | 11 | [Visual da v2](docs/11-v2-visual.md) | Junção da 09 com a 10, globo 3D e tela larga, com o [protótipo v2](prototipo/v2/index.html) |
+| 12 | [Contas, rotas e admin](docs/12-contas-admin-rotas.md) | Login Google opcional, busca por rota, painel de admin e o [protótipo do admin](prototipo/admin/index.html) |
 
 ### Referência da AeroAPI
 

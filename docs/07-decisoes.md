@@ -65,3 +65,27 @@ Formato curto de ADR (*Architecture Decision Record*). Cada decisão tem context
 **Decisão.** SQLite (`better-sqlite3`) em volume persistente do Railway.
 
 **Consequências.** Zero infraestrutura extra. O limite é uma instância de servidor só, o que basta para a v1. Se precisar escalar horizontalmente, migrar para Postgres.
+
+---
+
+## ADR-006 · Conta Google opcional
+
+**Status:** aceita · 14/11/2026
+
+**Contexto.** A v1 foi pensada sem cadastro (zero atrito). Surgiu a necessidade de ver os voos em mais de um aparelho, de dar limites maiores a quem se identifica e de ter um painel de admin protegido.
+
+**Decisão.** Login com Google, **opcional**, via Google Identity Services e ID token validado no servidor. Acompanhar um voo e abrir um link compartilhado continuam sem login. O admin exige Google e um e-mail na lista `ADMIN_EMAILS`.
+
+**Consequências.** Entram as tabelas `USUARIO`, `SESSAO` e `APARELHO`. A R5 vira "5 por aparelho sem conta, 15 por conta". Passamos a guardar e-mail e nome de quem entra, e "Minha conta" precisa permitir apagar tudo. Detalhes em [12](12-contas-admin-rotas.md).
+
+---
+
+## ADR-007 · Busca por rota de aeroporto a aeroporto
+
+**Status:** aceita · 14/11/2026
+
+**Contexto.** Pedido para acompanhar voos "de país para país". A AeroAPI só busca entre dois aeroportos (`/airports/{id}/flights/to/{dest_id}`, US$ 0,050 por conjunto de resultados). Assinar todos os voos de uma rota custaria US$ 0,10 por voo, dezenas por dia.
+
+**Decisão.** A busca por rota serve para **achar e escolher um voo**, não para assinar a rota. O país é um filtro de interface para escolher os aeroportos; cada busca usa no máximo 3 pares, com cache de 30 min por par e dia, limite diário por pessoa e um interruptor no admin.
+
+**Consequências.** Uma busca típica custa US$ 0,05. A lista de países e aeroportos fica no nosso banco. Seguir uma rota inteira fica fora do escopo até haver plano pago e demanda.
