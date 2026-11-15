@@ -1,5 +1,6 @@
 // Cliente da FlightAware AeroAPI v4. Ver docs/04-integracao-aeroapi.md.
 // Toda chamada é registrada em CHAMADA_API com o preço da tabela, para o painel de admin.
+import { tetoDuroAtingido } from './limites.js';
 
 export const BASE_AEROAPI = 'https://aeroapi.flightaware.com/aeroapi';
 
@@ -15,7 +16,7 @@ export const PRECOS = {
 /** Erro com código do contrato (docs/13-api.md). */
 export class ErroAeroapi extends Error {
   /**
-   * @param {'aeroapi_sem_chave'|'aeroapi_falhou'} codigo
+   * @param {'aeroapi_sem_chave'|'aeroapi_falhou'|'teto_duro'} codigo
    * @param {string} mensagem
    * @param {{status?: number, corpo?: string}} [extra]
    */
@@ -23,11 +24,13 @@ export class ErroAeroapi extends Error {
     super(mensagem);
     this.name = 'ErroAeroapi';
     this.codigo = codigo;
-    this.http = codigo === 'aeroapi_sem_chave' ? 503 : 502;
+    this.http = codigo === 'aeroapi_falhou' ? 502 : 503;
     this.statusAeroapi = extra.status ?? null;
     this.corpo = extra.corpo ?? null;
   }
 }
+
+export const MENSAGEM_TETO_DURO = 'A busca de voos está pausada até o mês que vem: o limite de gasto do serviço foi atingido. Os voos que você já acompanha continuam avisando.';
 
 export const MENSAGEM_SEM_CHAVE = 'A busca de voos ainda não está ligada neste servidor. Falta configurar a chave da AeroAPI.';
 
@@ -47,6 +50,7 @@ export function registrarChamada(db, { tipo, endpoint, paginas = 1, status = nul
  * @param {(ms:number)=>Promise<void>} [op.esperar]
  * @param {number} [op.tentativas] novas tentativas em 429/5xx/rede
  * @param {() => Date} [op.agora]
+ * @param {() => boolean} [op.bloqueado] true quando o teto duro do mês foi atingido (padrão: lê CONFIG e CHAMADA_API)
  */
 export function criarAeroapi({
   db,
@@ -56,6 +60,7 @@ export function criarAeroapi({
   esperar = (ms) => new Promise((r) => setTimeout(r, ms)),
   tentativas = 3,
   agora = () => new Date(),
+  bloqueado = () => tetoDuroAtingido(db, agora()),
 } = {}) {
   const temChave = () => Boolean(chave());
 
@@ -67,6 +72,10 @@ export function criarAeroapi({
   async function chamar(metodo, caminho, op) {
     const k = chave();
     if (!k) throw new ErroAeroapi('aeroapi_sem_chave', MENSAGEM_SEM_CHAVE);
+    // Teto duro: nada pago sai daqui. Apagar alerta continua (é de graça e evita novas entregas cobradas).
+    if (!(metodo === 'DELETE' && op.tipo === 'alerts') && bloqueado()) {
+      throw new ErroAeroapi('teto_duro', MENSAGEM_TETO_DURO);
+    }
     const url = new URL(base + caminho);
     for (const [n, v] of Object.entries(op.query || {})) if (v != null) url.searchParams.set(n, String(v));
     const endpoint = `${metodo} ${op.endpoint}`;

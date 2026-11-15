@@ -718,7 +718,7 @@ async function telaStatus([id], { silencioso = false } = {}) {
     const naoExiste = e.erro === 'nao_encontrado';
     pintar($('#st-cabeca'), `<div class="quem"><h1 id="t-status" tabindex="-1">${naoExiste ? 'Voo não encontrado' : 'Não deu para abrir o voo'}</h1></div>`);
     pintar($('#st-corpo'), vazio({ erro: !naoExiste,
-      titulo: naoExiste ? 'Esse voo não está mais aqui' : e.erro === 'aeroapi_sem_chave' ? 'Busca de voos indisponível' : 'Algo deu errado',
+      titulo: naoExiste ? 'Esse voo não está mais aqui' : e.erro === 'aeroapi_sem_chave' ? 'Busca de voos indisponível' : e.erro === 'teto_duro' ? 'Busca de voos pausada' : 'Algo deu errado',
       texto: naoExiste ? 'O link pode estar errado, ou o voo já foi apagado: os dados somem 7 dias depois do pouso.' : esc(mensagemDe(e)),
       acao: `<a class="botao" href="#inicio">${icone('i-mais')}Acompanhar um voo</a>` }));
     $('#st-acoes').innerHTML = ''; $('#st-acoes').dataset.chave = '';

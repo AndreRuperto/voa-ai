@@ -4,6 +4,7 @@
 import { apagarAlertaDoVoo } from './alertas.js';
 import { lerVoo, salvarVoo, chegada } from './voos.js';
 import { verificarAtraso, avisarUmaVez, chaveEvento } from './webhook.js';
+import { verificarGasto } from './avisosgasto.js';
 
 const MIN = 60_000;
 const MARCOS_ANTES = [{ nome: '3h', min: 180 }, { nome: '1h', min: 60 }, { nome: '15m', min: 15 }];
@@ -26,6 +27,9 @@ export async function rodarCiclo(ctx) {
   const agora = ctx.agora();
   const t = agora.getTime();
   const temChave = ctx.aeroapi.temChave();
+
+  // 0. Gasto do mês: avisa os admins a 50% e 80% do crédito, no teto mensal e no teto duro.
+  try { await verificarGasto(ctx); } catch (e) { console.warn(`[agendador] avisos de gasto: ${e.message}`); }
 
   // Voos com alguém inscrito e ainda não terminados.
   const voos = db.prepare(`SELECT DISTINCT v.fa_flight_id FROM VOO v JOIN INSCRICAO i ON i.fa_flight_id = v.fa_flight_id

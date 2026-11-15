@@ -156,6 +156,10 @@
               <span class="pequeno">Ao chegar nele, a busca por rota pausa sozinha. Acompanhar pelo número do voo continua.</span></div>
             <div class="campo"><label for="l-alertas">Alertas criados por dia</label><input id="l-alertas" inputmode="numeric" data-chave="teto_alertas_dia" data-nome="Alertas criados por dia">
               <span class="pequeno">Teto de voos novos acompanhados por dia, somando todo mundo.</span></div>
+            <div class="campo"><label for="l-duro">Teto duro no mês (US$)</label><input id="l-duro" inputmode="decimal" data-chave="teto_duro_usd" data-nome="Teto duro" data-decimal>
+              <span class="pequeno">Ao chegar nele, nenhuma busca nova vai à AeroAPI até o mês virar. Os voos já acompanhados continuam avisando.</span></div>
+            <div class="campo"><label for="l-ip">Consultas por rede</label><input id="l-ip" inputmode="numeric" data-chave="limite_ip_consultas" data-nome="Consultas por rede">
+              <span class="pequeno">Por endereço IP, a cada 10 minutos. Freia quem dispara buscas em sequência.</span></div>
           </div>
           <div>
             <div class="chave"><span><b id="c-rota">Busca por rota</b><span class="pequeno">Cada busca custa US$ 0,05. Desligue se o gasto disparar.</span></span>
@@ -166,10 +170,22 @@
           <p class="campo"><span class="erro" id="erro-limites" role="alert" hidden></span></p>
           <button class="botao" type="submit" id="salvar-limites">Salvar limites</button>
         </form>
-        <section class="cartao" aria-labelledby="t-aud">
-          <h2 id="t-aud">Últimas mudanças</h2>
-          <ol class="auditoria" id="auditoria"></ol>
-        </section>
+        <div class="coluna">
+          <section class="cartao" aria-labelledby="t-avisos">
+            <h2 id="t-avisos">Avisos de gasto</h2>
+            <p class="apoio">Um push a 50% e a 80% do crédito, quando a busca por rota pausa no teto do mês e quando o teto duro para as buscas. Cada um chega uma vez por mês.</p>
+            <p class="pequeno" id="avisos-estado" role="status">…</p>
+            <div class="botoes">
+              <button class="botao" type="button" id="avisos-ligar">Receber neste aparelho</button>
+              <button class="botao botao--sec" type="button" id="avisos-teste">Enviar aviso de teste</button>
+            </div>
+            <ol class="auditoria" id="avisos-mes" aria-label="Avisos deste mês"></ol>
+          </section>
+          <section class="cartao" aria-labelledby="t-aud">
+            <h2 id="t-aud">Últimas mudanças</h2>
+            <ol class="auditoria" id="auditoria"></ol>
+          </section>
+        </div>
       </div>
     </section>
   </main>

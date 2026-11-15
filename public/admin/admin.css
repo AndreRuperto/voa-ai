@@ -137,6 +137,8 @@ tr.apagado td { opacity: .45; }
 .interruptor::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--c-tinta); transition: left var(--m-dur) var(--m-curva); }
 .interruptor[aria-checked="true"] { background: var(--c-pista); border-color: var(--c-pista); }
 .interruptor[aria-checked="true"]::after { left: 28px; background: var(--c-placa-tinta); }
+.coluna { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.botoes { display: flex; gap: 12px; flex-wrap: wrap; }
 .auditoria { list-style: none; padding: 0; display: flex; flex-direction: column; }
 .auditoria li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--c-linha); font-size: .875rem; }
 .auditoria time { font: 700 1rem var(--f-placa); color: var(--c-tinta-suave); }

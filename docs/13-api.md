@@ -16,6 +16,9 @@
 | Sem `AEROAPI_KEY` | Toda rota que chamaria a AeroAPI responde `503 {"erro":"aeroapi_sem_chave"}`. Não existe modo de dados falsos |
 | Lugares | Lista estática de países e aeroportos em `server/dados/aeroportos.json` (OurAirports, domínio público), só aeroportos `large_airport`/`medium_airport` com código IATA e serviço regular. Campos: `iata`, `icao`, `nome`, `cidade`, `pais` (código ISO), `lat`, `lon`, `fuso` |
 | Horários | A API devolve ISO 8601 em UTC. O front formata no fuso do aeroporto de **destino** (`destino.fuso`) e diz isso na tela ("Horários de Guarulhos") |
+| Limite por IP | Na memória, janela fixa: **consultas** (`GET /api/voos/buscar`, `GET /api/voos/:id`, `GET /api/rotas/buscar`, `POST /api/inscricoes`) 40 a cada 10 min (`limite_ip_consultas` no admin); `POST /api/sessao` 20 a cada 10 min; o resto de `/api/*` 240 por minuto. Admin e webhook ficam de fora. O IP vem de `X-Real-IP` no Railway (ou do cabeçalho em `CABECALHO_IP`); fora disso, do IP da conexão |
+| Teto duro | `teto_duro_usd` (padrão 2 × teto do mês). Passou dele, o servidor não faz chamada paga à AeroAPI até o mês virar (`503 teto_duro`); apagar alerta continua |
+| Avisos de gasto | O agendador confere o gasto a cada minuto e manda push aos aparelhos dos admins a 50% e 80% do crédito, no teto do mês e no teto duro. Uma vez por marco e por mês (tabela `AVISO_GASTO`); se vários marcos passam juntos, só o mais alto manda push. E-mail ainda não |
 | Posição no globo | Sem `/track` na v1: o front estima a posição pela fração do tempo de voo (`actual_off` → `estimated_on`) ao longo do grande círculo, e a legenda diz que é estimada |
 
 ## Formato de erro
@@ -28,6 +31,8 @@ Todo erro é JSON `{"erro": "<codigo>", "mensagem": "<texto em PT-BR para mostra
 | `nao_encontrado` | 404 | Voo ou recurso inexistente (e `/admin` para quem não é admin) |
 | `limite` | 429 | Limite de voos ativos ou de buscas por rota |
 | `pausado` | 503 | Busca por rota pausada no admin ou teto mensal atingido |
+| `muitos_pedidos` | 429 | Passou do limite de pedidos por IP (vem com `Retry-After` em segundos) |
+| `teto_duro` | 503 | O gasto do mês chegou ao teto duro: nenhuma chamada paga à AeroAPI até o mês virar |
 | `aeroapi_sem_chave` | 503 | `AEROAPI_KEY` vazia |
 | `aeroapi_falhou` | 502 | A AeroAPI respondeu erro depois das novas tentativas |
 
@@ -72,6 +77,7 @@ Todo erro é JSON `{"erro": "<codigo>", "mensagem": "<texto em PT-BR para mostra
 | `DELETE` | `/api/eu` | Apaga a conta. `204` |
 | `GET` | `/api/voos/buscar?ident=TP103&data=2026-11-14` | `{"voos":[Voo…]}`. `data` entre hoje e +2 dias (R4). IATA vira ICAO por `/canonical` (R6). Cache de 10 min por `ident+data` |
 | `GET` | `/api/voos/:fa_flight_id` | `Voo` (do banco; se tiver mais de 15 min e o voo não terminou, atualiza na AeroAPI antes) |
+| `PUT` | `/api/aparelho/push` | Corpo `{"push":PushSubscription}`. Liga o push do aparelho sem voo (o painel usa para os avisos de gasto). `204` |
 | `GET` | `/api/inscricoes` | `{"inscricoes":[{"id","apelido","criado_em","voo":Voo}]}` do aparelho ou da conta |
 | `POST` | `/api/inscricoes` | Corpo `{"fa_flight_id","apelido","push":PushSubscription|null}`. Cria o alerta na AeroAPI se o voo ainda não tem (R1). `201 {"id", "voo":Voo}`. Respeita o limite (R5 / doc 12) |
 | `PUT` | `/api/inscricoes/:id/push` | Corpo `{"push":PushSubscription}`. Liga o push depois da permissão |
@@ -87,7 +93,9 @@ Todo erro é JSON `{"erro": "<codigo>", "mensagem": "<texto em PT-BR para mostra
 | Método | Rota | Resposta |
 |---|---|---|
 | `GET` | `/admin/` | Página do painel |
-| `GET` | `/api/admin/resumo?mes=2026-11` | `{"mes","credito_usd","gasto_usd","projecao_usd","por_dia":[{"dia","usd"}],"por_tipo":[{"tipo","chamadas","usd"}],"voos_ativos","alertas_entregues","contas","buscas_rota"}` |
+| `GET` | `/api/admin/resumo?mes=2026-11` | `{"mes","credito_usd","teto_mensal_usd","teto_duro_usd","avisos_gasto":[{"marco","gasto_usd","enviados","em"}],"gasto_usd","projecao_usd","por_dia":[{"dia","usd"}],"por_tipo":[{"tipo","chamadas","usd"}],"voos_ativos","alertas_entregues","contas","buscas_rota"}` |
+| `GET` | `/api/admin/avisos` | `{"aparelhos_com_push"}`: quantos aparelhos de admin recebem os avisos de gasto |
+| `POST` | `/api/admin/avisos/teste` | Manda um push de teste aos aparelhos dos admins. `{"enviados"}` |
 | `GET` | `/api/admin/voos` | `{"voos":[{"voo":Voo,"inscritos","alertas_entregues","custo_usd","alert_id"}]}` |
 | `POST` | `/api/admin/voos/:fa_flight_id/parar` | Apaga o alerta e as inscrições do voo. `204` |
 | `GET` | `/api/admin/contas` | `{"contas":[{"id","email","nome","foto","voos_ativos","buscas_mes","ultimo_acesso","bloqueado"}]}` |
@@ -95,7 +103,7 @@ Todo erro é JSON `{"erro": "<codigo>", "mensagem": "<texto em PT-BR para mostra
 | `DELETE` | `/api/admin/contas/:id` | `204` |
 | `GET` | `/api/admin/rotas` | `{"rotas":[{"de","para","buscas","acertos_cache","custo_usd"}]}` |
 | `GET` | `/api/admin/config` | `{"config":{chave:valor},"auditoria":[{"em","admin_email","acao","detalhe"}]}` |
-| `PUT` | `/api/admin/config` | Corpo `{chave:valor}`. Chaves: `limite_voos_anonimo`, `limite_voos_conta`, `limite_rota_anonimo`, `limite_rota_conta`, `teto_alertas_dia`, `teto_mensal_usd`, `rota_pausada`, `modo_economico` |
+| `PUT` | `/api/admin/config` | Corpo `{chave:valor}`. Chaves: `limite_voos_anonimo`, `limite_voos_conta`, `limite_rota_anonimo`, `limite_rota_conta`, `teto_alertas_dia`, `teto_mensal_usd`, `teto_duro_usd`, `limite_ip_consultas`, `rota_pausada`, `modo_economico` |
 
 ## Custo registrado
 
