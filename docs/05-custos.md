@@ -47,6 +47,7 @@ Como o alerta é **por voo** e não por pessoa (regra R1), 10 pessoas acompanhan
 | Item | Estimativa |
 |---|---|
 | Railway (servidor + volume de 1 GB) | ≈ US$ 5/mês (plano Hobby) |
+| Busca por rota com "Incluir voos com uma escala" | 2 consultas por par em vez de 1 (sem escala e com uma escala): ≈ US$ 0,10 por par, com cache de 30 min |
 | Web Push | Gratuito |
 | Domínio próprio (opcional) | ≈ R$ 40/ano (`.com.br`) |
 

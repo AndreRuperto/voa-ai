@@ -535,11 +535,83 @@ function cenaConfirmacao() {
     rotulos: comMapa.map(v => ({ id: v.fa_flight_id, onde: 'aviao', html: placaMini(codigo(v), `${nomeCurto(v.origem)} a ${nomeCurto(v.destino)}`) })),
   });
 }
+/** Viagem com escala escolhida na busca por rota: mostra as duas pernas e acompanha as duas. */
+let confViagem = null;
+function cartaoTrecho(v, n) {
+  const f = fusoDe(v), sai = saidaDe(v), chega = chegadaDe(v);
+  const maisDia = diaISO(chega, f) && diaISO(sai, f) && diaISO(chega, f) !== diaISO(sai, f) ? ' <small>+1 dia</small>' : '';
+  const cia = [`Trecho ${n}`, codigo(v), v.companhia, v.aeronave].filter(Boolean).join(' · ');
+  return `<li class="cartao-voo cartao-voo--trecho"><span class="cartao-voo__corpo">
+      <span class="cartao-voo__cia"><span>${esc(cia)}</span></span>
+      <span class="ponta"><span class="ponta__codigo">${esc(v.origem?.iata || '')}</span><span class="ponta__cidade">${esc(cidade(v.origem))}</span><span class="ponta__hora num">sai ${hora(sai, f)}</span></span>
+      ${icone('i-aviao', ' class="cartao-voo__aviao"')}
+      <span class="ponta ponta--fim"><span class="ponta__codigo">${esc(v.destino?.iata || '')}</span><span class="ponta__cidade">${esc(cidade(v.destino))}</span><span class="ponta__hora num">chega ${hora(chega, f)}${maisDia}</span></span>
+    </span></li>`;
+}
+function modoConfirmacao(viagem) {
+  const t = $('#t-conf'); t.textContent = viagem ? t.dataset.viagem : t.dataset.um;
+  $('#me-avisar span').textContent = viagem ? `Me avisar dos ${viagem.length} voos` : 'Me avisar';
+}
+function telaConfirmacaoViagem(cods, data) {
+  const est = $('#conf-estado'), escolha = $('#conf-escolha'), b = estado.buscaViagem;
+  const ok = b && b.data === data && b.pernas.map(v => limparIdent(codigo(v))).join('+') === cods.join('+');
+  if (!ok) {
+    escolha.hidden = true; $('#conf-apoio').textContent = ''; confViagem = null; modoConfirmacao(null);
+    est.innerHTML = vazio({ titulo: 'Busque a viagem de novo', texto: 'As viagens com escala vêm da busca por rota. Faça a busca de novo e toque na viagem.',
+      acao: '<a class="botao" href="#rota">Buscar pela rota</a>' });
+    cenaGlobo({ voos: [] });
+    return;
+  }
+  const pernas = b.pernas; confViagem = pernas; confVoos = pernas; modoConfirmacao(pernas);
+  est.innerHTML = ''; escolha.hidden = false;
+  $('#conf-apoio').textContent = `Achamos a viagem ${pernas.map(codigo).join(' + ')} ${nomeDoDia(data)}, com escala em ${cidade(pernas[0].destino)}. Confira se é a de quem você espera.`;
+  $('#conf-opcoes').innerHTML = `<ol class="viagem__pernas">${pernas.map((v, j) => (j ? conexaoHtml(pernas[j - 1], v) : '') + cartaoTrecho(v, j + 1)).join('')}</ol>`;
+  $('#conf-fuso').textContent = 'Os horários de cada voo são da cidade onde ele chega.'
+    + (desktop.matches && pernas.every(temCoordenadas) ? ' A viagem aparece no globo.' : '');
+  pintarPrevia();
+  const comMapa = pernas.filter(temCoordenadas);
+  if (comMapa.length === pernas.length) {
+    const ps = pernas.map(v => ({ voo: v })), voos = globoDaViagem(ps, 0), ult = pernas[pernas.length - 1];
+    cenaGlobo({ voos, enquadrar: voos.map(x => x.id), rotulos: [
+      { id: pernas[0].fa_flight_id, onde: 'a', classe: 'rotulo--aero', html: placaMini(pernas[0].origem.iata, '') },
+      ...pernas.slice(0, -1).map(v => ({ id: v.fa_flight_id, onde: 'b', classe: 'rotulo--aero', html: placaMini(v.destino.iata, 'conexão') })),
+      { id: ult.fa_flight_id, onde: 'b', html: placaMini(ult.destino.iata, nomeCurto(ult.destino)) },
+    ] });
+  }
+}
+/** Acompanha todas as pernas com o mesmo apelido e liga os avisos de cada uma; abre o 1º voo. */
+async function seguirViagem(pernas, apelidoTxt, botao, erroEl) {
+  esconderErro(erroEl);
+  ocupado(botao, true);
+  if (suportaPush() && estado.config?.vapid_publica && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+  const criadas = [];
+  try {
+    for (const v of pernas) {
+      if (inscricaoDe(v.fa_flight_id)) continue;
+      const r = await post('/api/inscricoes', { fa_flight_id: v.fa_flight_id, apelido: apelidoTxt || null, push: null });
+      if (r?.voo) estado.voos.set(v.fa_flight_id, r.voo);
+      criadas.push(r.id);
+    }
+    let resultado = 'ok';
+    for (const id of criadas) resultado = await ligarAvisos(id).catch(() => 'falhou');
+    await Promise.all([carregarEu(), carregarInscricoes()]);
+    avisar((TOAST_AVISO[resultado] || TOAST_AVISO.ok).replace('Voo salvo', 'Viagem salva'), 5000);
+    location.hash = `#status/${encodeURIComponent(pernas[0].fa_flight_id)}`;
+  } catch (e) {
+    let html = esc(mensagemDe(e));
+    if (criadas.length) html = `Só deu para salvar ${plural(criadas.length, 'voo', 'voos')} da viagem. ${html}`;
+    if (e.erro === 'limite') html += ` <a href="#meus-voos">Ver meus voos</a>${!estado.eu?.conta ? ' ou <a href="#entrar">entre com Google</a> para acompanhar mais' : ''}.`;
+    if (criadas.length) carregarInscricoes();
+    mostrarErro(erroEl, html);
+  } finally { ocupado(botao, false); }
+}
 async function telaConfirmacao([cod, data]) {
   cod = limparIdent(cod || ''); data = data || diasDeBusca()[0].valor;
   if (!cod) { location.replace('#inicio'); return; }
   const est = $('#conf-estado'), escolha = $('#conf-escolha');
   esconderErro($('#conf-erro'));
+  if (cod.includes('+')) return telaConfirmacaoViagem(cod.split('+').filter(Boolean), data);
+  confViagem = null; modoConfirmacao(null);
   let voos = estado.busca?.chave === `${cod}|${data}` ? estado.busca.voos : null;
   if (!voos) {
     escolha.hidden = true; $('#conf-apoio').textContent = `Procurando o voo ${cod} ${nomeDoDia(data)}…`;
@@ -578,7 +650,10 @@ async function telaConfirmacao([cod, data]) {
   $$('input[name="voo"]').forEach(r => r.addEventListener('change', () => { estado.busca.escolhido = r.value; pintarPrevia(); cenaConfirmacao(); }));
   pintarPrevia(); cenaConfirmacao();
 }
-$('#me-avisar').addEventListener('click', e => { const v = vooEscolhido(); if (v) meAvisar(v, apelido.value.trim(), e.currentTarget, $('#conf-erro')); });
+$('#me-avisar').addEventListener('click', e => {
+  if (confViagem) return seguirViagem(confViagem, apelido.value.trim(), e.currentTarget, $('#conf-erro'));
+  const v = vooEscolhido(); if (v) meAvisar(v, apelido.value.trim(), e.currentTarget, $('#conf-erro'));
+});
 
 /* ============================================================ STATUS */
 let timerStatus = null, timerAviao = null, statusId = null;
@@ -1055,28 +1130,43 @@ $('#form-rota').addEventListener('submit', async e => {
   const botao = $('#buscar-rota'); ocupado(botao, true);
   const res = $('#rota-resultados');
   try {
-    const r = await get(`/api/rotas/buscar?de=${de.join(',')}&para=${para.join(',')}&data=${data}`);
+    const comEscala = $('#com-escala').checked;
+    const r = await get(`/api/rotas/buscar?de=${de.join(',')}&para=${para.join(',')}&data=${data}${comEscala ? '&escala=1' : ''}`);
     await carregarEu();
     const prs = r?.pares || [];
     const itens = prs.flatMap(p => (p.voos || []).map(v => ({ v, par: `par-${p.de}-${p.para}` })))
       .sort((x, y) => new Date(saidaDe(x.v)) - new Date(saidaDe(y.v)));
     itens.forEach(({ v }) => estado.voos.set(v.fa_flight_id, v));
-    estado.rotaData = data; estado.rotaItens = itens;
-    $('#t-res').textContent = itens.length ? `${itens.length} ${itens.length === 1 ? 'voo sem escala' : 'voos sem escala'} ${nomeDoDia(data)}` : `Nenhum voo sem escala ${nomeDoDia(data)}`;
-    $('#lista-rota').innerHTML = itens.length ? itens.map(({ v, par }) => {
+    const viagens = prs.flatMap(p => (p.viagens || []).map(x => ({ pernas: x.pernas, par: `par-${p.de}-${p.para}` })))
+      .sort((x, y) => new Date(saidaDe(x.pernas[0])) - new Date(saidaDe(y.pernas[0])));
+    viagens.forEach(x => x.pernas.forEach(v => estado.voos.set(v.fa_flight_id, v)));
+    estado.rotaData = data; estado.rotaItens = itens; estado.rotaViagens = viagens;
+    const partes = [itens.length ? plural(itens.length, 'voo sem escala', 'voos sem escala') : '', viagens.length ? plural(viagens.length, 'viagem com escala', 'viagens com escala') : ''].filter(Boolean);
+    $('#t-res').textContent = partes.length ? `${partes.join(' e ')} ${nomeDoDia(data)}` : `Nenhum voo ${comEscala ? '' : 'sem escala '}${nomeDoDia(data)}`;
+    const htmlViagens = viagens.map((x, i) => resultadoViagem(x, i)).join('');
+    $('#lista-rota').innerHTML = (itens.length || viagens.length) ? htmlViagens + itens.map(({ v, par }) => {
       const f = fusoDe(v), sai = saidaDe(v), chega = chegadaDe(v), dur = minutosEntre(h(v).saida_prevista || sai, h(v).chegada_prevista || chega);
-      return `<button class="resultado" type="button" data-id="${esc(v.fa_flight_id)}" data-par="${esc(par)}">
+      return `<button class="resultado" type="button" data-id="${esc(v.fa_flight_id)}" data-par="${esc(par)}" data-sai="${esc(sai || '')}">
         <span class="resultado__cia"><span>${esc(v.companhia || '')}</span><b>${esc(codigo(v))}</b></span>
         <span class="ponta"><span class="ponta__codigo">${esc(v.origem?.iata || '')}</span><span class="ponta__hora num">sai ${hora(sai, f)}</span></span>
         <span class="resultado__meio">${dur ? duracao(dur, true) : ''}<br>sem escala</span>
         <span class="ponta ponta--fim"><span class="ponta__codigo">${esc(v.destino?.iata || '')}</span><span class="ponta__hora num">chega ${hora(chega, f)}</span></span>
       </button>`;
-    }).join('') : vazio({ titulo: 'Nada nesse dia', texto: 'Não achamos voos diretos entre esses aeroportos nessa data. Tente outro dia, outros aeroportos ou <a href="#inicio">busque pelo número do voo</a>.' });
+    }).join('') : vazio({ titulo: 'Nada nesse dia', texto: comEscala
+      ? 'Não achamos voos diretos nem com uma escala entre esses aeroportos nessa data. Tente outro dia, outros aeroportos ou <a href="#inicio">busque pelo número do voo</a>.'
+      : 'Não achamos voos diretos entre esses aeroportos nessa data. Marque "Incluir voos com uma escala", tente outro dia ou <a href="#inicio">busque pelo número do voo</a>.' });
+    // os com escala vêm primeiro só quando não há direto; com direto, a ordem é pela saída
+    if (itens.length && viagens.length) {
+      const lista = $('#lista-rota'), todos = [...lista.children];
+      todos.sort((a, b) => new Date(a.dataset.sai) - new Date(b.dataset.sai)).forEach(el => lista.append(el));
+    }
     const cidades = [...new Set(itens.map(({ v }) => cidade(v.destino)))];
     const lim = estado.eu?.limites?.buscas_rota, usadas = estado.eu?.uso?.buscas_rota_hoje;
     const resto = Number.isFinite(lim) && Number.isFinite(usadas) ? Math.max(0, lim - usadas) : null;
     $('#rota-nota').textContent = [
       itens.length ? (cidades.length === 1 ? `Horários de ${cidades[0]}.` : 'Horários da cidade de chegada de cada voo.') + ' Toque num voo para acompanhar.' : '',
+      viagens.length ? 'Nas viagens com escala, a saída está no horário da cidade de origem e a chegada no do destino final. A lista com escala mostra as próximas saídas e pode não ter todas as opções.' : '',
+      comEscala && !viagens.length && itens.length ? 'Não achamos viagens com uma escala para essa data.' : '',
       prs.length && prs.every(p => p.cache) ? 'Esta busca veio do cache e não gastou nada.' : '',
       resto !== null ? `Você ainda tem ${plural(resto, 'busca', 'buscas')} por rota hoje.` : '',
     ].filter(Boolean).join(' ');
@@ -1093,6 +1183,12 @@ $('#form-rota').addEventListener('submit', async e => {
 });
 $('#lista-rota').addEventListener('click', e => {
   const b = e.target.closest('.resultado'); if (!b) return;
+  if (b.dataset.viagem != null) {
+    const x = estado.rotaViagens?.[Number(b.dataset.viagem)]; if (!x) return;
+    estado.buscaViagem = { pernas: x.pernas, data: estado.rotaData };
+    location.hash = `confirmacao/${x.pernas.map(v => limparIdent(codigo(v))).join('+')}/${estado.rotaData}`;
+    return;
+  }
   const v = estado.voos.get(b.dataset.id); if (!v) return;
   const c = limparIdent(codigo(v)), data = estado.rotaData;
   estado.busca = { chave: `${c}|${data}`, voos: [v], escolhido: v.fa_flight_id };
@@ -1100,6 +1196,20 @@ $('#lista-rota').addEventListener('click', e => {
 });
 $('#lista-rota').addEventListener('mouseover', e => { const b = e.target.closest('.resultado'); if (b) globo?.realcar(b.dataset.par); });
 $('#lista-rota').addEventListener('mouseleave', () => globo?.realcar(null));
+/** Resultado da busca por rota: uma viagem com uma escala (as duas pernas num botão só). */
+function resultadoViagem({ pernas, par }, i) {
+  const [a, b] = pernas, sai = saidaDe(a), chega = chegadaDe(b);
+  const total = minutosEntre(sai, chega), escala = minutosEntre(chegadaDe(a), saidaDe(b));
+  const cias = [...new Set(pernas.map(v => v.companhia).filter(Boolean))].join(' + ');
+  const maisDia = diaISO(chega, fusoDe(b)) !== diaISO(sai, a.origem?.fuso) ? ' <small>+1 dia</small>' : '';
+  const aria = `${cias}, ${codigo(a)} e ${codigo(b)}: sai de ${cidade(a.origem)} às ${hora(sai, a.origem?.fuso)}, escala de ${duracao(escala)} em ${cidade(a.destino)}, chega a ${cidade(b.destino)} às ${hora(chega, fusoDe(b))}`;
+  return `<button class="resultado resultado--escala" type="button" data-viagem="${i}" data-par="${esc(par)}" data-sai="${esc(sai || '')}" aria-label="${esc(aria)}">
+    <span class="resultado__cia"><span>${esc(cias)}</span><b>${esc(codigo(a))} + ${esc(codigo(b))}</b></span>
+    <span class="ponta"><span class="ponta__codigo">${esc(a.origem?.iata || '')}</span><span class="ponta__hora num">sai ${hora(sai, a.origem?.fuso)}</span></span>
+    <span class="resultado__meio">${total ? duracao(total, true) : ''}<br><span class="resultado__escala">${icone('i-conexao')}${esc(a.destino?.iata || '')} · ${escala !== null ? duracao(Math.max(0, escala), true) : ''}</span></span>
+    <span class="ponta ponta--fim"><span class="ponta__codigo">${esc(b.destino?.iata || '')}</span><span class="ponta__hora num">chega ${hora(chega, fusoDe(b))}${maisDia}</span></span>
+  </button>`;
+}
 function telaRota() { carregarPaises().then(() => cenaRota()); cenaRota(); }
 
 /* ============================================================ ENTRAR */

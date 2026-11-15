@@ -109,7 +109,8 @@ export function registrarApi(r) {
   r.rota('GET', '/api/rotas/buscar', async ({ ctx, res, url, quem }) => {
     if (quem.usuario?.bloqueado) throw new ErroRegra(403, 'bloqueado', 'Esta conta está bloqueada.');
     const p = url.searchParams;
-    const pares = await buscarRota(ctx, { de: p.get('de'), para: p.get('para'), data: p.get('data') }, { quem: rotuloQuem(quem), temConta: Boolean(quem.usuario) });
+    const pares = await buscarRota(ctx, { de: p.get('de'), para: p.get('para'), data: p.get('data'), escala: p.get('escala') === '1' },
+      { quem: rotuloQuem(quem), temConta: Boolean(quem.usuario) });
     enviarJson(res, 200, { pares });
   });
 }

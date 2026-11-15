@@ -447,3 +447,17 @@ dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
 .conexao-add summary svg { width: 20px; height: 20px; fill: var(--c-ceu); flex: none; }
 .conexao-add summary:focus-visible { outline: 2px solid var(--c-foco); outline-offset: 2px; border-radius: var(--r-cartao); }
 .conexao-add__form { display: flex; flex-direction: column; gap: var(--e-3); padding: 0 var(--e-4) var(--e-4); }
+
+/* Busca por rota: opção de voos com uma escala e o resultado de uma viagem */
+.opcao-escala { display: flex; gap: var(--e-3); align-items: flex-start; cursor: pointer; position: relative; }
+.opcao-escala input { position: absolute; opacity: 0; width: 24px; height: 24px; margin: 0; }
+.opcao-escala__caixa { flex: none; width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--c-linha-forte); display: grid; place-items: center; margin-top: 1px; }
+.opcao-escala__caixa svg { width: 16px; height: 16px; fill: var(--c-placa-tinta); opacity: 0; }
+.opcao-escala input:checked + .opcao-escala__caixa { background: var(--c-pista); border-color: var(--c-pista); }
+.opcao-escala input:checked + .opcao-escala__caixa svg { opacity: 1; }
+.opcao-escala input:focus-visible + .opcao-escala__caixa { outline: 3px solid var(--c-foco); outline-offset: 2px; }
+.opcao-escala__texto { display: flex; flex-direction: column; gap: 2px; }
+.opcao-escala__texto small { color: var(--c-tinta-suave); font-size: var(--fs-pp); line-height: 1.35; }
+.resultado__escala { display: inline-flex; align-items: center; gap: 3px; color: var(--c-ceu); font-weight: 600; white-space: nowrap; }
+.resultado__escala svg { width: 14px; height: 14px; fill: currentColor; }
+.cartao-voo--trecho { list-style: none; }

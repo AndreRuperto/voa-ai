@@ -152,6 +152,17 @@ export function criarAeroapi({
       return (json?.flights || []).filter((f) => f.segments?.length === 1).map((f) => f.segments[0]);
     },
 
+    /**
+     * Viagens com uma escala entre dois aeroportos: [[perna1, perna2], …]. A AeroAPI não aceita data com
+     * `onestop` (devolve as próximas saídas) e avisa que a lista vem de uma heurística e pode ser incompleta.
+     */
+    async viagensComEscala(de, para, { quem, ref } = {}) {
+      const { json } = await chamar('GET', `/airports/${encodeURIComponent(de)}/flights/to/${encodeURIComponent(para)}`, {
+        endpoint: '/airports/{id}/flights/to/{dest_id}', tipo: 'rota', query: { connection: 'onestop', type: 'Airline' }, quem, ref, aceitar404: true,
+      });
+      return (json?.flights || []).filter((f) => f.segments?.length === 2).map((f) => f.segments);
+    },
+
     /** Cria um alerta e devolve o id (vem no cabeçalho Location: /alerts/{id}). */
     async criarAlerta(corpo, { fa_flight_id, quem } = {}) {
       const { json, headers } = await chamar('POST', '/alerts', { endpoint: '/alerts', tipo: 'alerts', corpo, fa_flight_id, quem });
