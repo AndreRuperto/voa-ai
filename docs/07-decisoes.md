@@ -89,3 +89,16 @@ Formato curto de ADR (*Architecture Decision Record*). Cada decisão tem context
 **Decisão.** A busca por rota serve para **achar e escolher um voo**, não para assinar a rota. O país é um filtro de interface para escolher os aeroportos; cada busca usa no máximo 3 pares, com cache de 30 min por par e dia, limite diário por pessoa e um interruptor no admin.
 
 **Consequências.** Uma busca típica custa US$ 0,05. A lista de países e aeroportos fica no nosso banco. Seguir uma rota inteira fica fora do escopo até haver plano pago e demanda.
+
+---
+
+## ADR-008 · Viagem com conexão deduzida dos voos acompanhados
+
+**Status:** aceita · 15/11/2026
+
+**Contexto.** Quem vem do Japão passando por Dubai faz dois voos. O app acompanhava cada voo solto: dois cartões sem relação, dois aviões e rótulos sobrepostos no aeroporto da escala, e nada dizia se a troca de avião estava em risco.
+
+**Decisão.** A viagem é **deduzida**, não cadastrada: o voo B continua o A quando sai do aeroporto onde A chega, até 24 h depois, e é da mesma pessoa (mesmo apelido, ou um sem apelido). Em Meus voos, as pernas viram um cartão de viagem com a frase de onde ela está e a conexão entre os trechos (escala, apertada abaixo de 45 min, pode perder). No status, uma seção mostra todos os trechos; no globo, o que já voou fica como rastro, o que falta como tracejado, com um rótulo só por viagem.
+
+**Consequências.** Nenhuma mudança no banco nem na API, e nenhum custo extra na AeroAPI. Cada perna continua com seus avisos. Ainda não há aviso por push de conexão em risco (o servidor não sabe da viagem). Uma ida e volta no mesmo dia, com o mesmo apelido e menos de 24 h de intervalo, seria lida como conexão.
+

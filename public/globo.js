@@ -187,7 +187,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
   /* ---- rotas
      tipo: 'voo' (avião na rota, t = fração estimada), 'cancelado', 'opcao' (arco sem avião). */
   const objetos = {};
-  const assinatura = v => `${v.a.lat},${v.a.lon}|${v.b.lat},${v.b.lon}|${v.tipo}|${Math.round(v.t * 400)}|${familia(v.aeronave)}`;
+  const assinatura = v => `${v.a.lat},${v.a.lon}|${v.b.lat},${v.b.lon}|${v.tipo}|${Math.round(v.t * 400)}|${familia(v.aeronave)}|${v.semHalo ? 1 : 0}`;
   function montar(v) {
     const a = vetor(v.a.lat, v.a.lon), b = vetor(v.b.lat, v.b.lon);
     const ang = a.angleTo(b), h = .012 + .16 * ang / Math.PI, pts = [];
@@ -199,18 +199,19 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     }
     const curva = new THREE.CatmullRomCurve3(pts);
     const grupo = new THREE.Group(), mats = [];
-    const cancelado = v.tipo === 'cancelado', comAviao = v.tipo === 'voo';
-    const t = Math.max(0, Math.min(1, v.t || 0));
+    // 'feito': trecho já voado de uma viagem com conexão (rastro inteiro, sem avião); 'opcao': trecho por voar.
+    const cancelado = v.tipo === 'cancelado', comAviao = v.tipo === 'voo', feito = v.tipo === 'feito';
+    const t = feito ? 1 : Math.max(0, Math.min(1, v.t || 0));
     const respiro = .075 / curva.getLength();          // o rastro para antes do marcador do avião
     let rastroLonge = null;
-    if (comAviao && t > respiro) {
-      const fim = t - respiro, sub = []; for (let i = 0; i <= 60; i++) sub.push(curva.getPoint(fim * i / 60));
+    if ((comAviao && t > respiro) || feito) {
+      const fim = feito ? 1 : t - respiro, sub = []; for (let i = 0; i <= 60; i++) sub.push(curva.getPoint(fim * i / 60));
       const m = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true }); mats.push(m);
       rastroLonge = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sub), 60, .0042, 6), m);
       grupo.add(rastroLonge);
     }
     const tTrac = comAviao ? t : 0;
-    const passo = .012 / Math.max(ang, .05), qtd = Math.max(4, Math.floor((1 - tTrac) / passo));
+    const passo = .012 / Math.max(ang, .05), qtd = feito ? 0 : Math.max(4, Math.floor((1 - tTrac) / passo));
     const mPonto = new THREE.MeshBasicMaterial({ color: cancelado ? COR.cancelado : COR.tinta, transparent: true, opacity: .7 }); mats.push(mPonto);
     const pontos = new THREE.InstancedMesh(new THREE.SphereGeometry(.0028, 6, 4), mPonto, qtd), mx = new THREE.Matrix4();
     const ini = comAviao ? Math.min(1, tTrac + respiro) : tTrac;
@@ -241,7 +242,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     const destino = new THREE.Mesh(new THREE.SphereGeometry(.011, 12, 10), mDest); destino.position.copy(b).multiplyScalar(1.004);
     const mHalo = new THREE.MeshBasicMaterial({ color: COR.pista, transparent: true, opacity: .45, side: THREE.DoubleSide, depthWrite: false }); mats.push(mHalo);
     const halo = new THREE.Mesh(new THREE.RingGeometry(.016, .03, 32), mHalo);
-    halo.position.copy(b).multiplyScalar(1.004); halo.lookAt(b.clone().multiplyScalar(2)); halo.visible = !cancelado;
+    halo.position.copy(b).multiplyScalar(1.004); halo.lookAt(b.clone().multiplyScalar(2)); halo.visible = !cancelado && !v.semHalo;   // escala no meio da viagem: sem halo de destino
     grupo.add(origem, destino, halo);
     let marcador = null, sombra = null;
     if (comAviao) {

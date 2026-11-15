@@ -10,8 +10,9 @@ if (existsSync(arquivoEnv)) {
   try { process.loadEnvFile(arquivoEnv); } catch (e) { console.warn(`[env] não li o .env: ${e.message}`); }
 }
 
-// AeroAPI simulada usa um banco à parte, para não misturar voos e gastos de mentira com os de verdade.
-if (process.env.AEROAPI_SIMULADA === '1' && !process.env.DB_CAMINHO) process.env.DB_CAMINHO = join(RAIZ, 'dados', 'simulado.sqlite');
+// AeroAPI simulada usa sempre um banco à parte (mesmo com DB_CAMINHO no .env), para não misturar
+// voos e gastos de mentira com os de verdade. SIM_DB_CAMINHO troca o arquivo, se precisar.
+if (process.env.AEROAPI_SIMULADA === '1') process.env.DB_CAMINHO = process.env.SIM_DB_CAMINHO || join(RAIZ, 'dados', 'simulado.sqlite');
 
 const { criarContexto, criarApp } = await import('./app.js');
 const { iniciarAgendador } = await import('./agendador.js');

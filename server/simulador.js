@@ -14,10 +14,10 @@ export const CATALOGO = [
   { iata: 'G31402', icao: 'GLO1402', op: ['GLO', 'G3'], de: 'GRU', para: 'SDU', tipo: 'B38M', dur: 10, ciclo: 15 },
   { iata: 'AD4510', icao: 'AZU4510', op: ['AZU', 'AD'], de: 'VCP', para: 'REC', tipo: 'A20N', dur: 20, ciclo: 30 },
   { iata: 'LA8084', icao: 'TAM8084', op: ['TAM', 'LA'], de: 'GRU', para: 'LHR', tipo: 'B789', dur: 60, ciclo: 75 },
-  // Conexão Brasil → Japão por Dubai: a 2ª perna sai 12 min depois do pouso da 1ª, no mesmo ciclo
-  // (de verdade: 14h40 + escala de ~3h + 9h40; aqui 30 + 12 + 25 min).
-  { iata: 'EK262', icao: 'UAE262', op: ['UAE', 'EK'], de: 'GRU', para: 'DXB', tipo: 'B77W', dur: 30, ciclo: 80 },
-  { iata: 'EK318', icao: 'UAE318', op: ['UAE', 'EK'], de: 'DXB', para: 'NRT', tipo: 'B77W', dur: 25, ciclo: 80, depois: 42 },
+  // Conexão Brasil → Japão por Dubai: a 2ª perna decola 60 min depois do pouso da 1ª, no mesmo ciclo
+  // (50 min de portão a portão, acima do limite de conexão apertada). De verdade: 14h40 + ~3h + 9h40.
+  { iata: 'EK262', icao: 'UAE262', op: ['UAE', 'EK'], de: 'GRU', para: 'DXB', tipo: 'B77W', dur: 30, ciclo: 130 },
+  { iata: 'EK318', icao: 'UAE318', op: ['UAE', 'EK'], de: 'DXB', para: 'NRT', tipo: 'B77W', dur: 25, ciclo: 130, depois: 90 },
 ];
 
 export function simulacaoLigada(env = process.env) {
