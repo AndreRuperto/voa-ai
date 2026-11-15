@@ -59,21 +59,22 @@ export function criarAviao3d(fam = 'estreito') {
   }
 
   // Estabilizadores horizontais.
-  const dimEst = { raiz: R * .3, ponta: .19 * L, zRaizFrente: -.36 * L, zRaizTras: -.47 * L, zPontaFrente: -.44 * L, zPontaTras: -.49 * L, esp: .008 * L };
+  const dimEst = { raiz: R * .1, ponta: .19 * L, zRaizFrente: -.36 * L, zRaizTras: -.47 * L, zPontaFrente: -.44 * L, zPontaTras: -.49 * L, esp: .008 * L };
   for (const sinal of [1, -1]) {
     const e = new THREE.Mesh(asa(dimEst, sinal), mAsa);
-    e.position.y = R * .25;
+    e.position.y = R * .08;     // dentro da cauda, que ali já é fina
     g.add(e);
   }
 
   // Deriva (cauda vertical) em azul-céu, a cor de "em voo" da marca.
+  // A base desce junto com a fuselagem, que afina na cauda (senão a parte de trás fica flutuando).
+  const topo = .7 * R + .2 * L;
   const deriva = new THREE.Shape([
-    new THREE.Vector2(-.32 * L, 0), new THREE.Vector2(-.47 * L, .2 * L), new THREE.Vector2(-.51 * L, .2 * L), new THREE.Vector2(-.49 * L, 0),
+    new THREE.Vector2(-.32 * L, .7 * R), new THREE.Vector2(-.47 * L, topo), new THREE.Vector2(-.51 * L, topo), new THREE.Vector2(-.495 * L, .02 * R),
   ]);
   // Forma no plano (z, y): rotateY(−π/2) leva o x da forma para +Z; a espessura fica no eixo X, centrada.
   const geoDeriva = new THREE.ExtrudeGeometry(deriva, { depth: .012 * L, bevelEnabled: false }).translate(0, 0, -.006 * L).rotateY(-Math.PI / 2);
   const d = new THREE.Mesh(geoDeriva, mCauda);
-  d.position.y = R * .7;
   g.add(d);
 
   // Motores sob as asas.
