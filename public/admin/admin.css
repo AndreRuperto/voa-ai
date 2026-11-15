@@ -192,3 +192,6 @@ dialog .acoes { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: 
 .logo__arco { position: absolute; left: 0; top: 0; width: 100%; height: .58em; overflow: visible; pointer-events: none; }
 .logo__arco path { fill: none; stroke: #5CC8FF; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1.2 4.2; vector-effect: non-scaling-stroke; }
 .logo .marca__i::after { top: -.05em; width: max(.18em, 6px); height: max(.18em, 6px); margin-left: min(-.09em, -3px); box-shadow: 0 0 0 .067em rgba(255, 181, 71, .18); }
+
+/* Contas: foto (ou inicial) ao lado do nome */
+.pessoa { display: flex; align-items: center; gap: 12px; }

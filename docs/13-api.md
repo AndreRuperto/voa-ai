@@ -90,7 +90,7 @@ Todo erro é JSON `{"erro": "<codigo>", "mensagem": "<texto em PT-BR para mostra
 | `GET` | `/api/admin/resumo?mes=2026-11` | `{"mes","credito_usd","gasto_usd","projecao_usd","por_dia":[{"dia","usd"}],"por_tipo":[{"tipo","chamadas","usd"}],"voos_ativos","alertas_entregues","contas","buscas_rota"}` |
 | `GET` | `/api/admin/voos` | `{"voos":[{"voo":Voo,"inscritos","alertas_entregues","custo_usd","alert_id"}]}` |
 | `POST` | `/api/admin/voos/:fa_flight_id/parar` | Apaga o alerta e as inscrições do voo. `204` |
-| `GET` | `/api/admin/contas` | `{"contas":[{"id","email","nome","voos_ativos","buscas_mes","ultimo_acesso","bloqueado"}]}` |
+| `GET` | `/api/admin/contas` | `{"contas":[{"id","email","nome","foto","voos_ativos","buscas_mes","ultimo_acesso","bloqueado"}]}` |
 | `POST` | `/api/admin/contas/:id/bloquear` | Corpo `{"bloqueado":bool}`. `204` |
 | `DELETE` | `/api/admin/contas/:id` | `204` |
 | `GET` | `/api/admin/rotas` | `{"rotas":[{"de","para","buscas","acertos_cache","custo_usd"}]}` |
