@@ -34,6 +34,9 @@
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></symbol>
   <symbol id="i-lixo" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
   <symbol id="i-conexao" viewBox="0 0 24 24"><path d="M2 17.5h5.2a4 4 0 0 0 0-8H5v-2h2.2a6 6 0 0 1 0 12H2v-2zm15.8-11H22v2h-4.2a4 4 0 0 0 0 8H19v2h-1.2a6 6 0 0 1 0-12z"/><circle cx="12.5" cy="12.5" r="2.2"/></symbol>
+  <symbol id="i-perto" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5M11 8v6M8 11h6"/></symbol>
+  <symbol id="i-destino" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zM12 7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></symbol>
+  <symbol id="i-livre" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol>
   <symbol id="i-alerta" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
   <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
   <symbol id="i-mais" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
@@ -55,17 +58,16 @@
 
 <button class="botao botao--secundario mostrar-painel" type="button" data-recolher="nao"><svg aria-hidden="true" style="transform:rotate(180deg)"><use href="#i-painel"/></svg>Mostrar detalhes do voo</button>
 
-<div class="camera" role="group" aria-label="Câmera do globo">
-  <span>Câmera</span>
-  <div class="camera__opcoes">
-    <button type="button" data-cam="aviao" aria-pressed="true">Avião</button>
-    <button type="button" data-cam="perto" aria-pressed="false">De perto</button>
-    <button type="button" data-cam="destino" aria-pressed="false">Destino</button>
-    <button type="button" data-cam="livre" aria-pressed="false">Livre</button>
+<!-- Painel do voo no globo: a câmera junto dos números do voo (prancha "topo e câmera", caminho B). -->
+<div class="painel-globo">
+  <div class="camera" role="group" aria-label="Câmera do globo">
+    <button type="button" data-cam="aviao" aria-pressed="true"><svg aria-hidden="true"><use href="#i-aviao"/></svg><span>Avião</span></button>
+    <button type="button" data-cam="perto" aria-pressed="false"><svg aria-hidden="true"><use href="#i-perto"/></svg><span>De perto</span></button>
+    <button type="button" data-cam="destino" aria-pressed="false"><svg aria-hidden="true"><use href="#i-destino"/></svg><span>Destino</span></button>
+    <button type="button" data-cam="livre" aria-pressed="false"><svg aria-hidden="true"><use href="#i-livre"/></svg><span>Livre</span></button>
   </div>
+  <dl class="hud" id="hud" aria-label="Dados do voo"></dl>
 </div>
-
-<dl class="hud" id="hud" aria-label="Dados do voo"></dl>
 <p class="legenda estimada" id="legenda">Arraste o globo para girar. Posição do avião estimada pelos horários da companhia.</p>
 
 <main class="painel" id="painel">

@@ -1,6 +1,6 @@
 # Próximos passos
 
-**Data:** 15/11/2026 · **Branch:** `claude/rota-com-escala` (a partir da `claude/adicionar-conexao`, PR #21)
+**Data:** 15/11/2026 · **Branch:** `claude/camera-no-painel-do-voo` (a partir da `main` com os PRs até o #22)
 
 ## O que mudou nesta sessão: o app real existe
 
@@ -10,6 +10,14 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`server/dados/`**: 3.245 aeroportos com fuso (OurAirports), nomes em português para 291 aeroportos e nomes de companhias. Gerado por `scripts/gerar-aeroportos.js`.
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
+
+## 15/11: câmera junto do painel do voo
+
+- Prancha de opções: [Voa Aí · topo e câmera](https://claude.ai/artifact/KUGkLFBG7Sv7QCihqx5SL2). Ela mostra o layout de hoje, três caminhos no desktop (A, B e C) e dois no celular. Escolhido: **B**.
+- **Desktop:** a câmera saiu do topo e fica em cima dos números do voo (Falta · Chega · Posição), no canto de baixo à direita, num bloco só. O topo ficou só com "Meus voos" e "Entrar".
+- **Celular:** a câmera fica numa barra na borda de baixo do globo.
+- **Botões:** ícone + palavra, 52 px de altura, e o modo escolhido em azul-céu, em vez do branco.
+- [ ] Atualizar a prancha **Voa Aí · Design** (componente da câmera e telas de status). Nesta sessão, a conta não conseguiu abrir a prancha ("não encontrada"); conferir o compartilhamento.
 
 ## 15/11: busca por rota com escala
 
