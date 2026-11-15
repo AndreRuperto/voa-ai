@@ -15,6 +15,7 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 
 - `npm run simular` sobe o servidor com uma **AeroAPI simulada** (`server/simulador.js`) e um banco à parte, `dados/simulado.sqlite`. A simulação não liga em produção.
 - Voos de teste, curtos e em ciclo, sempre com um no ar: **TP1018** (OPO→MAD, 8 min), **TP103** (LIS→GRU, 40 min), **G31402** (GRU→SDU, 10 min), **AD4510** (VCP→REC, 20 min) e **LA8084** (GRU→LHR, 60 min). A busca por rota também funciona nesses pares.
+- **Conexão Brasil → Japão:** **EK262** (GRU→DXB, 30 min) e **EK318** (DXB→NRT, 25 min), com escala de 12 min em Dubai. Siga as duas pernas com o mesmo apelido e veja as duas em Meus voos. O app ainda não junta as pernas numa viagem: cada uma é um voo, e os rótulos se sobrepõem no aeroporto da escala.
 - Um selo "Dados simulados" aparece na tela. No status, o avião avança no globo a cada 2 s, sem consultar a API de novo (vale também para voos reais).
 - O histórico da AeroAPI (`/history/flights/{ident}`, US$ 0,02 por consulta; `/track` US$ 0,06) está disponível desde 2011, mas mostra voos que já terminaram. Não serve para ver o avião andando ao vivo; serviria para um "replay" de voo passado.
 

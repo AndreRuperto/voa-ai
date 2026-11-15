@@ -152,7 +152,7 @@ function mostrarSeloSimulado(c) {
   if (!c?.simulada || $('.selo-simulado')) return;
   const p = document.createElement('p');
   p.className = 'selo-simulado'; p.setAttribute('role', 'note');
-  p.innerHTML = 'Dados simulados<span> · voos de teste: TP1018, TP103, G31402, AD4510, LA8084</span>';
+  p.innerHTML = 'Dados simulados<span> · voos de teste: TP1018, TP103, G31402, AD4510, LA8084, EK262 + EK318 (conexão)</span>';
   document.body.append(p);
 }
 const aeroapiDesligada = () => estado.config && estado.config.aeroapi === false;
