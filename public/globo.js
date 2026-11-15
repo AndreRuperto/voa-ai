@@ -270,7 +270,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     grupo.visible = false;
     cena.add(grupo);
     const noChao = !comAviao ? -1 : t > 0 && t < 1 ? -1 : t >= 1 ? 1 : 0;   // 0 = na origem, 1 = no destino
-    return { noChao, semHalo: !!v.semHalo, grupo, mats, halo, aviao: marcador, sombra, perto, longe: [rastroLonge, pontos].filter(Boolean), marcos: [origem, destino], escala: 1, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
+    return { noChao, voando: comAviao && t > 0 && t < 1, semHalo: !!v.semHalo, grupo, mats, halo, aviao: marcador, sombra, perto, longe: [rastroLonge, pontos].filter(Boolean), marcos: [origem, destino], escala: 1, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
   }
 
   function definirVoos(lista) {
@@ -454,14 +454,29 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
   }
 
   /* ---- laço: pausa com a aba escondida e quando o globo não aparece */
+  /* Turbinas ligadas: de perto, com o avião no ar, o rotor (pás e espiral do cone) gira.
+     Não gira no solo nem com "reduzir movimento". */
+  const GIRO = Math.PI * 2 * 1.6;      // voltas por segundo (devagar o bastante para ver a espiral)
+  let quadroAntes = 0;
+  function girarTurbinas(dt) {
+    if (reduzir) return;
+    for (const id of atual.ids || []) {
+      const o = objetos[id], u = o?.aviao?.userData;
+      if (!u?.perto || !o.voando) continue;
+      for (const r of u.modelo.userData.rotores) r.rotation.z -= GIRO * dt;
+    }
+  }
+
   function quadro(agora) {
     requestAnimationFrame(quadro);
+    const dt = Math.min(.1, (agora - (quadroAntes || agora)) / 1000); quadroAntes = agora;
     if (document.hidden || !palco.clientHeight) return;
     if (Math.abs(deslocAlvo - deslocamento) > .5) { deslocamento += (deslocAlvo - deslocamento) * (reduzir ? 1 : .12); aplicarOffset(); }
     passoVoo(agora);
     if (!voo) ctrl().update();
     if (camera.position.length() < 1.004) camera.position.setLength(1.004);   // de perto, não entra na Terra
     trocarPerto();
+    girarTurbinas(dt);
     opacidadeDasLinhas();
     if (!reduzir) {
       const s = 1 + .45 * (.5 + .5 * Math.sin(agora / 1000 * 2.6));

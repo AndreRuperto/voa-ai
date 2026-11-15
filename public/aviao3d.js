@@ -8,7 +8,7 @@ import * as THREE from 'three';
 
 const COR = {
   corpo: 0xF2F5FA, asa: 0xC4CFDF, cauda: 0x5CC8FF, sombra: 0x02060E,
-  nacele: 0xDCE3EE, borda: 0xA9B6CC, fan: 0x1B2D4F, cone: 0xC4CFDF, escape: 0x4A5A75,   // turbina
+  nacele: 0xDCE3EE, borda: 0xA9B6CC, fan: 0x1B2D4F, pa: 0x6E83A8, cone: 0xC4CFDF, espiral: 0xF2F5FA, escape: 0x4A5A75,   // turbina
   vidro: 0x16243D,                                                                      // para-brisa
 };
 
@@ -42,11 +42,26 @@ function turbina(r, comp, alturaPilone, mats) {
   // Borda da entrada: anel claro.
   const borda = new THREE.Mesh(new THREE.TorusGeometry(r * .95, r * .09, 4, 14), mats.borda);
   borda.position.z = .5 * comp;
-  // Fan: disco escuro um pouco para dentro, com o cone (spinner) apontando para a frente.
+  // Fan: fundo escuro um pouco para dentro; na frente dele, o rotor (pás + cone com a espiral branca,
+  // como nos motores de verdade). O rotor gira em Z quando o avião está no ar (ver userData.rotores).
   const fan = new THREE.Mesh(new THREE.CircleGeometry(r * .9, 14), mats.fan);
   fan.position.z = .38 * comp;
+  const rotor = new THREE.Group();
+  rotor.position.z = .38 * comp;
+  const geoPa = new THREE.BoxGeometry(r * .56, r * .15, r * .02).translate(r * .58, 0, 0).rotateX(.5);   // torcida, pega luz
+  const PAS = 12;
+  for (let i = 0; i < PAS; i++) {
+    const pa = new THREE.Mesh(geoPa, mats.pa);
+    pa.rotation.z = (i / PAS) * Math.PI * 2;
+    pa.position.z = r * .01;
+    rotor.add(pa);
+  }
   const cone = new THREE.Mesh(new THREE.ConeGeometry(r * .32, r * .55, 8).rotateX(Math.PI / 2), mats.cone);
-  cone.position.z = .38 * comp + r * .27;
+  cone.position.z = r * .27;
+  // Espiral: uma fatia branca do cone, um pouco maior; girando, mostra que o motor está ligado.
+  const espiral = new THREE.Mesh(new THREE.ConeGeometry(r * .335, r * .57, 8, 1, false, 0, Math.PI * .45).rotateX(Math.PI / 2), mats.espiral);
+  espiral.position.z = r * .27;
+  rotor.add(cone, espiral);
   // Escape: bocal cinza saindo de trás, com o cone de cauda.
   const escape = new THREE.Mesh(new THREE.CylinderGeometry(r * .7, r * .55, comp * .16, 12, 1, true).rotateX(Math.PI / 2), mats.escape);
   escape.position.z = -.58 * comp;
@@ -55,7 +70,8 @@ function turbina(r, comp, alturaPilone, mats) {
   // Pilone: lâmina fina do topo da nacele até a asa.
   const pilone = new THREE.Mesh(new THREE.BoxGeometry(r * .22, alturaPilone + r * .3, comp * .6), mats.nacele);
   pilone.position.set(0, r + alturaPilone / 2, -.05 * comp);
-  g.add(nacele, borda, fan, cone, escape, plug, pilone);
+  g.add(nacele, borda, fan, rotor, escape, plug, pilone);
+  g.userData.rotor = rotor;
   return g;
 }
 
@@ -79,7 +95,8 @@ export function criarAviao3d(fam = 'estreito') {
   const mCorpo = material(COR.corpo), mAsa = material(COR.asa), mCauda = material(COR.cauda);
   const mTurbina = {
     nacele: material(COR.nacele, { side: THREE.DoubleSide }), borda: material(COR.borda),
-    fan: material(COR.fan, { side: THREE.DoubleSide }), cone: material(COR.cone), escape: material(COR.escape, { side: THREE.DoubleSide }),
+    fan: material(COR.fan, { side: THREE.DoubleSide }), pa: material(COR.pa), cone: material(COR.cone), espiral: material(COR.espiral),
+    escape: material(COR.escape, { side: THREE.DoubleSide }),
   };
   const mVidro = material(COR.vidro);
   const g = new THREE.Group();
@@ -127,12 +144,14 @@ export function criarAviao3d(fam = 'estreito') {
   g.add(d);
 
   // Turbinas sob as asas, um pouco à frente do bordo de ataque (como nos jatos de verdade).
-  const rM = m.motorRaio * L, folgaAsa = rM * .35;
+  const rM = m.motorRaio * L, folgaAsa = rM * .35, rotores = [];
   for (const sinal of [1, -1]) {
     const t = turbina(rM, m.motorComp * L, folgaAsa, mTurbina);
     t.position.set(sinal * m.motorX * m.envergadura * L, -R * .35 - .012 * L - folgaAsa - rM, .02 * L);
     g.add(t);
+    rotores.push(t.userData.rotor);
   }
+  g.userData.rotores = rotores;
 
   g.userData.materiais = [mCorpo, mAsa, mCauda, mVidro, ...Object.values(mTurbina)];
   g.userData.comprimento = L;
