@@ -350,7 +350,7 @@ function obterGlobo() {
   }))).catch(e => { console.warn('O globo não carregou; o painel funciona sem ele.', e); return null; });
   return carregandoGlobo;
 }
-const paraGlobo = (v, id = v.fa_flight_id) => ({ id, a: v.origem, b: v.destino, t: progresso(v),
+const paraGlobo = (v, id = v.fa_flight_id) => ({ id, a: v.origem, b: v.destino, t: progresso(v), aeronave: v.aeronave,
   tipo: v.estado === 'cancelado' ? 'cancelado' : v.estado === 'desviado' ? 'opcao' : 'voo' });
 
 /** cfg: { voos:[entrada], foco, destaque, enquadrar, girar, hud:[[dt,dd,un,chegada]], globoCelular, rotulos, manterCamera } */

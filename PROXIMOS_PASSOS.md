@@ -1,6 +1,6 @@
 # Próximos passos
 
-**Data:** 15/11/2026 · **Branch:** `claude/proteger-custo` (a partir da `main` com os PRs #1 a #14)
+**Data:** 15/11/2026 · **Branch:** `claude/aviao-3d` (a partir da `main` com os PRs #1 a #15)
 
 ## O que mudou nesta sessão: o app real existe
 
@@ -10,6 +10,13 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`server/dados/`**: 3.245 aeroportos com fuso (OurAirports), nomes em português para 291 aeroportos e nomes de companhias. Gerado por `scripts/gerar-aeroportos.js`.
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
+
+## 15/11: avião 3D
+
+- Câmera nova **De perto**: perseguição atrás e acima do avião. Perto dele, o marcador vira o modelo 3D low-poly (`public/aviao3d.js`), com duas famílias pelo `aircraft_type`, sombra no chão, rastro fino até a cauda e aeroportos menores.
+- Conferido no localhost com dois voos de teste no banco local (LIS→GRU A339 e OPO→MAD A20N), em 1440×900 e 375×812. Os voos de teste foram apagados.
+- [ ] Atualizar a prancha de design (marcador e modelo de perto, botão De perto)
+- [ ] Testar a 60 fps num celular intermediário com o modo De perto
 
 ## 15/11: proteção de custo
 
