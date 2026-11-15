@@ -90,6 +90,7 @@ export function registrarAdmin(r) {
       id: u.id,
       email: u.email,
       nome: u.nome,
+      foto: u.foto || null,
       voos_ativos: voosAtivos(db, { aparelhoId: '', usuario: u }, agora),
       buscas_mes: db.prepare('SELECT COUNT(DISTINCT busca_id) n FROM BUSCA_ROTA WHERE quem = ? AND substr(em, 1, 7) = ?').get(`u:${u.id}`, mes).n,
       ultimo_acesso: u.ultimo_acesso,

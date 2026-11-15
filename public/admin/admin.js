@@ -307,7 +307,7 @@ async function pintarContas() {
   corpo.innerHTML = contas.length ? contas.map((c, i) => {
     const nome = esc(c.nome || c.email), b = sim(c.bloqueado), eu_ = c.email === eu?.conta?.email;
     return `<tr>
-      <td><b>${nome}</b><br><span class="pequeno">${esc(c.email)}</span></td>
+      <td><span class="pessoa"><span class="avatar" aria-hidden="true">${avatar(c)}</span><span><b>${nome}</b><br><span class="pequeno">${esc(c.email)}</span></span></span></td>
       <td>${b ? '<span class="estado-conta" style="color:var(--c-cancelado)"><svg aria-hidden="true"><use href="#i-bloq"/></svg>Bloqueada</span>'
         : '<span class="estado-conta" style="color:var(--c-ok)"><svg aria-hidden="true"><use href="#i-ok"/></svg>Ativa</span>'}</td>
       <td class="n">${c.voos_ativos ?? 0}${Number.isFinite(lim) && c.voos_ativos >= lim ? ' <span class="pequeno" style="font:inherit;font-size:.75rem">no limite</span>' : ''}</td>
