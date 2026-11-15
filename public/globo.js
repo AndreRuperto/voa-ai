@@ -163,6 +163,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
 
   /* ---- avião: marcador de longe, modelo 3D de perto */
   const PERTO_ENTRA = .7, PERTO_SAI = .85;   // distância câmera → avião (com folga, para não piscar)
+  const FOLGA_CHAO = .0004;
   function aviao(fam, noChao) {
     const forma = new THREE.Shape(SILHUETA.map(([x, y]) => new THREE.Vector2(x - 11.5, 12 - y)));
     const geo = new THREE.ExtrudeGeometry(forma, { depth: .9, bevelEnabled: false })
@@ -177,7 +178,9 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     disco.renderOrder = 1; anel.renderOrder = 2; corpo.renderOrder = 3;
     const pino = new THREE.Group(); pino.add(disco, anel, corpo);
     const modelo = criarAviao3d(fam);
-    if (noChao) modelo.position.y = -.0045;     // o pino fica um pouco acima; o modelo pousa no chão
+    // O grupo fica a 1.006 do centro (o pino, um pouco acima do chão); no solo, o modelo desce até as
+    // turbinas encostarem na superfície (raio 1), com uma folga mínima.
+    if (noChao) modelo.position.y = (1 + modelo.userData.fundo + FOLGA_CHAO) - 1.006;
     modelo.visible = false;
     g.add(pino, modelo);
     g.userData = { materiais: [mCorpo, mDisco, mAnel, ...modelo.userData.materiais], pino, modelo, perto: false };
@@ -220,6 +223,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     // De perto, rastro e tracejado na escala do modelo: o rastro, fino, vai até a cauda; o tracejado,
     // em pontos miúdos, recomeça logo depois do nariz. Os de longe somem (seriam mais grossos que o avião).
     const perto = new THREE.Group(); perto.visible = false;
+    let pontosPerto = null;
     const fam = familia(v.aeronave), comp = curva.getLength(), meioAviao = (fam === 'largo' ? .017 : .013) / comp;
     if (comAviao && t > 0) {
       const fim2 = t - meioAviao * .9;
@@ -231,8 +235,13 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       const a2 = t + meioAviao * 1.5, n2 = Math.max(0, Math.floor((1 - a2) * comp / .005)), mx2 = new THREE.Matrix4();
       if (n2 > 0) {
         const p2 = new THREE.InstancedMesh(new THREE.SphereGeometry(.0006, 5, 3), mPonto, n2);
-        for (let i = 0; i < n2; i++) { mx2.setPosition(curva.getPoint(a2 + (1 - a2) * (i + .5) / n2)); p2.setMatrixAt(i, mx2); }
+        p2.userData.pontos = [];
+        for (let i = 0; i < n2; i++) {
+          const q = curva.getPoint(a2 + (1 - a2) * (i + .5) / n2);
+          mx2.setPosition(q); p2.setMatrixAt(i, mx2); p2.userData.pontos.push(q);
+        }
         perto.add(p2);
+        pontosPerto = p2;
       }
     }
     grupo.add(perto);
@@ -252,6 +261,9 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       frente.crossVectors(direita, cima);
       marcador.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(direita, cima, frente));
       marcador.position.copy(t > 0 ? p : a.clone().multiplyScalar(1.006));
+      // Perto da decolagem e do pouso a rota passa rente ao chão: o modelo nunca fica abaixo do próprio fundo.
+      const minimo = 1 + marcador.userData.modelo.userData.fundo + FOLGA_CHAO;
+      if (t > 0 && marcador.position.length() < minimo) marcador.position.setLength(minimo);
       grupo.add(marcador);
       if (t > 0 && t < 1) {            // no ar: sombra no chão, logo abaixo
         sombra = criarSombra(fam); mats.push(...sombra.userData.materiais);
@@ -263,7 +275,8 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     }
     grupo.visible = false;
     cena.add(grupo);
-    return { grupo, mats, halo, aviao: marcador, sombra, perto, longe: [rastroLonge, pontos].filter(Boolean), marcos: [origem, destino], escala: 1, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
+    const noChao = !comAviao ? -1 : t > 0 && t < 1 ? -1 : t >= 1 ? 1 : 0;   // 0 = na origem, 1 = no destino
+    return { pontosPerto, noChao, voando: comAviao && t > 0 && t < 1, semHalo: !!v.semHalo, grupo, mats, halo, aviao: marcador, sombra, perto, longe: [rastroLonge, pontos].filter(Boolean), marcos: [origem, destino], escala: 1, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
   }
 
   function definirVoos(lista) {
@@ -439,19 +452,56 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       for (const x of o.longe) x.visible = !perto;
       o.escala = perto ? .3 : 1;          // aeroportos na escala do modelo
       for (const x of o.marcos) x.scale.setScalar(o.escala);
+      // de perto, o ponto do aeroporto onde o avião está parado some (senão vira uma bola no meio dele)
+      o.marcos.forEach((x, k) => { x.visible = !(perto && o.noChao === k); });
+      if (o.noChao === 1) o.halo.visible = !perto && !o.semHalo && !o.cancelado;
       o.halo.scale.setScalar(o.escala);
     }
   }
 
   /* ---- laço: pausa com a aba escondida e quando o globo não aparece */
+  /* Turbinas ligadas: de perto, com o avião no ar, o rotor (pás e espiral do cone) gira.
+     Não gira no solo nem com "reduzir movimento". */
+  const GIRO = Math.PI * 2 * 1.6;      // voltas por segundo (devagar o bastante para ver a espiral)
+  let quadroAntes = 0;
+  function girarTurbinas(dt) {
+    if (reduzir) return;
+    for (const id of atual.ids || []) {
+      const o = objetos[id], u = o?.aviao?.userData;
+      if (!u?.perto || !o.voando) continue;
+      for (const r of u.modelo.userData.rotores) r.rotation.z -= GIRO * dt;
+    }
+  }
+
+  /* De perto, os pontos da rota que passam rente à câmera (olhando o avião de frente) viravam bolas
+     enormes. Agora somem perto da lente e, mais longe, ficam do mesmo tamanho na tela. */
+  const PONTO_SOME = .012, PONTO_CHEIO = .035, PONTO_REF = .12, _mx = new THREE.Matrix4(), _esc = new THREE.Vector3(), _rot = new THREE.Quaternion();
+  function afastarPontosDaCamera() {
+    for (const id of atual.ids || []) {
+      const o = objetos[id], p2 = o?.pontosPerto;
+      if (!p2 || !o.aviao?.userData.perto) continue;
+      const pts = p2.userData.pontos;
+      for (let i = 0; i < pts.length; i++) {
+        const d = camera.position.distanceTo(pts[i]);
+        // some rente à lente e, mais longe, mantém o tamanho na tela (não cresce ao aproximar)
+        const s = THREE.MathUtils.clamp((d - PONTO_SOME) / (PONTO_CHEIO - PONTO_SOME), 0, 1) * Math.min(1, d / PONTO_REF);
+        p2.setMatrixAt(i, _mx.compose(pts[i], _rot, _esc.setScalar(s)));
+      }
+      p2.instanceMatrix.needsUpdate = true;
+    }
+  }
+
   function quadro(agora) {
     requestAnimationFrame(quadro);
+    const dt = Math.min(.1, (agora - (quadroAntes || agora)) / 1000); quadroAntes = agora;
     if (document.hidden || !palco.clientHeight) return;
     if (Math.abs(deslocAlvo - deslocamento) > .5) { deslocamento += (deslocAlvo - deslocamento) * (reduzir ? 1 : .12); aplicarOffset(); }
     passoVoo(agora);
     if (!voo) ctrl().update();
     if (camera.position.length() < 1.004) camera.position.setLength(1.004);   // de perto, não entra na Terra
     trocarPerto();
+    girarTurbinas(dt);
+    afastarPontosDaCamera();
     opacidadeDasLinhas();
     if (!reduzir) {
       const s = 1 + .45 * (.5 + .5 * Math.sin(agora / 1000 * 2.6));
