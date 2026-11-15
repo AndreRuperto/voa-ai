@@ -5,6 +5,7 @@ import { apagarAlertaDoVoo } from './alertas.js';
 import { lerVoo, salvarVoo, chegada } from './voos.js';
 import { verificarAtraso, avisarUmaVez, chaveEvento } from './webhook.js';
 import { verificarGasto } from './avisosgasto.js';
+import { verificarConexoes } from './conexoes.js';
 
 const MIN = 60_000;
 const MARCOS_ANTES = [{ nome: '3h', min: 180 }, { nome: '1h', min: 60 }, { nome: '15m', min: 15 }];
@@ -70,6 +71,9 @@ export async function rodarCiclo(ctx) {
     }
   }
 
+  // 2b. Viagens com conexão: avisa se a troca de avião ficou apertada ou deve ser perdida (sem custo na AeroAPI).
+  try { await verificarConexoes(ctx); } catch (e) { console.warn(`[agendador] conexões: ${e.message}`); }
+
   // 3. R2: apagar alertas 24 h depois da chegada prevista (ou já terminados).
   for (const l of db.prepare('SELECT fa_flight_id, scheduled_in, estimated_in, cancelado, actual_in FROM VOO WHERE alert_id IS NOT NULL').all()) {
     const fimPrev = ms(l.estimated_in || l.scheduled_in);
@@ -97,6 +101,7 @@ export async function rodarCiclo(ctx) {
   // 5. Arrumação: sessões e cache vencidos.
   db.prepare('DELETE FROM SESSAO WHERE expira_em < ?').run(agora.toISOString());
   db.prepare('DELETE FROM CACHE WHERE expira_em < ?').run(agora.toISOString());
+  db.prepare('DELETE FROM AVISO_CONEXAO WHERE em < ?').run(corte);
   return { voos: voos.length, apagados: velhos.length };
 }
 

@@ -18,7 +18,8 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **Status:** a seção "Viagem até Tóquio · trecho N de M" com os outros trechos. No globo aparecem todos os trechos: o que já voou como rastro, o que falta tracejado, o destino final com halo e um rótulo só por viagem.
 - Conferido no localhost em 1440×900 e 375×812, com a conexão simulada EK262 + EK318. São 68 testes.
 - Correção: a simulação agora usa **sempre** `dados/simulado.sqlite`. Antes, o `DB_CAMINHO` do `.env` fazia ela gravar no banco de desenvolvimento. As linhas simuladas foram apagadas de lá; há uma cópia de antes da limpeza no scratchpad da sessão.
-- [ ] Push de "conexão em risco" (o servidor precisaria saber da viagem)
+- **Aviso de conexão em risco** (`server/conexoes.js`, no agendador a cada minuto): push quando a troca de avião fica pior que a planejada. Primeiro "Conexão apertada em Dubai", depois "Ana pode perder a conexão em Dubai", e "Conexão em Dubai em dia" se o atraso for recuperado. Cada nível avisa uma vez (tabela `AVISO_CONEXAO`, migração 3). Vai para os aparelhos de quem acompanha o 2º trecho.
+- Na simulação, a EK262 sai 35 min atrasada nos ciclos ímpares (sobram 15 min em Dubai). Conferido: o agendador gravou o aviso "apertada". O push real não foi testado num aparelho.
 - [ ] Prancha de design: cartão de viagem, linha de conexão (escala, apertada, pode perder) e o ícone `i-conexao`
 
 ## 15/11: voos simulados (sem a chave)
