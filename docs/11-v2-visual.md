@@ -44,14 +44,15 @@ Contraste medido do texto escuro sobre as placas: âmbar 10,46:1, atraso 7,94:1,
 DESKTOP (≥ 960 px)                                         CELULAR (< 960 px)
 ┌──────────────────────────────────────────────────────┐   ┌──────────────────┐
 │ ⋰• Voa Aí                                Meus voos 3 │   │ ⋰• Voa Aí   Meus │
-│ ┌──────────────┐                  Câmera [Avião|...] │   │   ╭──globo──╮    │  ← só nas telas
+│ ┌──────────────┐                                      │   │   ╭──globo──╮    │  ← só nas telas
 │ │ ← Meus voos ‹│            ╭─────────╮              │   │  ✈┈┈┈┈┈◎ GRU     │    de voo
 │ │ Voo da Mãe   │          ╱  ✈┈┈┈┈┈┈◎ ╲             │   ├──────────────────┤
 │ │ [TP103|Em voo]│         │  globo 3D  │             │   │ Voo da Mãe       │
 │ │ LIS ━━━┈┈┈◎ GRU│        ╲            ╱             │   │ [TP103|Em voo]   │
 │ │ ● Decolou    │            ╰─────────╯              │   │ LIS ━━┈┈◎ GRU    │
 │ │ ◉ Em voo     │                                      │   │ [HUD em grade]   │
-│ │ ○ Pousa      │              [Alt|Vel|Falta|Chega]   │   │ ● ◉ ○ etapas     │
+│ │ ○ Pousa      │         [✈ Avião|⌕ Perto|⌖ Dest|✥ Livre]│   │ ● ◉ ○ etapas     │
+│ │              │              [Falta | Chega | Posição]│   │                  │
 │ └──────────────┘                                      │   └──────────────────┘
 └──────────────────────────────────────────────────────┘
 ```
@@ -70,7 +71,7 @@ DESKTOP (≥ 960 px)                                         CELULAR (< 960 px)
 | Avião | **Marcador, não miniatura** ([recorte](visual/v2-aviao-marcador.png)): a silhueta do ícone do app em branco-nuvem, num disco noite com anel céu, como um pino de mapa. O rastro em céu para antes do disco e o tracejado recomeça depois dele. O nariz segue a tangente da rota. No solo, fica na origem, apontado para o destino. A primeira versão (avião em céu, fino) se confundia com o rastro. **De perto** (câmera a menos de 0,7 do avião, sai a 0,85), o marcador vira o modelo 3D low-poly de `public/aviao3d.js`: corpo branco-nuvem, asas e estabilizadores cinza-azulados e deriva em céu. São duas famílias, escolhidas pelo `aircraft_type`: corredor único, que também vale para tipo desconhecido, e fuselagem larga. Nessa vista, o rastro afina e vai até a cauda, o tracejado vira pontos miúdos, os aeroportos encolhem para 30% e aparece uma sombra no chão |
 | Destino | Ponto âmbar com halo pulsando ("o aeroporto brilhando à espera"). Em voo cancelado, ponto vermelho e sem halo |
 | Rótulos | HTML sobre o 3D, no formato da placa mini. Somem quando o ponto vai para o lado de trás do globo |
-| Câmera | Modos **Avião**, **De perto**, **Destino** e **Livre**. De perto é uma câmera de perseguição atrás e acima do avião, com o horizonte na horizontal (o "para cima" é o céu sobre o avião); dá para girar em volta dele. Arrastar o globo muda para Livre. As transições levam 1,3 s (1,5 s para chegar perto), com curva suave |
+| Câmera | Modos **Avião**, **De perto**, **Destino** e **Livre**. **Onde fica** (prancha [Voa Aí · topo e câmera](https://claude.ai/artifact/KUGkLFBG7Sv7QCihqx5SL2), caminho B, 15/11): no desktop, junto dos números do voo, no canto de baixo à direita, num bloco só (`.painel-globo`); o topo fica só com a navegação. No celular, numa barra na borda de baixo do globo, perto do polegar. Cada botão tem ícone + palavra e 52 px de altura; o modo escolhido fica em azul-céu (fundo céu a 16% e contorno céu), não em branco, para não competir com o laranja da ação principal. De perto é uma câmera de perseguição atrás e acima do avião, com o horizonte na horizontal (o "para cima" é o céu sobre o avião); dá para girar em volta dele. Arrastar o globo muda para Livre. As transições levam 1,3 s (1,5 s para chegar perto), com curva suave |
 | HUD | Altitude, velocidade, quanto falta e a chegada (em âmbar), sempre com o aviso de que a posição é estimada |
 
 O que cada tela mostra no globo:
