@@ -163,6 +163,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
 
   /* ---- avião: marcador de longe, modelo 3D de perto */
   const PERTO_ENTRA = .7, PERTO_SAI = .85;   // distância câmera → avião (com folga, para não piscar)
+  const FOLGA_CHAO = .0004;
   function aviao(fam, noChao) {
     const forma = new THREE.Shape(SILHUETA.map(([x, y]) => new THREE.Vector2(x - 11.5, 12 - y)));
     const geo = new THREE.ExtrudeGeometry(forma, { depth: .9, bevelEnabled: false })
@@ -177,7 +178,9 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     disco.renderOrder = 1; anel.renderOrder = 2; corpo.renderOrder = 3;
     const pino = new THREE.Group(); pino.add(disco, anel, corpo);
     const modelo = criarAviao3d(fam);
-    if (noChao) modelo.position.y = -.0045;     // o pino fica um pouco acima; o modelo pousa no chão
+    // O grupo fica a 1.006 do centro (o pino, um pouco acima do chão); no solo, o modelo desce até as
+    // turbinas encostarem na superfície (raio 1), com uma folga mínima.
+    if (noChao) modelo.position.y = (1 + modelo.userData.fundo + FOLGA_CHAO) - 1.006;
     modelo.visible = false;
     g.add(pino, modelo);
     g.userData = { materiais: [mCorpo, mDisco, mAnel, ...modelo.userData.materiais], pino, modelo, perto: false };
@@ -252,6 +255,9 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       frente.crossVectors(direita, cima);
       marcador.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(direita, cima, frente));
       marcador.position.copy(t > 0 ? p : a.clone().multiplyScalar(1.006));
+      // Perto da decolagem e do pouso a rota passa rente ao chão: o modelo nunca fica abaixo do próprio fundo.
+      const minimo = 1 + marcador.userData.modelo.userData.fundo + FOLGA_CHAO;
+      if (t > 0 && marcador.position.length() < minimo) marcador.position.setLength(minimo);
       grupo.add(marcador);
       if (t > 0 && t < 1) {            // no ar: sombra no chão, logo abaixo
         sombra = criarSombra(fam); mats.push(...sombra.userData.materiais);
@@ -263,7 +269,8 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     }
     grupo.visible = false;
     cena.add(grupo);
-    return { grupo, mats, halo, aviao: marcador, sombra, perto, longe: [rastroLonge, pontos].filter(Boolean), marcos: [origem, destino], escala: 1, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
+    const noChao = !comAviao ? -1 : t > 0 && t < 1 ? -1 : t >= 1 ? 1 : 0;   // 0 = na origem, 1 = no destino
+    return { noChao, semHalo: !!v.semHalo, grupo, mats, halo, aviao: marcador, sombra, perto, longe: [rastroLonge, pontos].filter(Boolean), marcos: [origem, destino], escala: 1, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
   }
 
   function definirVoos(lista) {
@@ -439,6 +446,9 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       for (const x of o.longe) x.visible = !perto;
       o.escala = perto ? .3 : 1;          // aeroportos na escala do modelo
       for (const x of o.marcos) x.scale.setScalar(o.escala);
+      // de perto, o ponto do aeroporto onde o avião está parado some (senão vira uma bola no meio dele)
+      o.marcos.forEach((x, k) => { x.visible = !(perto && o.noChao === k); });
+      if (o.noChao === 1) o.halo.visible = !perto && !o.semHalo && !o.cancelado;
       o.halo.scale.setScalar(o.escala);
     }
   }

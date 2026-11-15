@@ -86,6 +86,8 @@ export function criarAviao3d(fam = 'estreito') {
 
   g.userData.materiais = [mCorpo, mAsa, mMotor, mCauda];
   g.userData.comprimento = L;
+  // Quanto o avião desce abaixo do centro (as turbinas penduradas): usado para não afundar no chão.
+  g.userData.fundo = -new THREE.Box3().setFromObject(g).min.y;
   return g;
 }
 
