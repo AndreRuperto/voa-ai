@@ -4,12 +4,15 @@
    - Dia e noite pela hora real (ponto subsolar), recalculado a cada minuto.
    - Rota no grande círculo: voado sólido em céu, restante tracejado, destino aceso em âmbar.
    - Avião é marcador (silhueta do ícone num disco noite com anel céu), na posição ESTIMADA.
-   - Câmera Avião / Destino / Livre; transições de 1,3 s; sem animação com prefers-reduced-motion. */
+     Com a câmera perto, o marcador vira o modelo 3D low-poly (aviao3d.js), com sombra no chão e
+     o rastro saindo da cauda.
+   - Câmera Avião / De perto / Destino / Livre; transições de 1,3 s; sem animação com prefers-reduced-motion. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { criarAviao3d, criarSombra, familia } from '/aviao3d.js';
 
 const COR = { ceu: 0x5CC8FF, pista: 0xFFB547, tinta: 0xF2F5FA, cancelado: 0xFF6B7A, atraso: 0xFF8A65,
-  oceano: new THREE.Color('#0A152B'), terra: new THREE.Color('#33507F') };
+  oceano: new THREE.Color('#071022'), terra: new THREE.Color('#3D6499'), litoral: 0xBFD3EE, divisa: 0xA9B6CC };
 const grau = Math.PI / 180;
 
 export function vetor(lat, lon, r = 1) {
@@ -57,7 +60,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
   cena.add(sol, new THREE.AmbientLight(0x9DB4E0, .7));
 
   /* ---- globo low-poly */
-  const geoGlobo = new THREE.IcosahedronGeometry(1, 22);
+  const geoGlobo = new THREE.IcosahedronGeometry(1, 34);     // faces de ~1° de lado: litoral menos serrilhado
   const nFaces = geoGlobo.attributes.position.count / 3;
   geoGlobo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nFaces * 9), 3));
   function pintarGlobo(ehTerra) {
@@ -76,18 +79,66 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
   pintarGlobo();
   cena.add(new THREE.Mesh(geoGlobo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })));
 
-  // Continentes: sem rede, o globo fica só com o oceano e o resto funciona.
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json').then(r => r.json()).then(topo => {
+  /* Linhas sobre a superfície (litoral e divisas). Trechos longos são divididos para acompanhar a curva. */
+  function linhasNaEsfera(multi, r) {
+    const pts = [];
+    for (const linha of multi.coordinates) {
+      for (let i = 1; i < linha.length; i++) {
+        const a = vetor(linha[i - 1][1], linha[i - 1][0], r), b = vetor(linha[i][1], linha[i][0], r);
+        const n = Math.max(1, Math.ceil(a.angleTo(b) / (1.5 * grau)));
+        let ant = a;
+        for (let k = 1; k <= n; k++) {
+          const q = k === n ? b : a.clone().lerp(b, k / n).setLength(r);
+          pts.push(ant.x, ant.y, ant.z, q.x, q.y, q.z); ant = q;
+        }
+      }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return g;
+  }
+  // Divisas: discretas de longe, mais nítidas quando a câmera chega perto (ver quadro()).
+  const matLitoral = new THREE.LineBasicMaterial({ color: COR.litoral, transparent: true, opacity: .5, depthWrite: false });
+  const matDivisa = new THREE.LineBasicMaterial({ color: COR.divisa, transparent: true, opacity: .16, depthWrite: false });
+  function opacidadeDasLinhas() {
+    const alt = camera.position.length() - 1;              // altura da câmera sobre a superfície
+    const k = THREE.MathUtils.clamp((alt - .15) / 2.2, 0, 1); // 0 = bem perto, 1 = longe
+    matDivisa.opacity = THREE.MathUtils.lerp(.55, .16, k);
+    matLitoral.opacity = THREE.MathUtils.lerp(.8, .5, k);
+  }
+
+  // Continentes e países: sem rede, o globo fica só com o oceano e o resto funciona.
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(r => r.json()).then(topo => {
     if (!window.topojson) return;
-    const W = 1440, H = 720, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const paises = topo.objects.countries;
+    const litoral = window.topojson.mesh(topo, paises, (a, b) => a === b);
+    const divisas = window.topojson.mesh(topo, paises, (a, b) => a !== b);
+    const lLit = new THREE.LineSegments(linhasNaEsfera(litoral, 1.0012), matLitoral);
+    const lDiv = new THREE.LineSegments(linhasNaEsfera(divisas, 1.0011), matDivisa);
+    lLit.renderOrder = lDiv.renderOrder = 1;
+    cena.add(lDiv, lLit);
+
+    const W = 2048, H = 1024, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const g = cv.getContext('2d'); g.fillStyle = '#fff';
-    const terra = window.topojson.feature(topo, topo.objects.land);
+    const terra = window.topojson.feature(topo, paises);
     for (const f of terra.features) {
+      if (!f.geometry) continue;
       const polis = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
       for (const p of polis) {
-        g.beginPath();
-        for (const anel of p) anel.forEach(([lo, la], i) => { const x = (lo + 180) / 360 * W, y = (90 - la) / 180 * H; i ? g.lineTo(x, y) : g.moveTo(x, y); });
-        g.fill('evenodd');
+        // Polígonos que cruzam a linha de 180° (Fiji, Rússia): desenrola a longitude e desenha também
+        // deslocado de uma volta, senão o preenchimento atravessa o mapa inteiro.
+        for (const desloc of [0, -W, W]) {
+          g.beginPath();
+          for (const anel of p) {
+            let ant = null, extra = 0;
+            anel.forEach(([lo, la], i) => {
+              if (ant !== null && Math.abs(lo - ant) > 180) extra += lo < ant ? 360 : -360;
+              ant = lo;
+              const x = (lo + extra + 180) / 360 * W + desloc, y = (90 - la) / 180 * H;
+              i ? g.lineTo(x, y) : g.moveTo(x, y);
+            });
+          }
+          g.fill('evenodd');
+        }
       }
     }
     const px = g.getImageData(0, 0, W, H).data;
@@ -110,8 +161,9 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     cena.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xA9B6CC, size: 1.4, sizeAttenuation: false, transparent: true, opacity: .55 })));
   }
 
-  /* ---- avião: marcador, não miniatura */
-  function aviao() {
+  /* ---- avião: marcador de longe, modelo 3D de perto */
+  const PERTO_ENTRA = .7, PERTO_SAI = .85;   // distância câmera → avião (com folga, para não piscar)
+  function aviao(fam, noChao) {
     const forma = new THREE.Shape(SILHUETA.map(([x, y]) => new THREE.Vector2(x - 11.5, 12 - y)));
     const geo = new THREE.ExtrudeGeometry(forma, { depth: .9, bevelEnabled: false })
       .translate(0, 0, -.45).rotateX(Math.PI / 2).scale(.0034, .0034, .0034);   // nariz para +Z, topo para +Y
@@ -123,15 +175,19 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     const anel = new THREE.Mesh(new THREE.RingGeometry(.05, .057, 48).rotateX(-Math.PI / 2).translate(0, -.0035, 0), mAnel);
     const corpo = new THREE.Mesh(geo, mCorpo);
     disco.renderOrder = 1; anel.renderOrder = 2; corpo.renderOrder = 3;
-    g.add(disco, anel, corpo);
-    g.userData.materiais = [mCorpo, mDisco, mAnel];
+    const pino = new THREE.Group(); pino.add(disco, anel, corpo);
+    const modelo = criarAviao3d(fam);
+    if (noChao) modelo.position.y = -.0045;     // o pino fica um pouco acima; o modelo pousa no chão
+    modelo.visible = false;
+    g.add(pino, modelo);
+    g.userData = { materiais: [mCorpo, mDisco, mAnel, ...modelo.userData.materiais], pino, modelo, perto: false };
     return g;
   }
 
   /* ---- rotas
      tipo: 'voo' (avião na rota, t = fração estimada), 'cancelado', 'opcao' (arco sem avião). */
   const objetos = {};
-  const assinatura = v => `${v.a.lat},${v.a.lon}|${v.b.lat},${v.b.lon}|${v.tipo}|${Math.round(v.t * 400)}`;
+  const assinatura = v => `${v.a.lat},${v.a.lon}|${v.b.lat},${v.b.lon}|${v.tipo}|${Math.round(v.t * 400)}|${familia(v.aeronave)}`;
   function montar(v) {
     const a = vetor(v.a.lat, v.a.lon), b = vetor(v.b.lat, v.b.lon);
     const ang = a.angleTo(b), h = .012 + .16 * ang / Math.PI, pts = [];
@@ -146,10 +202,12 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     const cancelado = v.tipo === 'cancelado', comAviao = v.tipo === 'voo';
     const t = Math.max(0, Math.min(1, v.t || 0));
     const respiro = .075 / curva.getLength();          // o rastro para antes do marcador do avião
+    let rastroLonge = null;
     if (comAviao && t > respiro) {
       const fim = t - respiro, sub = []; for (let i = 0; i <= 60; i++) sub.push(curva.getPoint(fim * i / 60));
       const m = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true }); mats.push(m);
-      grupo.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sub), 60, .0042, 6), m));
+      rastroLonge = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sub), 60, .0042, 6), m);
+      grupo.add(rastroLonge);
     }
     const tTrac = comAviao ? t : 0;
     const passo = .012 / Math.max(ang, .05), qtd = Math.max(4, Math.floor((1 - tTrac) / passo));
@@ -158,6 +216,25 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     const ini = comAviao ? Math.min(1, tTrac + respiro) : tTrac;
     for (let i = 0; i < qtd; i++) { mx.setPosition(curva.getPoint(ini + (1 - ini) * (i + .5) / qtd)); pontos.setMatrixAt(i, mx); }
     grupo.add(pontos);
+    // De perto, rastro e tracejado na escala do modelo: o rastro, fino, vai até a cauda; o tracejado,
+    // em pontos miúdos, recomeça logo depois do nariz. Os de longe somem (seriam mais grossos que o avião).
+    const perto = new THREE.Group(); perto.visible = false;
+    const fam = familia(v.aeronave), comp = curva.getLength(), meioAviao = (fam === 'largo' ? .017 : .013) / comp;
+    if (comAviao && t > 0) {
+      const fim2 = t - meioAviao * .9;
+      if (fim2 > 0) {
+        const sub = []; for (let i = 0; i <= 80; i++) sub.push(curva.getPoint(fim2 * i / 80));
+        const m = new THREE.MeshBasicMaterial({ color: COR.ceu, transparent: true, opacity: .85 }); mats.push(m);
+        perto.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sub), 160, .0007, 6), m));
+      }
+      const a2 = t + meioAviao * 1.5, n2 = Math.max(0, Math.floor((1 - a2) * comp / .005)), mx2 = new THREE.Matrix4();
+      if (n2 > 0) {
+        const p2 = new THREE.InstancedMesh(new THREE.SphereGeometry(.0006, 5, 3), mPonto, n2);
+        for (let i = 0; i < n2; i++) { mx2.setPosition(curva.getPoint(a2 + (1 - a2) * (i + .5) / n2)); p2.setMatrixAt(i, mx2); }
+        perto.add(p2);
+      }
+    }
+    grupo.add(perto);
     const mOrigem = new THREE.MeshBasicMaterial({ color: COR.tinta, transparent: true }); mats.push(mOrigem);
     const origem = new THREE.Mesh(new THREE.SphereGeometry(.007, 10, 8), mOrigem); origem.position.copy(a).multiplyScalar(1.003);
     const mDest = new THREE.MeshBasicMaterial({ color: cancelado ? COR.cancelado : COR.pista, transparent: true }); mats.push(mDest);
@@ -166,19 +243,26 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     const halo = new THREE.Mesh(new THREE.RingGeometry(.016, .03, 32), mHalo);
     halo.position.copy(b).multiplyScalar(1.004); halo.lookAt(b.clone().multiplyScalar(2)); halo.visible = !cancelado;
     grupo.add(origem, destino, halo);
-    let marcador = null;
+    let marcador = null, sombra = null;
     if (comAviao) {
-      marcador = aviao(); mats.push(...marcador.userData.materiais);
+      marcador = aviao(fam, !(t > 0)); mats.push(...marcador.userData.materiais);
       const tt = Math.min(t, .995), p = curva.getPoint(tt), frente = curva.getPoint(Math.min(1, tt + .01)).sub(p).normalize();
       const cima = p.clone().normalize(), direita = new THREE.Vector3().crossVectors(cima, frente).normalize();
       frente.crossVectors(direita, cima);
       marcador.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(direita, cima, frente));
       marcador.position.copy(t > 0 ? p : a.clone().multiplyScalar(1.006));
       grupo.add(marcador);
+      if (t > 0 && t < 1) {            // no ar: sombra no chão, logo abaixo
+        sombra = criarSombra(fam); mats.push(...sombra.userData.materiais);
+        sombra.quaternion.copy(marcador.quaternion);
+        sombra.position.copy(p).normalize().multiplyScalar(1.0015);
+        sombra.visible = false;
+        grupo.add(sombra);
+      }
     }
     grupo.visible = false;
     cena.add(grupo);
-    return { grupo, mats, halo, aviao: marcador, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
+    return { grupo, mats, halo, aviao: marcador, sombra, perto, longe: [rastroLonge, pontos].filter(Boolean), marcos: [origem, destino], escala: 1, curva, origem: a, destino: b, cancelado, base: mats.map(m => m.opacity), sig: assinatura(v) };
   }
 
   function definirVoos(lista) {
@@ -188,10 +272,15 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       vistos.add(v.id);
       const atual = objetos[v.id];
       if (atual && atual.sig === assinatura(v)) continue;
-      const vis = atual?.grupo.visible;
+      const vis = atual?.grupo.visible, antes = atual?.aviao?.position.clone();
       if (atual) { cena.remove(atual.grupo); descartar(atual.grupo); }
       objetos[v.id] = montar(v);
       if (vis) objetos[v.id].grupo.visible = true;
+      // De perto, a câmera anda junto quando a posição estimada do avião é atualizada.
+      const depois = objetos[v.id].aviao?.position;
+      if (antes && depois && modoCamera === 'perto' && cfgAtual().foco === v.id) {
+        camera.position.add(depois.clone().sub(antes)); ctrl().target.copy(depois);
+      }
     }
     return [...vistos];
   }
@@ -227,6 +316,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
 
   /* ---- câmera */
   let voo = null, atual = { ids: [] }, modoCamera = 'livre';
+  const cfgAtual = () => atual;
   function enquadrar(ids) {
     ids = ids.filter(tem);
     if (!ids.length) return { lat: -2, lon: -28, dist: 4.6 };
@@ -246,29 +336,79 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       return { dir: vetor(cam.lat, cam.lon), dist: cam.dist };
     }
     if (modo === 'destino') return { dir: o.destino.clone(), dist: 2.8 };
+    if (modo === 'perto') return o.aviao ? { perto: o.aviao } : null;
     if (modo === 'livre') return null;
     const alvo = o.aviao ? o.aviao.position : o.origem;
     const meio = alvo.clone().normalize().lerp(o.destino, .3).normalize();
     return { dir: meio, dist: desktop.matches ? 3.4 : 3.9 };
   }
+  /* De perto, o "para cima" da câmera é o céu acima do avião, não o eixo do globo. O OrbitControls
+     do three 0.160 fixa o "para cima" ao ser criado, então o modo De perto tem um controle próprio. */
+  let ctrlPerto = null;
+  const ctrl = () => ctrlPerto || controles;
+  const CIMA_GLOBO = new THREE.Vector3(0, 1, 0);
+  function ligarPerto(centro) {
+    desligarPerto();
+    camera.up.copy(centro).normalize();
+    ctrlPerto = new OrbitControls(camera, canvas);
+    Object.assign(ctrlPerto, { enablePan: false, enableDamping: true, dampingFactor: .08, minDistance: .035, maxDistance: .5, rotateSpeed: .5 });
+    ctrlPerto.target.copy(centro);
+    ctrlPerto.addEventListener('start', aoComecarArrasto);
+    controles.enabled = false;
+  }
+  function desligarPerto() {
+    if (!ctrlPerto) return;
+    ctrlPerto.dispose(); ctrlPerto = null;
+    controles.enabled = true;
+  }
+  /** Câmera de perseguição: atrás, acima e um pouco ao lado do avião, olhando para ele. */
+  function poseDePerto(av) {
+    const L = av.userData.modelo.userData.comprimento;
+    const pos = new THREE.Vector3(L * .9, L * 1.6, -L * 2.4).applyQuaternion(av.quaternion).add(av.position);
+    return { pos, alvo: av.position.clone() };
+  }
   function voarPara(alvo) {
     if (!alvo) return;
+    const alvoDe = ctrl().target.clone(), cimaDe = camera.up.clone();
+    desligarPerto();
+    if (alvo.perto) {
+      const { pos, alvo: centro } = poseDePerto(alvo.perto);
+      const cimaPara = centro.clone().normalize();
+      if (reduzir) { camera.position.copy(pos); camera.up.copy(cimaPara); camera.lookAt(centro); ligarPerto(centro); return; }
+      voo = { reto: true, posDe: camera.position.clone(), posPara: pos, alvoDe, alvoPara: centro, cimaDe, cimaPara, perto: true, ini: performance.now(), dur: 1500 };
+      return;
+    }
     const { dir, dist } = alvo;
+    const centro = new THREE.Vector3();
     const de = camera.position.clone(), distDe = de.length(), dirDe = de.normalize();
     const para = dir.clone().normalize();
-    if (reduzir) { camera.position.copy(para.multiplyScalar(dist)); camera.lookAt(0, 0, 0); return; }
-    voo = { dirDe, para, distDe, dist, ini: performance.now(), dur: 1300 };
+    if (reduzir) { camera.position.copy(para.multiplyScalar(dist)); camera.up.copy(CIMA_GLOBO); controles.target.copy(centro); camera.lookAt(centro); return; }
+    voo = { dirDe, para, distDe, dist, alvoDe, alvoPara: centro, cimaDe, cimaPara: CIMA_GLOBO.clone(), ini: performance.now(), dur: 1300 };
   }
+  const _alvo = new THREE.Vector3();
   function passoVoo(agora) {
     if (!voo) return;
     const k = Math.min(1, (agora - voo.ini) / voo.dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-    const q = new THREE.Quaternion().setFromUnitVectors(voo.dirDe, voo.para), q0 = new THREE.Quaternion();
-    const d = voo.dirDe.clone().applyQuaternion(q0.slerp(q, e));
-    const arco = Math.sin(Math.PI * e) * .25 * voo.dirDe.angleTo(voo.para);
-    camera.position.copy(d.multiplyScalar(THREE.MathUtils.lerp(voo.distDe, voo.dist, e) + arco));
-    if (k === 1) voo = null;
+    if (voo.reto) {
+      // Aproximação: interpola e mantém a distância ao centro, para não atravessar a Terra no caminho.
+      const p = voo.posDe.clone().lerp(voo.posPara, e);
+      const r = THREE.MathUtils.lerp(voo.posDe.length(), voo.posPara.length(), e);
+      camera.position.copy(p.normalize().multiplyScalar(r));
+    } else {
+      const q = new THREE.Quaternion().setFromUnitVectors(voo.dirDe, voo.para), q0 = new THREE.Quaternion();
+      const d = voo.dirDe.clone().applyQuaternion(q0.slerp(q, e));
+      const arco = Math.sin(Math.PI * e) * .25 * voo.dirDe.angleTo(voo.para);
+      camera.position.copy(d.multiplyScalar(THREE.MathUtils.lerp(voo.distDe, voo.dist, e) + arco));
+    }
+    camera.up.copy(voo.cimaDe).lerp(voo.cimaPara, e).normalize();
+    camera.lookAt(_alvo.copy(voo.alvoDe).lerp(voo.alvoPara, e));
+    if (k === 1) {
+      if (voo.perto) ligarPerto(voo.alvoPara); else controles.target.copy(voo.alvoPara);
+      voo = null;
+    }
   }
-  controles.addEventListener('start', () => { voo = null; controles.autoRotate = false; aoArrastar(); });
+  function aoComecarArrasto() { voo = null; controles.autoRotate = false; aoArrastar(); }
+  controles.addEventListener('start', aoComecarArrasto);
 
   /* ---- painel do desktop empurra o centro do globo para a área livre à direita */
   let deslocamento = 0, deslocAlvo = 0;
@@ -286,16 +426,35 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
   }
   new ResizeObserver(ajustar).observe(palco);
 
+  /* ---- de longe o marcador, de perto o modelo 3D (com folga entre entrar e sair) */
+  function trocarPerto() {
+    for (const id of atual.ids) {
+      const o = objetos[id], av = o?.aviao; if (!av) continue;
+      const d = camera.position.distanceTo(av.position), u = av.userData;
+      const perto = u.perto ? d < PERTO_SAI : d < PERTO_ENTRA;
+      if (perto === u.perto) continue;
+      u.perto = perto; u.pino.visible = !perto; u.modelo.visible = perto;
+      o.perto.visible = perto; if (o.sombra) o.sombra.visible = perto;
+      for (const x of o.longe) x.visible = !perto;
+      o.escala = perto ? .3 : 1;          // aeroportos na escala do modelo
+      for (const x of o.marcos) x.scale.setScalar(o.escala);
+      o.halo.scale.setScalar(o.escala);
+    }
+  }
+
   /* ---- laço: pausa com a aba escondida e quando o globo não aparece */
   function quadro(agora) {
     requestAnimationFrame(quadro);
     if (document.hidden || !palco.clientHeight) return;
     if (Math.abs(deslocAlvo - deslocamento) > .5) { deslocamento += (deslocAlvo - deslocamento) * (reduzir ? 1 : .12); aplicarOffset(); }
     passoVoo(agora);
-    if (voo) camera.lookAt(0, 0, 0); else controles.update();
+    if (!voo) ctrl().update();
+    if (camera.position.length() < 1.004) camera.position.setLength(1.004);   // de perto, não entra na Terra
+    trocarPerto();
+    opacidadeDasLinhas();
     if (!reduzir) {
       const s = 1 + .45 * (.5 + .5 * Math.sin(agora / 1000 * 2.6));
-      for (const id in objetos) objetos[id].halo.scale.setScalar(s);
+      for (const id in objetos) objetos[id].halo.scale.setScalar(s * objetos[id].escala);
     }
     renderer.render(cena, camera);
     posicionarRotulos();
