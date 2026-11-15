@@ -55,7 +55,7 @@ function quandoCurto(iso) {
 }
 function avatar(c) {
   const ini = esc((c?.nome || c?.email || '?').trim().charAt(0).toUpperCase());
-  return c?.foto ? `<img src="${esc(c.foto)}" alt="" referrerpolicy="no-referrer">` : ini;
+  return c?.foto ? `<img src="${esc(c.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${ini}'))">` : ini;
 }
 /** 404 de /api/admin/* = sessão de admin acabou: volta para a porta. */
 function tratarErro(e) { if (e?.status === 404) { eu = null; portao('Sua sessão de admin acabou. Entre de novo com uma conta de administrador.'); return true; } return false; }
@@ -90,7 +90,7 @@ function portao(mensagem) {
   if (admin) {
     $('#quem-avatar').innerHTML = avatar(eu.conta);
     $('#quem-nome').textContent = eu.conta.nome || eu.conta.email;
-    $('#quem-email').textContent = eu.conta.email;
+    $('#quem-email').textContent = eu.conta.email; $('#quem-email').title = eu.conta.email;
     if (!location.hash) history.replaceState(null, '', '#visao');
     mostrar();
     return;
