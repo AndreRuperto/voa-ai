@@ -85,7 +85,7 @@ Todo erro é JSON `{"erro": "<codigo>", "mensagem": "<texto em PT-BR para mostra
 | `DELETE` | `/api/inscricoes/:id` | `204`. Apaga o alerta se era o último inscrito (R3) |
 | `GET` | `/api/lugares/paises` | `{"paises":[{"codigo":"PT","nome":"Portugal","aeroportos":3}]}` (nome em PT-BR) |
 | `GET` | `/api/lugares/aeroportos?pais=PT` | `{"aeroportos":[{"iata","icao","nome","cidade","lat","lon","grande":bool}]}` grandes primeiro |
-| `GET` | `/api/rotas/buscar?de=LIS,OPO&para=GRU&data=2026-11-14` | `{"pares":[{"de","para","cache":bool,"voos":[Voo…]}]}`. Máx. 3 pares, cache de 30 min por par+dia, `connection=nonstop` |
+| `GET` | `/api/rotas/buscar?de=LIS,OPO&para=GRU&data=2026-11-14` | `{"pares":[{"de","para","cache":bool,"voos":[Voo…],"viagens"?:[{"pernas":[Voo, Voo]}]}]}`. Máx. 3 pares, cache de 30 min por par+dia, `connection=nonstop`. Com `&escala=1`, mais uma consulta por par com `connection=onestop` (a AeroAPI não aceita data com escala: devolve as próximas saídas, por heurística, e pode vir incompleta); o servidor guarda as pernas, filtra pelo dia da 1ª saída e faz cache de 30 min por par. Conta como uma busca no limite diário |
 | `GET` | `/v/:fa_flight_id` | Devolve o `index.html` (o front abre a tela de status desse voo e oferece "Me avisar") |
 | `POST` | `/webhook/aeroapi/:segredo` | Callback da AeroAPI. Segredo errado → `404`. Responde `200` na hora e processa depois |
 

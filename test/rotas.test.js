@@ -83,3 +83,29 @@ test('lugares: países em PT-BR e aeroportos grandes primeiro', async () => {
   assert.deepEqual(Object.keys(a.json.aeroportos[0]), ['iata', 'icao', 'nome', 'cidade', 'lat', 'lon', 'grande']);
   assert.equal((await c.pedir('/api/lugares/aeroportos')).status, 400);
 });
+
+test('busca com escala: mais uma consulta (onestop, sem data), viagens do dia, com cache', async () => {
+  const antes = rotaCalls().length;
+  const r = await s.cliente().pedir('/api/rotas/buscar?de=OPO&para=GIG&data=2026-11-14&escala=1');
+  assert.equal(r.status, 200);
+  const novas = rotaCalls().slice(antes);
+  assert.deepEqual(novas.map((c) => c.query.connection), ['nonstop', 'onestop']);
+  assert.equal(novas[1].query.start, undefined, 'onestop não aceita data');
+  const p = r.json.pares[0];
+  assert.equal(p.viagens.length, 1);
+  assert.deepEqual(p.viagens[0].pernas.map((v) => v.fa_flight_id), ['XLPPRSBGL-1-schedule-0001', 'ESCALA']);
+
+  const r2 = await s.cliente().pedir('/api/rotas/buscar?de=OPO&para=GIG&data=2026-11-14&escala=1');
+  assert.equal(r2.json.pares[0].cache, true);
+  assert.equal(rotaCalls().length, antes + 2, 'as duas consultas vêm do cache');
+
+  const r3 = await s.cliente().pedir('/api/rotas/buscar?de=OPO&para=GIG&data=2026-11-15&escala=1');
+  assert.equal(r3.json.pares[0].viagens.length, 0, 'viagens de outro dia ficam de fora');
+});
+
+test('sem escala=1, a resposta não traz viagens nem faz a consulta extra', async () => {
+  const antes = rotaCalls().length;
+  const r = await s.cliente().pedir('/api/rotas/buscar?de=LIS&para=GIG&data=2026-11-14');
+  assert.equal(r.json.pares[0].viagens, undefined);
+  assert.equal(rotaCalls().length, antes + 1);
+});

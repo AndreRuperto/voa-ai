@@ -97,7 +97,7 @@
 <section class="tela" data-tela="confirmacao" aria-labelledby="t-conf">
   <a class="voltar" href="#inicio"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Voltar</a>
   <div style="display:flex;flex-direction:column;gap:var(--e-2)">
-    <h1 id="t-conf">É um destes?</h1>
+    <h1 id="t-conf" data-um="É um destes?" data-viagem="É esta viagem?">É um destes?</h1>
     <p class="apoio" id="conf-apoio"></p>
   </div>
   <div id="conf-estado" aria-live="polite"></div>
@@ -131,7 +131,7 @@
     </div>
     <p id="conf-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg><span></span></p>
     <div class="acoes">
-      <button class="botao" type="button" id="me-avisar"><svg aria-hidden="true"><use href="#i-sino"/></svg>Me avisar</button>
+      <button class="botao" type="button" id="me-avisar"><svg aria-hidden="true"><use href="#i-sino"/></svg><span>Me avisar</span></button>
       <p class="dica" style="text-align:center">O celular vai pedir permissão para mostrar notificações.</p>
     </div>
   </div>
@@ -175,6 +175,12 @@
       <legend>Data do voo</legend>
       <div class="segmentado" data-dias="data-rota"></div>
     </fieldset>
+    <label class="opcao-escala">
+      <input type="checkbox" id="com-escala">
+      <span class="opcao-escala__caixa" aria-hidden="true"><svg><use href="#i-check"/></svg></span>
+      <span class="opcao-escala__texto"><b>Incluir voos com uma escala</b>
+        <small>Para quem troca de avião no caminho, como Guarulhos → Dubai → Tóquio. A gente acompanha os dois voos juntos.</small></span>
+    </label>
     <p id="rota-erro" class="erro" role="alert" hidden><svg aria-hidden="true"><use href="#i-alerta"/></svg><span></span></p>
     <button class="botao" type="submit" id="buscar-rota">Buscar voos</button>
   </form>

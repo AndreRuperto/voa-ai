@@ -147,8 +147,30 @@ function lerAeroportos(lista, lado) {
   });
 }
 
-/** GET /api/rotas/buscar */
-export async function buscarRota(ctx, { de, para, data }, { quem, temConta }) {
+/** Viagens com escala de um par, guardadas e filtradas pelo dia da 1ª saída (cache de 30 min por par). */
+async function viagensDoPar(ctx, o, d, data, quem) {
+  const agora = ctx.agora();
+  const chave = `rota1:${o.icao || o.iata}:${d.icao || d.iata}`;
+  let pares = lerCache(ctx.db, chave, agora);
+  let doCache = Boolean(pares);
+  if (pares && pares.some(([a, b]) => !lerVoo(ctx.db, a) || !lerVoo(ctx.db, b))) { pares = null; doCache = false; }
+  if (!pares) {
+    exigirChave(ctx);
+    const brutas = await ctx.aeroapi.viagensComEscala(o.icao || o.iata, d.icao || d.iata, { quem, ref: `${o.iata}-${d.iata}-escala` });
+    pares = brutas.filter(([a, b]) => a?.fa_flight_id && b?.fa_flight_id)
+      .map(([a, b]) => [salvarVoo(ctx.db, a, agora).linha.fa_flight_id, salvarVoo(ctx.db, b, agora).linha.fa_flight_id]);
+    gravarCache(ctx.db, chave, pares, CACHE_ROTA_MS, agora);
+  }
+  const viagens = pares
+    .map(([a, b]) => [lerVoo(ctx.db, a), lerVoo(ctx.db, b)])
+    .filter(([a, b]) => a && b && dataDaPartida(a.dados) === data)
+    .map(([a, b]) => ({ pernas: [vooDaLinha(a, agora), vooDaLinha(b, agora)] }))
+    .sort((x, y) => String(x.pernas[0].horarios.saida_prevista).localeCompare(String(y.pernas[0].horarios.saida_prevista)));
+  return { viagens, doCache };
+}
+
+/** GET /api/rotas/buscar (com `escala`, também as viagens com uma escala: mais uma consulta por par). */
+export async function buscarRota(ctx, { de, para, data, escala = false }, { quem, temConta }) {
   const agora = ctx.agora();
   validarData(data, agora);
   const origens = lerAeroportos(de, 'origem');
@@ -171,15 +193,21 @@ export async function buscarRota(ctx, { de, para, data }, { quem, temConta }) {
     const chave = `rota:${o.icao || o.iata}:${d.icao || d.iata}:${data}`;
     const c = lerCache(ctx.db, chave, agora);
     const doCache = c && voosDoBanco(ctx, c);
-    if (doCache) {
-      resultado.push({ de: o.iata, para: d.iata, cache: true, voos: doCache });
-      continue;
+    let item;
+    if (doCache) item = { de: o.iata, para: d.iata, cache: true, voos: doCache };
+    else {
+      exigirChave(ctx);
+      const brutos = await ctx.aeroapi.voosEntre(o.icao || o.iata, d.icao || d.iata, { ...janela(data, agora), quem, ref: `${o.iata}-${d.iata}` });
+      const linhas = guardarVoos(ctx, brutos, data);
+      gravarCache(ctx.db, chave, linhas.map((l) => l.fa_flight_id), CACHE_ROTA_MS, agora);
+      item = { de: o.iata, para: d.iata, cache: false, voos: linhas.map((l) => vooDaLinha(l, agora)) };
     }
-    exigirChave(ctx);
-    const brutos = await ctx.aeroapi.voosEntre(o.icao || o.iata, d.icao || d.iata, { ...janela(data, agora), quem, ref: `${o.iata}-${d.iata}` });
-    const linhas = guardarVoos(ctx, brutos, data);
-    gravarCache(ctx.db, chave, linhas.map((l) => l.fa_flight_id), CACHE_ROTA_MS, agora);
-    resultado.push({ de: o.iata, para: d.iata, cache: false, voos: linhas.map((l) => vooDaLinha(l, agora)) });
+    if (escala) {
+      const { viagens, doCache: vc } = await viagensDoPar(ctx, o, d, data, quem);
+      item.viagens = viagens;
+      item.cache = item.cache && vc;
+    }
+    resultado.push(item);
   }
 
   const buscaId = randomUUID();

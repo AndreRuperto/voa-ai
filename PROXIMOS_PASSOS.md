@@ -1,6 +1,6 @@
 # Próximos passos
 
-**Data:** 15/11/2026 · **Branch:** `claude/viagem-conexao` (a partir da `claude/conexao-simulada`, PR #18)
+**Data:** 15/11/2026 · **Branch:** `claude/rota-com-escala` (a partir da `claude/adicionar-conexao`, PR #21)
 
 ## O que mudou nesta sessão: o app real existe
 
@@ -10,6 +10,13 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`server/dados/`**: 3.245 aeroportos com fuso (OurAirports), nomes em português para 291 aeroportos e nomes de companhias. Gerado por `scripts/gerar-aeroportos.js`.
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
+
+## 15/11: busca por rota com escala
+
+- Na busca por rota, a opção **"Incluir voos com uma escala"** traz também viagens com uma escala (ex.: Guarulhos → Narita como EK262 + EK318 por Dubai). Ao tocar numa, a confirmação mostra "É esta viagem?" com os dois trechos e a conexão; **"Me avisar dos 2 voos"** acompanha os dois com o mesmo apelido.
+- AeroAPI: `connection=onestop`, sem data (devolve as próximas saídas) e com a ressalva de que a lista pode vir incompleta. Mais uma consulta por par: ≈ US$ 0,10 por par com a opção marcada.
+- Conferido no simulador, do começo ao fim, em 1440×900 e 375×812. **Não testado com a AeroAPI real:** falta ver o quanto a lista de escalas vem completa para Brasil → Japão.
+- [ ] Com a chave: testar `GRU → NRT` com escala e conferir o formato dos `segments`
 
 ## 15/11: viagem com conexão
 

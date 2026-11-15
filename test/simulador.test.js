@@ -50,3 +50,13 @@ test('voo pelo id e por rota; alertas respondem', async () => {
   assert.equal(await a.criarAlerta({}), 1);
   await a.apagarAlerta(1);
 });
+
+test('simulador: viagem com escala GRU → NRT vem como EK262 + EK318 do mesmo ciclo', async () => {
+  const a = api();
+  const viagens = await a.viagensComEscala('SBGR', 'RJAA');
+  assert.equal(viagens.length, 4);
+  for (const [p1, p2] of viagens) {
+    assert.deepEqual([p1.ident_iata, p2.ident_iata], ['EK262', 'EK318']);
+    assert.equal(p1.fa_flight_id.split('-').pop(), p2.fa_flight_id.split('-').pop());
+  }
+});

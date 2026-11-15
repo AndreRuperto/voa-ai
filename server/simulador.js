@@ -98,6 +98,16 @@ export function criarFetchSimulado({ agora = () => Date.now() } = {}) {
       const i = porIdent(m[1]);
       return i ? resposta(200, { idents: [{ ident: i.icao, ident_type: 'designator' }] }) : resposta(404, { title: 'Not found' });
     }
+    if ((m = caminho.match(/^\/airports\/([^/]+)\/flights\/to\/([^/]+)$/)) && u.searchParams.get('connection') === 'onestop') {
+      // viagens com uma escala: duas pernas do catálogo encadeadas no mesmo ciclo (ex.: EK262 + EK318)
+      const viagens = [];
+      for (const a of CATALOGO) for (const b of CATALOGO) {
+        if (a === b || !noAeroporto(a.de, m[1]) || !noAeroporto(b.para, m[2]) || a.para !== b.de || a.ciclo !== b.ciclo) continue;
+        const k = Math.floor(t / (a.ciclo * MIN));
+        for (const n of [k - 1, k, k + 1, k + 2]) viagens.push({ segments: [vooSimulado(a, n, t), vooSimulado(b, n, t)] });
+      }
+      return resposta(200, { flights: viagens, num_pages: 1 });
+    }
     if ((m = caminho.match(/^\/airports\/([^/]+)\/flights\/to\/([^/]+)$/))) {
       const ini = Date.parse(u.searchParams.get('start')), fim = Date.parse(u.searchParams.get('end'));
       const voos = CATALOGO.filter((i) => noAeroporto(i.de, m[1]) && noAeroporto(i.para, m[2]))
