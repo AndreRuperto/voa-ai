@@ -30,6 +30,7 @@ export function registrarApi(r) {
       google_client_id: process.env.GOOGLE_CLIENT_ID || null,
       vapid_publica: process.env.VAPID_PUBLICA || null,
       aeroapi: ctx.aeroapi.temChave(),
+      simulada: !!ctx.simulada,
       limites: {
         voos_anonimo: c.limite_voos_anonimo,
         voos_conta: c.limite_voos_conta,

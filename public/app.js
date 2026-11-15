@@ -9,7 +9,8 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const reduzir = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const desktop = matchMedia('(min-width: 960px)');
 const MAX_PARES = 3;                      // docs/12: no máximo 3 pares de aeroportos por busca
-const ATUALIZAR_MS = 60000;               // status atualiza a cada 60 s com a tela visível
+const ATUALIZAR_MS = 60000;
+const ANDAR_MS = 2000;                    // o avião avança no globo entre as consultas               // status atualiza a cada 60 s com a tela visível
 
 const estado = {
   config: null,          // /api/config
@@ -146,6 +147,14 @@ async function carregarInscricoes() {
   return estado.inscricoes;
 }
 const inscricaoDe = id => estado.inscricoes?.find(i => i.voo?.fa_flight_id === id) || null;
+/** Servidor com AeroAPI simulada (só em desenvolvimento): avisa na tela, para ninguém confundir com voo de verdade. */
+function mostrarSeloSimulado(c) {
+  if (!c?.simulada || $('.selo-simulado')) return;
+  const p = document.createElement('p');
+  p.className = 'selo-simulado'; p.setAttribute('role', 'note');
+  p.innerHTML = 'Dados simulados<span> · voos de teste: TP1018, TP103, G31402, AD4510, LA8084</span>';
+  document.body.append(p);
+}
 const aeroapiDesligada = () => estado.config && estado.config.aeroapi === false;
 const MSG_SEM_AEROAPI = 'O serviço de voos ainda não está configurado. Tente de novo mais tarde.';
 /** Limites com conta (para convidar a entrar). A forma de config.limites não está no contrato; tenta os nomes da tabela CONFIG. */
@@ -520,7 +529,7 @@ async function telaConfirmacao([cod, data]) {
 $('#me-avisar').addEventListener('click', e => { const v = vooEscolhido(); if (v) meAvisar(v, apelido.value.trim(), e.currentTarget, $('#conf-erro')); });
 
 /* ============================================================ STATUS */
-let timerStatus = null, statusId = null;
+let timerStatus = null, timerAviao = null, statusId = null;
 function pararAtualizacao() { clearInterval(timerStatus); timerStatus = null; }
 function marcoHora(real, est, prev, f) {
   const hr = iso => hora(iso, f);
@@ -730,6 +739,13 @@ async function telaStatus([id], { silencioso = false } = {}) {
     if (document.hidden || rotaAtual().nome !== 'status') return;
     telaStatus([statusId], { silencioso: true });
   }, ATUALIZAR_MS);
+  // Entre uma consulta e outra, o avião segue andando no globo pela hora (o globo só refaz o desenho
+  // quando a posição muda o bastante para aparecer).
+  if (!timerAviao) timerAviao = setInterval(() => {
+    if (document.hidden || rotaAtual().nome !== 'status' || !globo) return;
+    const v = estado.voos.get(statusId);
+    if (v?.estado === 'em_voo' && temCoordenadas(v)) globo.definirVoos([paraGlobo(v)]);
+  }, ANDAR_MS);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && rotaAtual().nome === 'status' && statusId) telaStatus([statusId], { silencioso: true }); });
 
@@ -973,7 +989,7 @@ async function iniciar() {
   if (link && !location.hash) history.replaceState(null, '', `/#status/${link[1]}`);
   mostrarCaixasIOS();
   registrarSW();
-  const config = estado.configPronta = get('/api/config').then(c => (estado.config = c)).catch(() => null);
+  const config = estado.configPronta = get('/api/config').then(c => { mostrarSeloSimulado(c); return (estado.config = c); }).catch(() => null);
   const eu = estado.euPronta = carregarEu(), insc = carregarInscricoes();
   mostrar();
   await config; await eu; await insc;

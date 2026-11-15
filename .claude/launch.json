@@ -12,6 +12,17 @@
       "autoPort": false
     },
     {
+      "name": "simulado",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--env-file-if-exists=.env",
+        "--env-file=simulacao.env",
+        "server/index.js"
+      ],
+      "port": 3000,
+      "autoPort": false
+    },
+    {
       "name": "prototipo",
       "runtimeExecutable": "python",
       "runtimeArgs": [

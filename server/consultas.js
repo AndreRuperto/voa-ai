@@ -111,7 +111,7 @@ export async function obterVoo(ctx, faFlightId, { quem } = {}) {
   if (typeof faFlightId !== 'string' || !faFlightId || faFlightId.length > 120) throw new ErroRegra(400, 'invalido', 'Voo inválido.');
   const agora = ctx.agora();
   const l = lerVoo(ctx.db, faFlightId);
-  const velho = l && agora.getTime() - Date.parse(l.atualizado_em) > ATUALIZAR_APOS_MS;
+  const velho = l && agora.getTime() - Date.parse(l.atualizado_em) > (ctx.atualizarAposMs ?? ATUALIZAR_APOS_MS);
   if (l && (!velho || !vooAtivo(l.dados, agora))) return l;
   if (!ctx.aeroapi.temChave()) {
     if (l) return l;

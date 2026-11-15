@@ -11,6 +11,7 @@ import { registrarAdmin } from './rotas/admin.js';
 import { registrarWebhook } from './rotas/webhook.js';
 import { criarLimitePorIp, grupoDoPedido, ipDoPedido, mensagemLimiteIp } from './limiteip.js';
 import { lerConfig } from './limites.js';
+import { simulacaoLigada, criarFetchSimulado } from './simulador.js';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -28,10 +29,18 @@ export function criarContexto(op = {}) {
   const agora = op.agora || (() => new Date());
   const db = op.db || abrirBanco(process.env.DB_CAMINHO || join(RAIZ, 'dados', 'voa-ai.sqlite'));
   const tarefas = new Set();
+  // Desenvolvimento sem chave: AeroAPI simulada (server/simulador.js). Nunca liga em produção.
+  const simulada = !op.aeroapi && !op.fetch && simulacaoLigada();
+  const aeroapi = op.aeroapi || (simulada
+    ? criarAeroapi({ db, agora, fetch: criarFetchSimulado({ agora: () => agora().getTime() }), chave: () => 'simulada', esperar: async () => {}, bloqueado: () => false })
+    : criarAeroapi({ db, fetch: op.fetch, esperar: op.esperar, agora }));
   const ctx = {
     db,
     agora,
-    aeroapi: op.aeroapi || criarAeroapi({ db, fetch: op.fetch, esperar: op.esperar, agora }),
+    aeroapi,
+    simulada,
+    /** Voo em andamento é reconsultado depois deste tempo (simulado: rápido, para ver pousar). */
+    atualizarAposMs: simulada ? 30_000 : undefined,
     enviarPush: op.enviarPush || criarEnvioWebPush(),
     verificarGoogle: op.verificarGoogle || criarVerificadorGoogle(),
     pastaPublica: op.pastaPublica || join(RAIZ, 'public'),
