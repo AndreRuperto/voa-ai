@@ -401,3 +401,12 @@ dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
 .logo__arco { position: absolute; left: 0; top: 0; width: 100%; height: .58em; overflow: visible; pointer-events: none; }
 .logo__arco path { fill: none; stroke: var(--c-ceu); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1.2 4.2; vector-effect: non-scaling-stroke; }
 .logo .marca__i::after { top: -.05em; width: max(.18em, 6px); height: max(.18em, 6px); margin-left: min(-.09em, -3px); box-shadow: 0 0 0 .067em rgba(255, 181, 71, .18); }
+
+/* Servidor com AeroAPI simulada (npm run simular): nunca aparece em produção. */
+.selo-simulado {
+  position: fixed; left: 50%; bottom: var(--e-2); transform: translateX(-50%); z-index: 50; margin: 0;
+  max-width: calc(100vw - 2 * var(--e-4)); padding: var(--e-1) var(--e-3); border-radius: var(--r-placa);
+  background: var(--c-pista); color: var(--c-placa-tinta); font: 600 var(--fs-pp)/1.3 var(--f-placa);
+  text-align: center; pointer-events: none; opacity: .92;
+}
+@media (max-width: 767px) { .selo-simulado { left: auto; right: var(--e-2); bottom: auto; top: calc(var(--e-7) + var(--e-2)); transform: none; } .selo-simulado span { display: none; } }

@@ -1,6 +1,6 @@
 # Próximos passos
 
-**Data:** 15/11/2026 · **Branch:** `claude/aviao-3d` (a partir da `main` com os PRs #1 a #15)
+**Data:** 15/11/2026 · **Branch:** `claude/voos-simulados` (a partir da `main` com os PRs #1 a #16)
 
 ## O que mudou nesta sessão: o app real existe
 
@@ -10,6 +10,13 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`server/dados/`**: 3.245 aeroportos com fuso (OurAirports), nomes em português para 291 aeroportos e nomes de companhias. Gerado por `scripts/gerar-aeroportos.js`.
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
+
+## 15/11: voos simulados (sem a chave)
+
+- `npm run simular` sobe o servidor com uma **AeroAPI simulada** (`server/simulador.js`) e um banco à parte, `dados/simulado.sqlite`. A simulação não liga em produção.
+- Voos de teste, curtos e em ciclo, sempre com um no ar: **TP1018** (OPO→MAD, 8 min), **TP103** (LIS→GRU, 40 min), **G31402** (GRU→SDU, 10 min), **AD4510** (VCP→REC, 20 min) e **LA8084** (GRU→LHR, 60 min). A busca por rota também funciona nesses pares.
+- Um selo "Dados simulados" aparece na tela. No status, o avião avança no globo a cada 2 s, sem consultar a API de novo (vale também para voos reais).
+- O histórico da AeroAPI (`/history/flights/{ident}`, US$ 0,02 por consulta; `/track` US$ 0,06) está disponível desde 2011, mas mostra voos que já terminaram. Não serve para ver o avião andando ao vivo; serviria para um "replay" de voo passado.
 
 ## 15/11: avião 3D
 
@@ -51,6 +58,8 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - [ ] Levar three.js, world-atlas e fontes do CDN para `public/` (doc 11)
 
 ## Comandos úteis
+
+- Ver o avião andar sem a chave: `npm run simular` e buscar `TP103` (ou a configuração "simulado" do `.claude/launch.json`).
 
 - Produção: https://voaai.up.railway.app (saúde em `/saude`). Logs: `railway logs --service voa-ai`. Deploy manual: `railway up --service voa-ai --detach`.
 
