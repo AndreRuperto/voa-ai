@@ -437,3 +437,13 @@ dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
 .viagem__txt { min-width: 0; }
 .viagem__linha .placa--mini { justify-self: start; }
 .item-voo__link .placa--mini, .viagem__linha .placa--mini { flex-wrap: wrap; max-width: 100%; }   /* placa com "+35 min" não some em cartão estreito */
+
+/* "Tem conexão em …?" no status de um voo */
+.conexao-add { border: 1px solid var(--c-linha); border-radius: var(--r-cartao); background: var(--c-superficie); }
+.conexao-add summary { display: flex; align-items: center; gap: var(--e-2); padding: var(--e-3) var(--e-4); cursor: pointer; font-weight: 700; min-height: 48px; list-style: none; }
+.conexao-add summary::-webkit-details-marker { display: none; }
+.conexao-add summary::after { content: ""; margin-left: auto; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform var(--m-dur) var(--m-curva); }
+.conexao-add[open] summary::after { transform: rotate(-135deg); }
+.conexao-add summary svg { width: 20px; height: 20px; fill: var(--c-ceu); flex: none; }
+.conexao-add summary:focus-visible { outline: 2px solid var(--c-foco); outline-offset: 2px; border-radius: var(--r-cartao); }
+.conexao-add__form { display: flex; flex-direction: column; gap: var(--e-3); padding: 0 var(--e-4) var(--e-4); }

@@ -22,7 +22,7 @@ test('busca por número: IATA vira ICAO e há sempre um voo no ar', async () => 
   assert.deepEqual(await a.canonical('TP1018'), ['TAP1018']);
   for (const item of CATALOGO) {
     const voos = await a.voosPorIdent(item.icao, { start: '2026-11-15T00:00:00Z', end: '2026-11-16T00:00:00Z' });
-    assert.equal(voos.length, 3);
+    assert.equal(voos.length, 4);
     const noAr = voos.filter((v) => v.actual_off && !v.actual_on);
     const antes = voos.filter((v) => v.actual_on);
     assert.ok(noAr.length + antes.length >= 1, item.iata);

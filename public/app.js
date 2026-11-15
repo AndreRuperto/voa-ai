@@ -736,6 +736,58 @@ function secaoViagem({ pernas }, id) {
   return `<section class="viagem-status" aria-labelledby="t-viagem"><h2 id="t-viagem">Viagem até ${esc(cidade(destino))} · trecho ${i + 1} de ${pernas.length}</h2>
     <ol class="viagem__pernas">${linhas}</ol></section>`;
 }
+/** "Tem conexão em Dubai?": num voo acompanhado que ainda não faz parte de uma viagem, dá para
+ *  digitar o número do próximo voo; ele entra em Meus voos com o mesmo apelido e os dois viram uma viagem. */
+function pintarConexaoStatus(v, insc) {
+  const el = $('#st-conexao');
+  const mostrar = insc && !['cancelado', 'desviado'].includes(v.estado) && temCoordenadas(v) && !viagemDe(v.fa_flight_id);
+  const chave = mostrar ? `${v.fa_flight_id}|${v.destino.iata}` : '';
+  if (el.dataset.chave === chave) return;      // não repinta (não apaga o que a pessoa está digitando)
+  el.dataset.chave = chave;
+  if (!mostrar) { el.innerHTML = ''; return; }
+  const onde = cidade(v.destino);
+  el.innerHTML = `<details class="conexao-add">
+    <summary>${icone('i-conexao')}<span>Tem conexão em ${esc(onde)}?</span></summary>
+    <form class="conexao-add__form" novalidate>
+      <p class="dica">Digite o número do próximo voo. Os dois viram uma viagem em Meus voos, e a gente avisa se a troca de avião ficar apertada.</p>
+      <div class="campo"><label for="conexao-num">Número do próximo voo</label>
+        <input id="conexao-num" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" maxlength="8" placeholder="Ex.: EK318"></div>
+      <p id="conexao-erro" class="erro" role="alert" hidden>${icone('i-alerta')}<span></span></p>
+      <button class="botao botao--secundario" type="submit">${icone('i-conexao')}Acompanhar a conexão</button>
+    </form>
+  </details>`;
+  const form = $('form', el);
+  form.onsubmit = e => { e.preventDefault(); adicionarConexao(v, insc, $('#conexao-num').value, $('button', form), $('#conexao-erro')); };
+}
+/** Acha o próximo voo pelo número: o primeiro que sai do aeroporto onde este chega, até 24 h depois da chegada
+ *  (se nenhum sair depois, aceita um que sai até 3 h antes: este voo pode estar atrasado). */
+async function adicionarConexao(v, insc, digitado, botao, erroEl) {
+  esconderErro(erroEl);
+  const cod = limparIdent(digitado || '');
+  if (!/^[A-Z0-9]{3,8}$/.test(cod)) return mostrarErro(erroEl, 'Digite o número do voo, como EK318.');
+  const chega = chegadaDe(v), fuso = v.destino?.fuso, onde = cidade(v.destino);
+  const dias = [...new Set([diaISO(chega, fuso), diaISO(new Date(Date.parse(chega) + 864e5).toISOString(), fuso)])];
+  ocupado(botao, true);
+  try {
+    let achado = null;
+    for (const dia of dias) {
+      let voos = [];
+      try { voos = (await get(`/api/voos/buscar?ident=${encodeURIComponent(cod)}&data=${dia}`))?.voos || []; }
+      catch (e) { if (dia === dias[0] || e.erro !== 'invalido') throw e; }      // o dia seguinte pode estar fora da janela de busca
+      achado = voos.filter(c => c.origem?.iata === v.destino?.iata && c.fa_flight_id !== v.fa_flight_id)
+        .map(c => ({ c, esc: minutosEntre(chega, saidaDe(c)) }))
+        .filter(x => x.esc !== null && x.esc >= -180 && x.esc <= 24 * 60)
+        // o primeiro que sai depois da chegada; só se não houver, o que sai pouco antes (voo atrasado)
+        .sort((a, b) => (a.esc < 0) - (b.esc < 0) || (a.esc < 0 ? b.esc - a.esc : a.esc - b.esc))[0]?.c || null;
+      if (achado) break;
+    }
+    if (!achado) return mostrarErro(erroEl, `Não achei o ${esc(cod)} saindo de ${esc(onde)} até 24 h depois deste voo. Confira o número.`);
+    ocupado(botao, false);
+    await meAvisar(achado, insc.apelido, botao, erroEl);
+  } catch (e) {
+    mostrarErro(erroEl, esc(mensagemDe(e)));
+  } finally { ocupado(botao, false); }
+}
 function pintarAcoesStatus(v, insc) {
   const chave = `${v.fa_flight_id}|${insc?.id || ''}|${v.estado === 'cancelado'}`;
   const el = $('#st-acoes');
@@ -777,7 +829,7 @@ let focarAoPintar = false;
 async function telaStatus([id], { silencioso = false } = {}) {
   if (!id) { location.replace('#meus-voos'); return; }
   const novo = statusId !== id; statusId = id;
-  if (novo) { $('#st-acoes').dataset.chave = ''; pintar($('#st-avisos'), ''); }
+  if (novo) { $('#st-acoes').dataset.chave = ''; $('#st-conexao').dataset.chave = ''; pintar($('#st-avisos'), ''); }
   const conhecido = estado.voos.get(id);
   const desenhar = (v, manterCamera) => {
     const insc = inscricaoDe(id);
@@ -785,6 +837,7 @@ async function telaStatus([id], { silencioso = false } = {}) {
     const info = pintarCorpoStatus(v, insc);
     pintarAvisosStatus(v, insc);
     pintarAcoesStatus(v, insc);
+    pintarConexaoStatus(v, insc);
     cenaStatus(v, info, manterCamera);
     if (focarAoPintar) { focarAoPintar = false; $('#t-status')?.focus({ preventScroll: true }); }
   };
@@ -808,7 +861,7 @@ async function telaStatus([id], { silencioso = false } = {}) {
       titulo: naoExiste ? 'Esse voo não está mais aqui' : e.erro === 'aeroapi_sem_chave' ? 'Busca de voos indisponível' : e.erro === 'teto_duro' ? 'Busca de voos pausada' : 'Algo deu errado',
       texto: naoExiste ? 'O link pode estar errado, ou o voo já foi apagado: os dados somem 7 dias depois do pouso.' : esc(mensagemDe(e)),
       acao: `<a class="botao" href="#inicio">${icone('i-mais')}Acompanhar um voo</a>` }));
-    $('#st-acoes').innerHTML = ''; $('#st-acoes').dataset.chave = '';
+    $('#st-acoes').innerHTML = ''; $('#st-acoes').dataset.chave = ''; $('#st-conexao').innerHTML = ''; $('#st-conexao').dataset.chave = '';
     cenaGlobo({ voos: [] });
     if (focarAoPintar) { focarAoPintar = false; $('#t-status')?.focus({ preventScroll: true }); }
     return;

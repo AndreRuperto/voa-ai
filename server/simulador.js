@@ -71,10 +71,11 @@ function voosNaJanela(item, ini, fim, agora) {
   return lista;
 }
 
-/** Perto de agora: o anterior, o que está no ar (ou o próximo) e o seguinte. */
+/** Perto de agora: o anterior, o que está no ar (ou o próximo) e os dois seguintes (a conexão de um voo
+ *  que ainda vai sair precisa aparecer na busca do próximo número). */
 function voosPertoDeAgora(item, agora) {
   const k = Math.floor((agora - (item.depois || 0) * MIN) / (item.ciclo * MIN));
-  return [k - 1, k, k + 1].map((n) => vooSimulado(item, n, agora));
+  return [k - 1, k, k + 1, k + 2].map((n) => vooSimulado(item, n, agora));
 }
 
 const resposta = (status, corpo, cabecalhos = {}) =>
