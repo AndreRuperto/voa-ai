@@ -30,6 +30,17 @@ test('busca por número: IATA vira ICAO e há sempre um voo no ar', async () => 
   }
 });
 
+test('conexão: a 2ª perna sai do aeroporto onde a 1ª pousa, depois do pouso', async () => {
+  const a = api(), dia = { start: '2026-11-15T00:00:00Z', end: '2026-11-16T00:00:00Z' };
+  const p1 = await a.voosPorIdent('UAE262', dia), p2 = await a.voosPorIdent('UAE318', dia);
+  for (let i = 0; i < 3; i++) {
+    const k1 = p1[i].fa_flight_id.split('-').pop(), k2 = p2.find((v) => v.fa_flight_id.endsWith(`-${k1}`));
+    if (!k2) continue;
+    assert.equal(p1[i].destination.code_iata, k2.origin.code_iata);
+    assert.ok(Date.parse(k2.scheduled_off) - Date.parse(p1[i].scheduled_in) >= 5 * 60_000);
+  }
+});
+
 test('voo pelo id e por rota; alertas respondem', async () => {
   const a = api();
   const [v] = await a.voosPorIdent('GLO1402', { start: '2026-11-15T00:00:00Z', end: '2026-11-16T00:00:00Z' });

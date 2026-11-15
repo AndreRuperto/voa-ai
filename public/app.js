@@ -2,6 +2,7 @@
    #inicio · #confirmacao/<ident>/<data> · #status/<fa_flight_id> · #meus-voos · #rota · #entrar
    /v/<fa_flight_id> abre o status desse voo e oferece "Me avisar". */
 import { get, post, put, del, mensagemDe } from '/api.js';
+import { agruparViagens, conexao, momentoDaViagem } from '/viagens.js';
 import { hora, diaISO, diasDeBusca, diaRelativo, nomeDoDia, duracao, minutosEntre, esc, plural } from '/formato.js';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -147,12 +148,54 @@ async function carregarInscricoes() {
   return estado.inscricoes;
 }
 const inscricaoDe = id => estado.inscricoes?.find(i => i.voo?.fa_flight_id === id) || null;
+
+/* ============================================================ VIAGENS COM CONEXÃO (public/viagens.js) */
+/** Inscrições com o dado mais novo de cada voo (o status atualiza estado.voos antes da lista). */
+const inscricoesAtuais = () => (estado.inscricoes || []).map(i => ({ ...i, voo: estado.voos.get(i.voo?.fa_flight_id) || i.voo }));
+/** A viagem (2+ trechos) de que o voo faz parte, ou null. */
+function viagemDe(id) {
+  const g = agruparViagens(inscricoesAtuais()).find(x => x.pernas.some(p => p.voo.fa_flight_id === id));
+  return g && g.pernas.length > 1 ? g : null;
+}
+const rotaDaViagem = pernas => [pernas[0].voo.origem, ...pernas.map(p => p.voo.destino)];
+/** Entradas do globo para uma viagem, vista a partir do trecho `i`: antes dele, o que já voou fica como rastro;
+ *  depois dele, tracejado sem avião. Só o destino final tem halo. */
+function globoDaViagem(pernas, i) {
+  return pernas.map((p, j) => {
+    const v = p.voo, ultimo = j === pernas.length - 1;
+    const base = j < i && terminou(v) && v.estado !== 'cancelado' && v.estado !== 'desviado' ? { ...paraGlobo(v), tipo: 'feito' }
+      : j > i ? { ...paraGlobo(v), tipo: v.estado === 'cancelado' ? 'cancelado' : 'opcao' } : paraGlobo(v);
+    return { ...base, semHalo: !ultimo };
+  }).filter((_, j) => temCoordenadas(pernas[j].voo));
+}
+/** Linha entre dois trechos: escala, conexão apertada ou perdida (cor + ícone + palavra). */
+function conexaoHtml(a, b) {
+  const c = conexao(a, b), onde = cidade(c.aeroporto), dur = Math.abs(c.minutos);
+  const trocou = !!h(b).saida_real || ['em_voo', 'pousou', 'no_portao_destino'].includes(b.estado);
+  let cls = 'ok', ic = 'i-conexao', txt;
+  if (a.estado === 'cancelado' || b.estado === 'cancelado') { cls = 'critico'; ic = 'i-alerta'; txt = 'Conexão afetada: trecho cancelado'; }
+  else if (a.estado === 'desviado') { cls = 'critico'; ic = 'i-alerta'; txt = `Conexão afetada: o voo foi desviado e não vai pousar em ${onde}`; }
+  else if (trocou) txt = `Trocou de avião em ${onde}`;
+  else if (c.risco === 'perdida') { cls = 'critico'; ic = 'i-alerta'; txt = `Pode perder a conexão em ${onde}: chega ${duracao(dur)} depois da saída do próximo voo`; }
+  else if (c.risco === 'apertada') { cls = 'atencao'; ic = 'i-alerta'; txt = `Conexão apertada em ${onde}: ${duracao(dur)} para trocar de avião`; }
+  else txt = `Conexão em ${onde}: ${duracao(dur)} de escala`;
+  return `<li class="conexao conexao--${cls}">${icone(ic)}<span>${esc(txt)}</span></li>`;
+}
+/** Uma frase sobre onde a viagem está agora. */
+function fraseDaViagem(pernas) {
+  const voos = pernas.map(p => p.voo), m = momentoDaViagem(voos), n = voos.length, v = m.perna;
+  if (m.fase === 'antes') return `${n} trechos, sai ${diaRelativo(saidaDe(voos[0]), fusoDe(voos[0]))} às ${hora(saidaDe(voos[0]), fusoDe(voos[0]))}`;   // mesmo fuso da placa do trecho
+  if (m.fase === 'voando') return `Trecho ${m.indice + 1} de ${n} em voo, chega a ${cidade(v.destino)} às ${hora(pousoDe(v), fusoDe(v))}`;
+  if (m.fase === 'conexao') return `Em ${cidade(v.origem)}, trocando de avião. Próximo voo sai às ${hora(saidaDe(v), fusoDe(v))}`;
+  if (m.fase === 'chegou') return `Chegou a ${cidade(v.destino)}`;
+  return `Trecho ${m.indice + 1} ${v.estado === 'cancelado' ? 'cancelado' : 'desviado'}`;
+}
 /** Servidor com AeroAPI simulada (só em desenvolvimento): avisa na tela, para ninguém confundir com voo de verdade. */
 function mostrarSeloSimulado(c) {
   if (!c?.simulada || $('.selo-simulado')) return;
   const p = document.createElement('p');
   p.className = 'selo-simulado'; p.setAttribute('role', 'note');
-  p.innerHTML = 'Dados simulados<span> · voos de teste: TP1018, TP103, G31402, AD4510, LA8084</span>';
+  p.innerHTML = 'Dados simulados<span> · voos de teste: TP1018, TP103, G31402, AD4510, LA8084, EK262 + EK318 (conexão)</span>';
   document.body.append(p);
 }
 const aeroapiDesligada = () => estado.config && estado.config.aeroapi === false;
@@ -408,8 +451,17 @@ function rotuloVooLista(i) {
   return { id: v.fa_flight_id, onde: 'aviao', html: placaMini(codigo(v), quem + info.curto, info.curtoTipo || 'direcao') };
 }
 function cenaLista(extra = {}) {
-  const lista = voosAcompanhados();
-  return cenaGlobo({ voos: lista.map(i => paraGlobo(i.voo)), rotulos: lista.map(rotuloVooLista), ...extra });
+  const voos = [], rotulos = [];
+  for (const { pernas } of agruparViagens(voosAcompanhados().map(i => ({ ...i, voo: estado.voos.get(i.voo.fa_flight_id) || i.voo })))) {
+    if (pernas.length === 1) { voos.push(paraGlobo(pernas[0].voo)); rotulos.push(rotuloVooLista(pernas[0])); continue; }
+    // viagem: todos os trechos no globo, um rótulo só, no trecho de agora
+    const m = momentoDaViagem(pernas.map(p => p.voo)), atual = pernas[m.indice], info = infoEstado(atual.voo);
+    voos.push(...globoDaViagem(pernas, m.indice));
+    const quem = pernas.find(p => p.apelido)?.apelido;
+    const txt = `${quem ? quem + ', ' : ''}${m.fase === 'conexao' ? 'em conexão' : info.curto} · ${m.indice + 1} de ${pernas.length}`;
+    rotulos.push({ ...rotuloVooLista(atual), html: placaMini(codigo(atual.voo), txt, info.curtoTipo || 'direcao') });
+  }
+  return cenaGlobo({ voos, rotulos, ...extra });
 }
 
 /* ============================================================ DATAS */
@@ -604,6 +656,8 @@ function pintarCorpoStatus(v, insc) {
   const f = fusoDe(v), hud = hudDe(v), globoCelular = ['em_voo', 'atrasado'].includes(v.estado) && temCoordenadas(v);
   const atualizado = v.atualizado_em ? ` Atualizado às ${hora(v.atualizado_em, f)}.` : '';
   let html = trajeto(v);
+  const viagem = viagemDe(v.fa_flight_id);
+  if (viagem) html += secaoViagem(viagem, v.fa_flight_id);
   if (hud && globoCelular) html += `<dl class="hud hud-celular" aria-label="Dados do voo">${hud.map(([dt, dd, un, c]) => `<div class="${c ? 'hud__chegada' : ''}"><dt>${esc(dt)}</dt><dd class="num">${esc(dd)}${un ? ` <small>${esc(un)}</small>` : ''}</dd></div>`).join('')}</dl>`;
   if (v.estado === 'cancelado') {
     const quem = insc?.apelido ? `para ${insc.apelido}` : 'para quem viaja';
@@ -670,6 +724,18 @@ async function pintarAvisosStatus(v, insc) {
     pintarAvisosStatus(v, insc);
   };
 }
+function secaoViagem({ pernas }, id) {
+  const i = pernas.findIndex(p => p.voo.fa_flight_id === id), destino = pernas[pernas.length - 1].voo.destino;
+  const linhas = pernas.map((p, j) => {
+    const v = p.voo, aqui = j === i;
+    const corpo = `<span class="viagem__n num" aria-hidden="true">${j + 1}</span><span class="viagem__txt"><b class="num">${esc(codigo(v))}</b> ${esc(nomeCurto(v.origem))} a ${esc(nomeCurto(v.destino))}</span>${placaMiniVoo(v)}`;
+    return (j ? conexaoHtml(pernas[j - 1].voo, v) : '') + (aqui
+      ? `<li class="viagem__linha" aria-current="true">${corpo}<span class="sr">, este voo</span></li>`
+      : `<li class="viagem__linha"><a href="#status/${encodeURIComponent(v.fa_flight_id)}">${corpo}</a></li>`);
+  }).join('');
+  return `<section class="viagem-status" aria-labelledby="t-viagem"><h2 id="t-viagem">Viagem até ${esc(cidade(destino))} · trecho ${i + 1} de ${pernas.length}</h2>
+    <ol class="viagem__pernas">${linhas}</ol></section>`;
+}
 function pintarAcoesStatus(v, insc) {
   const chave = `${v.fa_flight_id}|${insc?.id || ''}|${v.estado === 'cancelado'}`;
   const el = $('#st-acoes');
@@ -690,6 +756,18 @@ function cenaStatus(v, { hud, globoCelular }, manterCamera) {
     : terminou(v) ? placaMini(v.destino.iata, `pousou ${hora(h(v).pouso_real || pousoDe(v), f)}`, 'pousou')
     : placaMini(v.destino.iata, `chega ${hora(pousoDe(v), f)}`);
   const comFoco = !['cancelado', 'desviado'].includes(v.estado);
+  const viagem = viagemDe(v.fa_flight_id);
+  if (viagem) {
+    // viagem com conexão: todos os trechos, este em destaque; rótulos na origem, nas escalas e no destino final
+    const { pernas } = viagem, i = pernas.findIndex(p => p.voo.fa_flight_id === v.fa_flight_id), ult = pernas[pernas.length - 1].voo;
+    const voos = globoDaViagem(pernas, i), ids = voos.map(x => x.id), tem = id => ids.includes(id);
+    const rotulos = [];
+    const p0 = pernas[0].voo;
+    if (tem(p0.fa_flight_id)) rotulos.push({ id: p0.fa_flight_id, onde: 'a', classe: 'rotulo--aero', html: placaMini(p0.origem.iata, '') });
+    pernas.slice(0, -1).forEach(p => { if (tem(p.voo.fa_flight_id)) rotulos.push({ id: p.voo.fa_flight_id, onde: 'b', classe: 'rotulo--aero', html: placaMini(p.voo.destino.iata, 'conexão') }); });
+    if (tem(ult.fa_flight_id)) rotulos.push({ id: ult.fa_flight_id, onde: 'b', html: ult.fa_flight_id === v.fa_flight_id ? destino : placaMini(ult.destino.iata, `chega ${hora(pousoDe(ult), fusoDe(ult))}`) });
+    return cenaGlobo({ voos, foco: comFoco ? v.fa_flight_id : null, destaque: v.fa_flight_id, enquadrar: ids, hud: comFoco ? hud : null, globoCelular, manterCamera, rotulos });
+  }
   return cenaGlobo({
     voos: [entrada], foco: comFoco ? v.fa_flight_id : null, enquadrar: [v.fa_flight_id], hud: comFoco ? hud : null, globoCelular, manterCamera,
     rotulos: [{ id: v.fa_flight_id, onde: 'a', classe: 'rotulo--aero', html: placaMini(v.origem.iata, '') }, { id: v.fa_flight_id, onde: 'b', html: destino }],
@@ -744,7 +822,9 @@ async function telaStatus([id], { silencioso = false } = {}) {
   if (!timerAviao) timerAviao = setInterval(() => {
     if (document.hidden || rotaAtual().nome !== 'status' || !globo) return;
     const v = estado.voos.get(statusId);
-    if (v?.estado === 'em_voo' && temCoordenadas(v)) globo.definirVoos([paraGlobo(v)]);
+    if (v?.estado !== 'em_voo' || !temCoordenadas(v)) return;
+    const viagem = viagemDe(statusId);
+    globo.definirVoos(viagem ? globoDaViagem(viagem.pernas, viagem.pernas.findIndex(p => p.voo.fa_flight_id === statusId)) : [paraGlobo(v)]);
   }, ANDAR_MS);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && rotaAtual().nome === 'status' && statusId) telaStatus([statusId], { silencioso: true }); });
@@ -798,10 +878,23 @@ function pintarMeusVoos() {
   const lConta = limiteComConta('voos');
   est.innerHTML = noLimite ? `<p class="nota-aviso">${icone('i-alerta')}<span>Você chegou ao limite de ${lim} voos ao mesmo tempo. Tire um voo da lista para acompanhar outro${!eu?.conta && lConta > lim ? `, ou <a href="#entrar">entre com Google</a> para acompanhar até ${lConta}` : ''}.</span></p>` : '';
   outro.hidden = noLimite;
-  lista.innerHTML = insc.map(i => {
-    const v = i.voo, quem = i.apelido || codigo(v), id = v.fa_flight_id;
-    const rotulo = v.estado === 'cancelado' ? `Tirar o voo ${i.apelido ? `de ${i.apelido}` : codigo(v)} da lista` : `Parar de acompanhar o voo ${i.apelido ? `de ${i.apelido}` : codigo(v)}`;
-    return `<li class="item-voo" data-voo="${esc(id)}">
+  lista.innerHTML = agruparViagens(inscricoesAtuais()).map(({ pernas }) => {
+    if (pernas.length === 1) return itemVooHtml(pernas[0]);
+    const quem = pernas.find(p => p.apelido)?.apelido || 'Viagem';
+    const rota = rotaDaViagem(pernas).map(a => a?.iata || '').join(' → ');
+    const nomes = rotaDaViagem(pernas).map(cidade).join(', ');
+    return `<li class="viagem" aria-label="${esc(`Viagem de ${quem}: ${nomes}`)}">
+      <div class="viagem__cabeca"><span class="item-voo__nome">${esc(quem)}</span>
+        <span class="viagem__rota num" aria-hidden="true">${esc(rota)}</span>
+        <span class="viagem__agora">${esc(fraseDaViagem(pernas))}</span></div>
+      <ol class="viagem__pernas">${pernas.map((p, j) => (j ? conexaoHtml(pernas[j - 1].voo, p.voo) : '') + itemVooHtml(p, { trecho: j + 1 })).join('')}</ol>
+    </li>`;
+  }).join('');
+}
+function itemVooHtml(i, { trecho } = {}) {
+  const v = i.voo, quem = trecho ? `Trecho ${trecho} · ${codigo(v)}` : i.apelido || codigo(v), id = v.fa_flight_id;
+  const rotulo = v.estado === 'cancelado' ? `Tirar o voo ${codigo(v)}${i.apelido ? ` de ${i.apelido}` : ''} da lista` : `Parar de acompanhar o voo ${codigo(v)}${i.apelido ? ` de ${i.apelido}` : ''}`;
+  return `<li class="item-voo${trecho ? ' item-voo--trecho' : ''}" data-voo="${esc(id)}">
       <a class="item-voo__link" href="#status/${encodeURIComponent(id)}">
         <span class="item-voo__nome">${esc(quem)}</span>
         ${placaMiniVoo(v)}
@@ -809,7 +902,6 @@ function pintarMeusVoos() {
       </a>
       <button class="item-voo__remover" type="button" aria-label="${esc(rotulo)}" data-remover="${esc(i.id)}">${icone('i-lixo')}</button>
     </li>`;
-  }).join('');
 }
 lista.addEventListener('click', e => {
   const b = e.target.closest('[data-remover]'); if (!b) return;

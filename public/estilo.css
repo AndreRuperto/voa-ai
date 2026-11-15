@@ -410,3 +410,30 @@ dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
   text-align: center; pointer-events: none; opacity: .92;
 }
 @media (max-width: 767px) { .selo-simulado { left: auto; right: var(--e-2); bottom: auto; top: calc(var(--e-7) + var(--e-2)); transform: none; } .selo-simulado span { display: none; } }
+
+/* ---- viagem com conexão (Meus voos e status) */
+.viagem { background: var(--c-superficie); border: 1px solid var(--c-linha); border-radius: var(--r-cartao); padding: var(--e-4); display: flex; flex-direction: column; gap: var(--e-3); }
+.viagem__cabeca { display: flex; flex-direction: column; gap: var(--e-1); }
+.viagem__rota { font: 600 var(--fs-p)/1.2 var(--f-placa); letter-spacing: .04em; color: var(--c-pista); }
+.viagem__agora { color: var(--c-tinta-suave); font-size: var(--fs-pp); }
+.viagem__pernas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--e-2); }
+.item-voo--trecho { background: var(--c-fundo); }
+.item-voo--trecho .item-voo__link { padding: var(--e-3); }
+.item-voo--trecho .item-voo__nome { font-size: var(--fs-p); }
+.conexao { display: flex; align-items: flex-start; gap: var(--e-2); font-size: var(--fs-pp); line-height: 1.35; color: var(--c-tinta-suave); padding: 0 var(--e-2); }
+.conexao svg { width: 18px; height: 18px; flex: none; fill: currentColor; margin-top: 1px; }
+.conexao--ok svg { fill: var(--c-ceu); }
+.conexao--atencao { color: var(--c-atraso); font-weight: 600; }
+.conexao--critico { color: var(--c-cancelado); font-weight: 600; }
+.viagem-status { margin-top: var(--e-4); display: flex; flex-direction: column; gap: var(--e-3); }
+.viagem-status h2 { font-size: var(--fs-p); }
+.viagem__linha { display: block; }
+.viagem__linha > a, .viagem__linha[aria-current] { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: auto auto; gap: var(--e-1) var(--e-2); align-items: center;
+  padding: var(--e-3); border: 1px solid var(--c-linha); border-radius: var(--r-campo); text-decoration: none; color: inherit; background: var(--c-fundo); }
+.viagem__linha[aria-current] { border-color: var(--c-ceu); }
+.viagem__linha > a:hover .viagem__txt { text-decoration: underline; }
+.viagem__n { grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--c-campo); font-weight: 700; font-size: var(--fs-pp); }
+.viagem__linha[aria-current] .viagem__n { background: var(--c-ceu); color: var(--c-placa-tinta); }
+.viagem__txt { min-width: 0; }
+.viagem__linha .placa--mini { justify-self: start; }
+.item-voo__link .placa--mini, .viagem__linha .placa--mini { flex-wrap: wrap; max-width: 100%; }   /* placa com "+35 min" não some em cartão estreito */

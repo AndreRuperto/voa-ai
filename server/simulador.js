@@ -6,13 +6,19 @@ import { aeroporto } from './lugares.js';
 
 const MIN = 60_000;
 
-/** Catálogo. `dur` = minutos no ar (encurtado de propósito, para ver o avião andar); `ciclo` = de quanto em quanto tempo sai um. */
+/** Catálogo. `dur` = minutos no ar (encurtado de propósito, para ver o avião andar); `ciclo` = de quanto em quanto tempo sai um;
+ *  `depois` = minutos depois do início do ciclo em que decola (para encaixar a 2ª perna de uma conexão). */
 export const CATALOGO = [
   { iata: 'TP1018', icao: 'TAP1018', op: ['TAP', 'TP'], de: 'OPO', para: 'MAD', tipo: 'A20N', dur: 8, ciclo: 12 },
   { iata: 'TP103', icao: 'TAP103', op: ['TAP', 'TP'], de: 'LIS', para: 'GRU', tipo: 'A339', dur: 40, ciclo: 50 },
   { iata: 'G31402', icao: 'GLO1402', op: ['GLO', 'G3'], de: 'GRU', para: 'SDU', tipo: 'B38M', dur: 10, ciclo: 15 },
   { iata: 'AD4510', icao: 'AZU4510', op: ['AZU', 'AD'], de: 'VCP', para: 'REC', tipo: 'A20N', dur: 20, ciclo: 30 },
   { iata: 'LA8084', icao: 'TAM8084', op: ['TAM', 'LA'], de: 'GRU', para: 'LHR', tipo: 'B789', dur: 60, ciclo: 75 },
+  // Conexão Brasil → Japão por Dubai: a 2ª perna decola 60 min depois do pouso da 1ª, no mesmo ciclo
+  // (50 min de portão a portão, acima do limite de conexão apertada). De verdade: 14h40 + ~3h + 9h40.
+  // Nos ciclos ímpares a EK262 sai 35 min atrasada: sobram 15 min em Dubai (conexão apertada, com aviso).
+  { iata: 'EK262', icao: 'UAE262', op: ['UAE', 'EK'], de: 'GRU', para: 'DXB', tipo: 'B77W', dur: 30, ciclo: 130, atrasoImpar: 35 },
+  { iata: 'EK318', icao: 'UAE318', op: ['UAE', 'EK'], de: 'DXB', para: 'NRT', tipo: 'B77W', dur: 25, ciclo: 130, depois: 90 },
 ];
 
 export function simulacaoLigada(env = process.env) {
@@ -32,8 +38,12 @@ const lugar = (c) => {
 
 /** O voo `k` de um item do catálogo, no formato da AeroAPI, como estaria no instante `agora`. */
 export function vooSimulado(item, k, agora) {
-  const decola = k * item.ciclo * MIN, pousa = decola + item.dur * MIN;
+  // `atrasoImpar`: nos ciclos ímpares o voo sai atrasado (para ver conexão apertada e o aviso).
+  const atraso = (item.atrasoImpar && Math.abs(k) % 2 === 1 ? item.atrasoImpar : 0) * MIN;
+  const plano = (k * item.ciclo + (item.depois || 0)) * MIN;
+  const decola = plano + atraso, pousa = decola + item.dur * MIN;
   const sai = decola - 6 * MIN, chega = pousa + 4 * MIN;
+  const prev = (t) => iso(t - atraso);
   const ja = (t) => (agora >= t ? iso(t) : null);
   const noAr = agora >= decola && agora < pousa;
   return {
@@ -43,11 +53,11 @@ export function vooSimulado(item, k, agora) {
     flight_number: item.iata.replace(/^\D+/, ''),
     aircraft_type: item.tipo, registration: null,
     origin: lugar(item.de), destination: lugar(item.para),
-    scheduled_out: iso(sai), estimated_out: iso(sai), actual_out: ja(sai),
-    scheduled_off: iso(decola), estimated_off: iso(decola), actual_off: ja(decola),
-    scheduled_on: iso(pousa), estimated_on: iso(pousa), actual_on: ja(pousa),
-    scheduled_in: iso(chega), estimated_in: iso(chega), actual_in: ja(chega),
-    departure_delay: 0, arrival_delay: 0,
+    scheduled_out: prev(sai), estimated_out: iso(sai), actual_out: ja(sai),
+    scheduled_off: prev(decola), estimated_off: iso(decola), actual_off: ja(decola),
+    scheduled_on: prev(pousa), estimated_on: iso(pousa), actual_on: ja(pousa),
+    scheduled_in: prev(chega), estimated_in: iso(chega), actual_in: ja(chega),
+    departure_delay: atraso / 1000, arrival_delay: atraso / 1000,
     cancelled: false, diverted: false,
     status: agora >= chega ? 'Arrived / Gate Arrival' : agora >= pousa ? 'Landed / Taxiing' : noAr ? 'En Route / On Time' : 'Scheduled',
     progress_percent: noAr ? Math.round(((agora - decola) / (pousa - decola)) * 100) : agora >= pousa ? 100 : 0,
@@ -56,14 +66,14 @@ export function vooSimulado(item, k, agora) {
 
 /** Voos de um item cujo horário cai em [ini, fim). */
 function voosNaJanela(item, ini, fim, agora) {
-  const passo = item.ciclo * MIN, lista = [];
-  for (let k = Math.ceil((ini + 6 * MIN) / passo); k * passo - 6 * MIN < fim; k++) lista.push(vooSimulado(item, k, agora));
+  const passo = item.ciclo * MIN, d = (item.depois || 0) * MIN - 6 * MIN, lista = [];
+  for (let k = Math.ceil((ini - d) / passo); k * passo + d < fim; k++) lista.push(vooSimulado(item, k, agora));
   return lista;
 }
 
 /** Perto de agora: o anterior, o que está no ar (ou o próximo) e o seguinte. */
 function voosPertoDeAgora(item, agora) {
-  const k = Math.floor(agora / (item.ciclo * MIN));
+  const k = Math.floor((agora - (item.depois || 0) * MIN) / (item.ciclo * MIN));
   return [k - 1, k, k + 1].map((n) => vooSimulado(item, n, agora));
 }
 

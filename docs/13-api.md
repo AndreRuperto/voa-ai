@@ -20,6 +20,7 @@
 | Teto duro | `teto_duro_usd` (padrão 2 × teto do mês). Passou dele, o servidor não faz chamada paga à AeroAPI até o mês virar (`503 teto_duro`); apagar alerta continua |
 | Avisos de gasto | O agendador confere o gasto a cada minuto e manda push aos aparelhos dos admins a 50% e 80% do crédito, no teto do mês e no teto duro. Uma vez por marco e por mês (tabela `AVISO_GASTO`); se vários marcos passam juntos, só o mais alto manda push. E-mail ainda não |
 | Posição no globo | Sem `/track` na v1: o front estima a posição pela fração do tempo de voo (`actual_off` → `estimated_on`) ao longo do grande círculo, e a legenda diz que é estimada |
+| Viagem com conexão | Deduzida no front (`public/viagens.js`), sem mudança na API: o voo B continua o A quando sai do aeroporto onde A chega, até 24 h depois, e os dois têm o mesmo apelido (ou um deles está sem apelido). Conexão **apertada** abaixo de 45 min de portão a portão; **pode perder** quando a chegada estimada de A passa da saída de B. O agendador (`server/conexoes.js`) faz a mesma dedução por pessoa (conta ou aparelho) e manda push aos aparelhos de quem acompanha o trecho B quando a conexão fica pior que a planejada; avisa de novo se piorar e uma vez se voltar ao planejado (tabela `AVISO_CONEXAO`) |
 
 ## Formato de erro
 

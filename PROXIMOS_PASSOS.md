@@ -1,6 +1,6 @@
 # Próximos passos
 
-**Data:** 15/11/2026 · **Branch:** `claude/voos-simulados` (a partir da `main` com os PRs #1 a #16)
+**Data:** 15/11/2026 · **Branch:** `claude/viagem-conexao` (a partir da `claude/conexao-simulada`, PR #18)
 
 ## O que mudou nesta sessão: o app real existe
 
@@ -11,10 +11,22 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
 
+## 15/11: viagem com conexão
+
+- Voos acompanhados que se encadeiam (sai de onde o outro chega, até 24 h depois, mesmo apelido) viram uma **viagem** (`public/viagens.js`, ADR-008). Não mexe no banco nem na API.
+- **Meus voos:** um cartão por viagem (rota GRU → DXB → NRT, frase de onde ela está, os trechos e a conexão entre eles: escala, apertada abaixo de 45 min, ou pode perder).
+- **Status:** a seção "Viagem até Tóquio · trecho N de M" com os outros trechos. No globo aparecem todos os trechos: o que já voou como rastro, o que falta tracejado, o destino final com halo e um rótulo só por viagem.
+- Conferido no localhost em 1440×900 e 375×812, com a conexão simulada EK262 + EK318. São 68 testes.
+- Correção: a simulação agora usa **sempre** `dados/simulado.sqlite`. Antes, o `DB_CAMINHO` do `.env` fazia ela gravar no banco de desenvolvimento. As linhas simuladas foram apagadas de lá; há uma cópia de antes da limpeza no scratchpad da sessão.
+- **Aviso de conexão em risco** (`server/conexoes.js`, no agendador a cada minuto): push quando a troca de avião fica pior que a planejada. Primeiro "Conexão apertada em Dubai", depois "Ana pode perder a conexão em Dubai", e "Conexão em Dubai em dia" se o atraso for recuperado. Cada nível avisa uma vez (tabela `AVISO_CONEXAO`, migração 3). Vai para os aparelhos de quem acompanha o 2º trecho.
+- Na simulação, a EK262 sai 35 min atrasada nos ciclos ímpares (sobram 15 min em Dubai). Conferido: o agendador gravou o aviso "apertada". O push real não foi testado num aparelho.
+- [ ] Prancha de design: cartão de viagem, linha de conexão (escala, apertada, pode perder) e o ícone `i-conexao`
+
 ## 15/11: voos simulados (sem a chave)
 
 - `npm run simular` sobe o servidor com uma **AeroAPI simulada** (`server/simulador.js`) e um banco à parte, `dados/simulado.sqlite`. A simulação não liga em produção.
 - Voos de teste, curtos e em ciclo, sempre com um no ar: **TP1018** (OPO→MAD, 8 min), **TP103** (LIS→GRU, 40 min), **G31402** (GRU→SDU, 10 min), **AD4510** (VCP→REC, 20 min) e **LA8084** (GRU→LHR, 60 min). A busca por rota também funciona nesses pares.
+- **Conexão Brasil → Japão:** **EK262** (GRU→DXB, 30 min) e **EK318** (DXB→NRT, 25 min), com 50 min de portão a portão em Dubai. Siga as duas pernas com o mesmo apelido e veja as duas em Meus voos. O app ainda não junta as pernas numa viagem: cada uma é um voo, e os rótulos se sobrepõem no aeroporto da escala.
 - Um selo "Dados simulados" aparece na tela. No status, o avião avança no globo a cada 2 s, sem consultar a API de novo (vale também para voos reais).
 - O histórico da AeroAPI (`/history/flights/{ident}`, US$ 0,02 por consulta; `/track` US$ 0,06) está disponível desde 2011, mas mostra voos que já terminaram. Não serve para ver o avião andando ao vivo; serviria para um "replay" de voo passado.
 

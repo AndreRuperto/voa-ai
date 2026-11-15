@@ -145,6 +145,14 @@ const MIGRACOES = [
     PRIMARY KEY (mes, marco)
   );
   `,
+  `
+  -- Avisos de conexão em risco: o último nível avisado por par de trechos (inscrição A | inscrição B).
+  CREATE TABLE AVISO_CONEXAO (
+    chave TEXT PRIMARY KEY,
+    risco TEXT NOT NULL,                 -- ok | apertada | perdida
+    em    TEXT NOT NULL
+  );
+  `,
 ];
 
 /**
