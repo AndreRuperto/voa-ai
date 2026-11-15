@@ -4,7 +4,7 @@ import { lerCache, gravarCache } from './db.js';
 import { ErroAeroapi, MENSAGEM_SEM_CHAVE } from './aeroapi.js';
 import { ErroRegra } from './alertas.js';
 import { lerVoo, salvarVoo, vooDaLinha, vooAtivo, dataDaPartida } from './voos.js';
-import { lerConfig, limitesPara } from './limites.js';
+import { lerConfig, limitesPara, gastoDoMes } from './limites.js';
 import { aeroporto } from './lugares.js';
 
 const MIN = 60_000;
@@ -130,11 +130,7 @@ export async function obterVoo(ctx, faFlightId, { quem } = {}) {
   }
 }
 
-/** Gasto estimado do mês corrente (UTC), em US$. */
-export function gastoDoMes(db, agora) {
-  const mes = agora.toISOString().slice(0, 7);
-  return db.prepare('SELECT COALESCE(SUM(custo), 0) s FROM CHAMADA_API WHERE substr(em, 1, 7) = ?').get(mes).s;
-}
+export { gastoDoMes };
 
 /** Buscas por rota feitas hoje (UTC) por quem. */
 export function buscasRotaHoje(db, quem, agora) {

@@ -44,7 +44,7 @@ export function listarInscricoes(ctx, q) {
   }).filter((i) => i.voo);
 }
 
-function guardarPushNoAparelho(db, aparelhoId, p) {
+export function guardarPushNoAparelho(db, aparelhoId, p) {
   if (!p) return;
   db.prepare('UPDATE APARELHO SET push_endpoint = ?, push_p256dh = ?, push_auth = ? WHERE id = ?').run(p.endpoint, p.p256dh, p.auth, aparelhoId);
 }

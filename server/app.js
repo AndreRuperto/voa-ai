@@ -9,6 +9,8 @@ import { criarRoteador, enviarJson, enviarErro, tratarErro, lerCookies, cookie, 
 import { registrarApi } from './rotas/api.js';
 import { registrarAdmin } from './rotas/admin.js';
 import { registrarWebhook } from './rotas/webhook.js';
+import { criarLimitePorIp, grupoDoPedido, ipDoPedido, mensagemLimiteIp } from './limiteip.js';
+import { lerConfig } from './limites.js';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -33,6 +35,7 @@ export function criarContexto(op = {}) {
     enviarPush: op.enviarPush || criarEnvioWebPush(),
     verificarGoogle: op.verificarGoogle || criarVerificadorGoogle(),
     pastaPublica: op.pastaPublica || join(RAIZ, 'public'),
+    limiteIp: op.limiteIp || criarLimitePorIp({ agora: () => agora().getTime() }),
     /** Roda trabalho depois da resposta (ex.: webhook). */
     emSegundoPlano(fn) {
       const p = Promise.resolve().then(fn).catch((e) => console.error('[segundo plano]', e));
@@ -80,6 +83,17 @@ export function criarApp(ctx) {
 
       if (ehApi && PRECISA_CSRF.has(metodo) && req.headers['x-requested-with'] !== 'voa-ai') {
         return enviarErro(res, 403, 'proibido', 'Falta o cabeçalho X-Requested-With: voa-ai.');
+      }
+
+      // Limite por IP antes de qualquer trabalho (admin fica de fora: já é só para ADMIN_EMAILS).
+      const grupo = grupoDoPedido(metodo, caminho);
+      if (grupo) {
+        const max = grupo === 'consulta' ? lerConfig(ctx.db).limite_ip_consultas : undefined;
+        const v = ctx.limiteIp.contar(grupo, ipDoPedido(req), max);
+        if (!v.ok) {
+          res.setHeader('retry-after', String(v.esperarS));
+          return enviarErro(res, 429, 'muitos_pedidos', mensagemLimiteIp(v.esperarS));
+        }
       }
 
       let quem = { aparelhoId: null, usuario };

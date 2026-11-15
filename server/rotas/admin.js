@@ -5,6 +5,8 @@ import { lerVoo, vooDaLinha, vooAtivo } from '../voos.js';
 import { apagarAlertaDoVoo, ErroRegra } from '../alertas.js';
 import { voosAtivos } from '../inscricoes.js';
 import { apagarConta, auditar } from '../contas.js';
+import { avisosDoMes, avisarAdmins, aparelhosDosAdmins } from '../avisosgasto.js';
+import { creditoMensal } from '../limites.js';
 
 const r6 = (n) => Math.round(n * 1e6) / 1e6;
 
@@ -12,7 +14,8 @@ const r6 = (n) => Math.round(n * 1e6) / 1e6;
 export function resumoDoMes(ctx, mes) {
   const db = ctx.db;
   const agora = ctx.agora();
-  const credito = Number(process.env.CREDITO_MENSAL_USD) || 5;
+  const credito = creditoMensal();
+  const cfg = lerConfig(db);
   const gasto = db.prepare('SELECT COALESCE(SUM(custo), 0) s FROM CHAMADA_API WHERE substr(em, 1, 7) = ?').get(mes).s;
   const [ano, m] = mes.split('-').map(Number);
   const diasNoMes = new Date(Date.UTC(ano, m, 0)).getUTCDate();
@@ -29,6 +32,9 @@ export function resumoDoMes(ctx, mes) {
   return {
     mes,
     credito_usd: credito,
+    teto_mensal_usd: cfg.teto_mensal_usd,
+    teto_duro_usd: cfg.teto_duro_usd,
+    avisos_gasto: avisosDoMes(db, mes),
     gasto_usd: r6(gasto),
     projecao_usd: r6(projecao),
     por_dia: porDia.map((l) => ({ dia: l.dia, usd: r6(l.usd) })),
@@ -46,6 +52,15 @@ export function registrarAdmin(r) {
     const mes = url.searchParams.get('mes') || ctx.agora().toISOString().slice(0, 7);
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)) throw new ErroRegra(400, 'invalido', 'Mês inválido. Use AAAA-MM.');
     enviarJson(res, 200, resumoDoMes(ctx, mes));
+  });
+
+  r.rota('GET', '/api/admin/avisos', ({ ctx, res }) => {
+    enviarJson(res, 200, { aparelhos_com_push: aparelhosDosAdmins(ctx.db).length });
+  });
+
+  r.rota('POST', '/api/admin/avisos/teste', async ({ ctx, res }) => {
+    const enviados = await avisarAdmins(ctx, { titulo: 'Aviso de teste', corpo: 'Os avisos de gasto da AeroAPI chegam assim neste aparelho.', tag: 'teste' });
+    enviarJson(res, 200, { enviados });
   });
 
   r.rota('GET', '/api/admin/voos', ({ ctx, res }) => {

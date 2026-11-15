@@ -4,7 +4,8 @@ import { listarPaises, aeroportosDoPais } from '../lugares.js';
 import { lerConfig, limitesPara } from '../limites.js';
 import { buscarPorIdent, obterVoo, buscarRota, buscasRotaHoje } from '../consultas.js';
 import { vooDaLinha } from '../voos.js';
-import { listarInscricoes, criarInscricao, ligarPush, apagarInscricao, voosAtivos, rotuloQuem } from '../inscricoes.js';
+import { listarInscricoes, criarInscricao, ligarPush, apagarInscricao, voosAtivos, rotuloQuem, guardarPushNoAparelho } from '../inscricoes.js';
+import { lerPushSubscription } from '../push.js';
 import { entrar, sair, apagarConta, ehAdmin, SESSAO_DIAS } from '../contas.js';
 import { ErroRegra } from '../alertas.js';
 
@@ -69,6 +70,14 @@ export function registrarApi(r) {
   r.rota('GET', '/api/voos/:id', async ({ ctx, res, params, quem }) => {
     const l = await obterVoo(ctx, params.id, { quem: rotuloQuem(quem) });
     enviarJson(res, 200, vooDaLinha(l, ctx.agora()));
+  });
+
+  // Liga o push do aparelho sem voo (usado pelo painel de admin para os avisos de gasto).
+  r.rota('PUT', '/api/aparelho/push', async ({ ctx, req, res, quem }) => {
+    const push = lerPushSubscription((await lerJson(req))?.push);
+    if (!push) throw new ErroRegra(400, 'invalido', 'Inscrição de push inválida.');
+    guardarPushNoAparelho(ctx.db, quem.aparelhoId, push);
+    enviarJson(res, 204);
   });
 
   r.rota('GET', '/api/inscricoes', ({ ctx, res, quem }) => enviarJson(res, 200, { inscricoes: listarInscricoes(ctx, quem) }));

@@ -1,6 +1,6 @@
 # Próximos passos
 
-**Data:** 14/11/2026 · **Branch:** `claude/ativar` (a partir da `main` com os PRs #1 a #8)
+**Data:** 15/11/2026 · **Branch:** `claude/proteger-custo` (a partir da `main` com os PRs #1 a #14)
 
 ## O que mudou nesta sessão: o app real existe
 
@@ -10,6 +10,13 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`server/dados/`**: 3.245 aeroportos com fuso (OurAirports), nomes em português para 291 aeroportos e nomes de companhias. Gerado por `scripts/gerar-aeroportos.js`.
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
+
+## 15/11: proteção de custo
+
+- **Limite por IP:** 40 consultas a cada 10 min por rede (ajustável em Limites), 20 logins a cada 10 min e 240 pedidos por minuto no resto da API. Quando passa do limite, a API responde `429 muitos_pedidos` com `Retry-After`. No Railway, o IP vem do `X-Real-IP`.
+- **Teto duro:** padrão de 2 × o teto do mês. Ao chegar nele, nenhuma chamada paga sai para a AeroAPI até o mês virar (`503 teto_duro`); apagar alerta continua.
+- **Avisos de gasto:** push nos aparelhos dos admins a 50% e 80% do crédito, no teto do mês e no teto duro, uma vez por mês cada. O cartão "Avisos de gasto" fica em Limites, com os botões "Receber neste aparelho" e "Enviar aviso de teste".
+- São 59 testes.
 
 ## Estado
 
@@ -21,12 +28,14 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 
 - [ ] **Chave da AeroAPI.** O plano Personal foi assinado em 14/11/2026, mas o portal da FlightAware dá erro 500 e não mostra "API Keys". Abrir chamado no suporte da FlightAware. Com a chave, colocar em `AEROAPI_KEY` no `.env`.
 - [ ] Com a chave: `npm run buscar-voo -- TP103` e um voo real de ponta a ponta (Marco 1 e critérios de aceite da [02](docs/02-v1-alertas.md#critérios-de-aceite-da-v1))
-- [ ] Testar o login Google no localhost:3000 e o painel `/admin/` com `andreruperto@gmail.com`
+- [x] Login Google e painel `/admin/` testados em produção
+- [ ] Depois do merge: em https://voaai.up.railway.app/admin/#limites, tocar em "Receber neste aparelho" no celular e em "Enviar aviso de teste"
+- [ ] E-mail nos avisos de gasto (precisa de um serviço de envio, ex.: Resend, e da chave dele)
 - [x] Deploy no Railway em 14/11/2026: projeto `voa-ai`, serviço `voa-ai`, volume em `/data`, variáveis do `.env`, domínio **https://voaai.up.railway.app** (porta 8080)
-- [ ] Ligar o repositório GitHub ao serviço no Railway (o app do Railway no GitHub precisa de acesso ao repo `voa-ai`). Até lá, o deploy é por `railway up --service voa-ai` nesta pasta
+- [x] Repositório GitHub ligado ao Railway: cada merge na `main` publica sozinho
 - [ ] Colocar a `AEROAPI_KEY` também no Railway: `railway variable set --service voa-ai AEROAPI_KEY=...`
 - [ ] Migrar `railway.json` para `.railway/railway.ts` antes de 01/12/2026 (`railway config migrate`)
-- [ ] Alertas do admin a 50% e 80% do crédito (push e e-mail) e rate limit por IP (não feitos)
+- [x] Alertas do admin a 50% e 80% do crédito (push) e limite por IP
 - [ ] Incluir em "Público-alvo → Usuários de teste" quem mais for testar o login
 - [ ] Prancha Admin · Visão geral: trocar "dia 25" por "dia 24"
 - [ ] Prancha: placa mini em Meus voos (v1) e os estados novos (pousou, desviado, avisos bloqueados)

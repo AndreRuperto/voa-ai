@@ -371,7 +371,60 @@ async function pintarLimites() {
   $$('.interruptor').forEach(b => b.setAttribute('aria-checked', valorCampo(b.dataset.chave)));
   erro.hidden = true;
   pintarAuditoria();
+  pintarAvisos();
 }
+
+/* ---------- avisos de gasto (push nos aparelhos dos admins) */
+const NOME_MARCO = { 50: '50% do crédito', 80: '80% do crédito', teto: 'Teto do mês: busca por rota pausada', duro: 'Teto duro: buscas paradas' };
+const suportaPush = () => isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+function chaveVapid(b64) {
+  const p = '='.repeat((4 - b64.length % 4) % 4), s = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(s, c => c.charCodeAt(0));
+}
+async function assinaturaDesteAparelho() {
+  if (!suportaPush() || Notification.permission !== 'granted') return null;
+  try { const reg = await navigator.serviceWorker.getRegistration('/'); return await reg?.pushManager.getSubscription() || null; } catch { return null; }
+}
+async function pintarAvisos() {
+  const estadoEl = $('#avisos-estado'), ligar = $('#avisos-ligar'), lista = $('#avisos-mes');
+  let info, r;
+  try { [info, r] = await Promise.all([get('/api/admin/avisos'), resumo(mesDe(new Date()))]); }
+  catch (e) { if (!tratarErro(e)) estadoEl.textContent = mensagemDe(e); return; }
+  const n = info.aparelhos_com_push, aqui = await assinaturaDesteAparelho();
+  const quantos = n ? `${plural(n, 'aparelho de admin recebe', 'aparelhos de admin recebem')} estes avisos.` : 'Nenhum aparelho de admin recebe estes avisos ainda.';
+  estadoEl.textContent = !suportaPush() ? `${quantos} Este navegador não recebe avisos${/iP(hone|ad|od)/.test(navigator.userAgent) ? ': no iPhone, instale o app na tela de início primeiro' : ''}.`
+    : Notification.permission === 'denied' ? `${quantos} Os avisos estão bloqueados neste navegador: libere nas permissões do site.`
+    : aqui ? `${quantos} Este aparelho está entre eles.` : quantos;
+  ligar.hidden = Boolean(aqui) || !suportaPush() || Notification.permission === 'denied';
+  $('#avisos-teste').disabled = !n;
+  const avisos = r?.avisos_gasto || [];
+  lista.innerHTML = avisos.length ? avisos.map(a =>
+    `<li><time datetime="${esc(a.em)}">${esc(quandoCurto(a.em))}</time><span>${esc(NOME_MARCO[a.marco] || a.marco)}<br><span class="pequeno">US$ ${brl(a.gasto_usd)} gastos${a.enviados ? ` · push em ${plural(a.enviados, 'aparelho', 'aparelhos')}` : ''}</span></span></li>`).join('')
+    : '<li><span></span><span class="pequeno">Nenhum aviso de gasto este mês.</span></li>';
+}
+$('#avisos-ligar').addEventListener('click', async () => {
+  const b = $('#avisos-ligar'); ocupado(b, true);
+  try {
+    const cfg = await get('/api/config');
+    if (!cfg?.vapid_publica) { avisar('O servidor está sem as chaves VAPID: não dá para mandar avisos.'); return; }
+    const perm = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
+    if (perm !== 'granted') { avisar('Sem permissão de avisos neste navegador.'); return; }
+    await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    const pronto = await navigator.serviceWorker.ready;
+    const sub = await pronto.pushManager.getSubscription() || await pronto.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveVapid(cfg.vapid_publica) });
+    await put('/api/aparelho/push', { push: sub.toJSON() });
+    avisar('Pronto. Os avisos de gasto chegam neste aparelho.');
+  } catch (e) { if (!tratarErro(e)) avisar(mensagemDe(e)); }
+  finally { ocupado(b, false); pintarAvisos(); }
+});
+$('#avisos-teste').addEventListener('click', async () => {
+  const b = $('#avisos-teste'); ocupado(b, true);
+  try {
+    const { enviados } = await post('/api/admin/avisos/teste');
+    avisar(enviados ? `Aviso de teste enviado para ${plural(enviados, 'aparelho', 'aparelhos')}.` : 'Nenhum aparelho aceitou o aviso. Ligue os avisos de novo.');
+  } catch (e) { if (!tratarErro(e)) avisar(mensagemDe(e)); }
+  finally { ocupado(b, false); pintarAvisos(); }
+});
 function pintarAuditoria() {
   $('#auditoria').innerHTML = auditoria.length ? auditoria.map(a =>
     `<li><time datetime="${esc(a.em)}">${esc(quandoCurto(a.em))}</time><span>${esc(a.acao)}${a.detalhe ? `: ${esc(a.detalhe)}` : ''}<br><span class="pequeno">${esc(a.admin_email || '')}</span></span></li>`).join('')
@@ -388,6 +441,7 @@ $('#form-limites').addEventListener('submit', async e => {
     if (ok) novo[i.dataset.chave] = v; else erros.push(i.dataset.nome);
   });
   if (erros.length) { erro.textContent = `Confira: ${erros.join(', ')}. Use números inteiros de 0 a 1000 (o teto aceita centavos).`; erro.hidden = false; return; }
+  if (novo.teto_duro_usd < novo.teto_mensal_usd) { erro.textContent = 'O teto duro precisa ser igual ou maior que o teto do mês: primeiro a busca por rota pausa, depois param as outras.'; erro.hidden = false; return; }
   if (novo.limite_voos_conta < novo.limite_voos_anonimo) { erro.textContent = 'Quem entra com Google deve poder acompanhar pelo menos tantos voos quanto quem não entra.'; erro.hidden = false; return; }
   const rotaLigada = $('[data-chave="rota_ligada"]').getAttribute('aria-checked') === 'true';
   const eco = $('[data-chave="modo_economico"]').getAttribute('aria-checked') === 'true';

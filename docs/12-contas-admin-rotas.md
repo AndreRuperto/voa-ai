@@ -111,6 +111,8 @@ A AeroAPI não tem um endpoint de uso da conta. O servidor registra **cada chama
 
 - Gasto do mês passou de 50% e de 80% do crédito → push e e-mail para os admins.
 - Teto mensal atingido → as buscas por rota pausam sozinhas; acompanhar por número continua.
+- Teto duro atingido (padrão: 2 × o teto mensal) → o servidor para de fazer chamadas pagas à AeroAPI até o mês virar; os alertas já criados continuam entregando.
+- Implementado: o push, uma vez por marco e por mês, com cartão "Avisos de gasto" em Limites (ligar neste aparelho, enviar teste). O e-mail ainda falta: precisa de um serviço de envio.
 
 ## Mudanças na arquitetura ([03](03-arquitetura.md))
 

@@ -134,6 +134,17 @@ const MIGRACOES = [
     expira_em TEXT NOT NULL
   );
   `,
+  `
+  -- Avisos de gasto já mandados aos admins (um por mês e marco): 50, 80, teto, duro.
+  CREATE TABLE AVISO_GASTO (
+    mes       TEXT NOT NULL,
+    marco     TEXT NOT NULL,
+    gasto_usd REAL NOT NULL,
+    enviados  INTEGER NOT NULL,          -- quantos aparelhos de admin receberam o push
+    em        TEXT NOT NULL,
+    PRIMARY KEY (mes, marco)
+  );
+  `,
 ];
 
 /**
