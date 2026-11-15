@@ -15,7 +15,8 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 
 - Câmera nova **De perto**: perseguição atrás e acima do avião. Perto dele, o marcador vira o modelo 3D low-poly (`public/aviao3d.js`), com duas famílias pelo `aircraft_type`, sombra no chão, rastro fino até a cauda e aeroportos menores.
 - Conferido no localhost com dois voos de teste no banco local (LIS→GRU A339 e OPO→MAD A20N), em 1440×900 e 375×812. Os voos de teste foram apagados.
-- [ ] Atualizar a prancha de design (marcador e modelo de perto, botão De perto)
+- Mapa do globo mais legível: mais contraste entre terra e oceano, linha de litoral e divisas entre países, que ficam mais nítidas de perto.
+- [ ] Atualizar a prancha de design (marcador e modelo de perto, botão De perto, novas cores de terra e oceano, litoral e divisas)
 - [ ] Testar a 60 fps num celular intermediário com o modo De perto
 
 ## 15/11: proteção de custo

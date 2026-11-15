@@ -12,7 +12,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { criarAviao3d, criarSombra, familia } from '/aviao3d.js';
 
 const COR = { ceu: 0x5CC8FF, pista: 0xFFB547, tinta: 0xF2F5FA, cancelado: 0xFF6B7A, atraso: 0xFF8A65,
-  oceano: new THREE.Color('#0A152B'), terra: new THREE.Color('#33507F') };
+  oceano: new THREE.Color('#071022'), terra: new THREE.Color('#3D6499'), litoral: 0xBFD3EE, divisa: 0xA9B6CC };
 const grau = Math.PI / 180;
 
 export function vetor(lat, lon, r = 1) {
@@ -60,7 +60,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
   cena.add(sol, new THREE.AmbientLight(0x9DB4E0, .7));
 
   /* ---- globo low-poly */
-  const geoGlobo = new THREE.IcosahedronGeometry(1, 22);
+  const geoGlobo = new THREE.IcosahedronGeometry(1, 34);     // faces de ~1° de lado: litoral menos serrilhado
   const nFaces = geoGlobo.attributes.position.count / 3;
   geoGlobo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nFaces * 9), 3));
   function pintarGlobo(ehTerra) {
@@ -79,18 +79,66 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
   pintarGlobo();
   cena.add(new THREE.Mesh(geoGlobo, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true })));
 
-  // Continentes: sem rede, o globo fica só com o oceano e o resto funciona.
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json').then(r => r.json()).then(topo => {
+  /* Linhas sobre a superfície (litoral e divisas). Trechos longos são divididos para acompanhar a curva. */
+  function linhasNaEsfera(multi, r) {
+    const pts = [];
+    for (const linha of multi.coordinates) {
+      for (let i = 1; i < linha.length; i++) {
+        const a = vetor(linha[i - 1][1], linha[i - 1][0], r), b = vetor(linha[i][1], linha[i][0], r);
+        const n = Math.max(1, Math.ceil(a.angleTo(b) / (1.5 * grau)));
+        let ant = a;
+        for (let k = 1; k <= n; k++) {
+          const q = k === n ? b : a.clone().lerp(b, k / n).setLength(r);
+          pts.push(ant.x, ant.y, ant.z, q.x, q.y, q.z); ant = q;
+        }
+      }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return g;
+  }
+  // Divisas: discretas de longe, mais nítidas quando a câmera chega perto (ver quadro()).
+  const matLitoral = new THREE.LineBasicMaterial({ color: COR.litoral, transparent: true, opacity: .5, depthWrite: false });
+  const matDivisa = new THREE.LineBasicMaterial({ color: COR.divisa, transparent: true, opacity: .16, depthWrite: false });
+  function opacidadeDasLinhas() {
+    const alt = camera.position.length() - 1;              // altura da câmera sobre a superfície
+    const k = THREE.MathUtils.clamp((alt - .15) / 2.2, 0, 1); // 0 = bem perto, 1 = longe
+    matDivisa.opacity = THREE.MathUtils.lerp(.55, .16, k);
+    matLitoral.opacity = THREE.MathUtils.lerp(.8, .5, k);
+  }
+
+  // Continentes e países: sem rede, o globo fica só com o oceano e o resto funciona.
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(r => r.json()).then(topo => {
     if (!window.topojson) return;
-    const W = 1440, H = 720, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const paises = topo.objects.countries;
+    const litoral = window.topojson.mesh(topo, paises, (a, b) => a === b);
+    const divisas = window.topojson.mesh(topo, paises, (a, b) => a !== b);
+    const lLit = new THREE.LineSegments(linhasNaEsfera(litoral, 1.0012), matLitoral);
+    const lDiv = new THREE.LineSegments(linhasNaEsfera(divisas, 1.0011), matDivisa);
+    lLit.renderOrder = lDiv.renderOrder = 1;
+    cena.add(lDiv, lLit);
+
+    const W = 2048, H = 1024, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const g = cv.getContext('2d'); g.fillStyle = '#fff';
-    const terra = window.topojson.feature(topo, topo.objects.land);
+    const terra = window.topojson.feature(topo, paises);
     for (const f of terra.features) {
+      if (!f.geometry) continue;
       const polis = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
       for (const p of polis) {
-        g.beginPath();
-        for (const anel of p) anel.forEach(([lo, la], i) => { const x = (lo + 180) / 360 * W, y = (90 - la) / 180 * H; i ? g.lineTo(x, y) : g.moveTo(x, y); });
-        g.fill('evenodd');
+        // Polígonos que cruzam a linha de 180° (Fiji, Rússia): desenrola a longitude e desenha também
+        // deslocado de uma volta, senão o preenchimento atravessa o mapa inteiro.
+        for (const desloc of [0, -W, W]) {
+          g.beginPath();
+          for (const anel of p) {
+            let ant = null, extra = 0;
+            anel.forEach(([lo, la], i) => {
+              if (ant !== null && Math.abs(lo - ant) > 180) extra += lo < ant ? 360 : -360;
+              ant = lo;
+              const x = (lo + extra + 180) / 360 * W + desloc, y = (90 - la) / 180 * H;
+              i ? g.lineTo(x, y) : g.moveTo(x, y);
+            });
+          }
+          g.fill('evenodd');
+        }
       }
     }
     const px = g.getImageData(0, 0, W, H).data;
@@ -403,6 +451,7 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
     if (!voo) ctrl().update();
     if (camera.position.length() < 1.004) camera.position.setLength(1.004);   // de perto, não entra na Terra
     trocarPerto();
+    opacidadeDasLinhas();
     if (!reduzir) {
       const s = 1 + .45 * (.5 + .5 * Math.sin(agora / 1000 * 2.6));
       for (const id in objetos) objetos[id].halo.scale.setScalar(s * objetos[id].escala);
