@@ -14,23 +14,34 @@ for (const t of TAMANHOS) {
   test(`busca por rota ${t.nome}`, async ({ page }) => {
     await page.setViewportSize({ width: t.width, height: t.height });
     await page.goto('/#rota');
-    await page.getByRole('combobox', { name: 'País de destino' }).waitFor();
+    const pais = page.getByRole('combobox', { name: 'País de destino' });
     await page.waitForFunction(() => !document.querySelector('#pais-para-campo').disabled);
     await page.waitForTimeout(500);
-    const grupo = page.locator('fieldset', { has: page.getByRole('combobox', { name: 'País de destino' }) });
     // o topo (logo, "Meus voos") é fixo: deixa uma folga para ele não cobrir o campo
-    await grupo.evaluate(el => { el.scrollIntoView({ block: 'start' }); scrollBy(0, -140); document.querySelector('.painel, main')?.scrollBy?.(0, -140); });
-    await page.screenshot({ path: `${PASTA}/${t.nome}-inicio.png` });
-    const busca = page.getByRole('combobox', { name: /aeroporto de destino/i });
-    if (await busca.count()) {
-      await page.getByRole('combobox', { name: 'País de destino' }).fill('bras');
-      await page.keyboard.press('Enter');
-      await busca.fill('salv');
-      await page.waitForTimeout(200);
-      await page.screenshot({ path: `${PASTA}/${t.nome}-digitando.png` });
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(200);
-      await page.screenshot({ path: `${PASTA}/${t.nome}-escolhido.png` });
-    }
+    const mostrarPara = () => page.locator('#pais-para').evaluate(el => {
+      el.scrollIntoView({ block: 'start' });
+      scrollBy(0, -140);
+      let p = el.parentElement;
+      while (p && p !== document.body) { if (p.scrollHeight > p.clientHeight + 4) p.scrollBy(0, -140); p = p.parentElement; }
+    });
+    await page.screenshot({ path: `${PASTA}/${t.nome}-1-inicio.png` });
+
+    const busca = page.getByRole('combobox', { name: 'Buscar aeroporto de destino' });
+    if (!(await page.locator('#busca-para').count())) return;   // antes da busca existir
+    await pais.fill('bras');
+    await pais.press('Enter');
+    await busca.waitFor();
+    await mostrarPara();
+    await page.screenshot({ path: `${PASTA}/${t.nome}-2-pais.png` });
+    await busca.fill('sal');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: `${PASTA}/${t.nome}-3-digitando.png` });
+    await busca.press('Enter');
+    await busca.fill('rio');
+    await busca.press('ArrowDown');
+    await busca.press('Enter');
+    await page.waitForTimeout(200);
+    await mostrarPara();
+    await page.screenshot({ path: `${PASTA}/${t.nome}-4-marcados.png` });
   });
 }

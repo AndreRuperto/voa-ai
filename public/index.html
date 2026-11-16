@@ -41,7 +41,8 @@
   <symbol id="i-voltar" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
   <symbol id="i-mais" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
   <symbol id="i-painel" viewBox="0 0 24 24"><path d="M15.41 16.59 10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></symbol>
-  <symbol id="i-lista" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></symbol>
+  <symbol id="i-busca" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM20 20l-4.8-4.8"/></symbol>
+  <symbol id="i-lista"viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></symbol>
   <!-- ícone do app (10): arco tracejado em céu chegando ao ponto aceso -->
   <symbol id="i-marca" viewBox="0 0 30 22"><path d="M2 20 Q 10 2 24 6" fill="none" stroke="#5CC8FF" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 4.5"/><circle cx="25" cy="6" r="4" fill="#FFB547"/></symbol>
 </svg>
@@ -170,6 +171,15 @@
         <span class="pais__seta" aria-hidden="true"></span>
         <ul class="pais__lista" id="pais-de-lista" role="listbox" aria-label="País de origem" hidden></ul>
       </div>
+      <div class="pais busca-aero" id="busca-de" hidden>
+        <label class="sr" for="busca-de-campo">Buscar aeroporto de origem</label>
+        <svg class="busca-aero__lupa" aria-hidden="true"><use href="#i-busca"/></svg>
+        <input class="pais__campo" id="busca-de-campo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+          aria-controls="busca-de-lista" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"
+          placeholder="Cidade, aeroporto ou código">
+        <ul class="pais__lista" id="busca-de-lista" role="listbox" aria-label="Aeroportos de origem encontrados" hidden></ul>
+        <p class="sr" id="busca-de-status" role="status"></p>
+      </div>
       <div class="chips" id="aero-de" role="group" aria-label="Aeroportos de origem"></div>
     </fieldset>
     <fieldset class="grupo">
@@ -181,6 +191,15 @@
           aria-controls="pais-para-lista" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Carregando países…" disabled>
         <span class="pais__seta" aria-hidden="true"></span>
         <ul class="pais__lista" id="pais-para-lista" role="listbox" aria-label="País de destino" hidden></ul>
+      </div>
+      <div class="pais busca-aero" id="busca-para" hidden>
+        <label class="sr" for="busca-para-campo">Buscar aeroporto de destino</label>
+        <svg class="busca-aero__lupa" aria-hidden="true"><use href="#i-busca"/></svg>
+        <input class="pais__campo" id="busca-para-campo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+          aria-controls="busca-para-lista" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"
+          placeholder="Cidade, aeroporto ou código">
+        <ul class="pais__lista" id="busca-para-lista" role="listbox" aria-label="Aeroportos de destino encontrados" hidden></ul>
+        <p class="sr" id="busca-para-status" role="status"></p>
       </div>
       <div class="chips" id="aero-para" role="group" aria-label="Aeroportos de destino"></div>
       <p class="dica" id="pares-dica">Até 3 combinações de aeroportos por busca.</p>
