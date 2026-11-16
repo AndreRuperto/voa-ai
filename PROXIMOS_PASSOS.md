@@ -11,6 +11,14 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
 
+## 15/11: país com bandeira na busca por rota
+
+- O `<select>` nativo de país virou um campo com busca e bandeira (`public/seletor-pais.js`, funções puras em `public/paises.js`). A lista abre logo abaixo do campo, com no máximo 320 px de altura (antes o navegador abria até o topo do monitor). Digitar filtra sem acento ("japao", "jp", "sul"); setas, Enter, Esc e Tab funcionam.
+- Bandeiras: fonte `public/fontes/bandeiras.woff2` (Twemoji Country Flags, 78 KB, CC-BY 4.0; crédito em `public/fontes/CREDITOS.md`), só para os caracteres de bandeira. Assim aparecem também no Windows.
+- Testado no navegador a 1440×900 e 375×812 contra o simulador.
+- [ ] Prancha de design: componente "campo de país" (fechado, aberto, filtrando, sem resultado, indisponível)
+- [ ] Aeroporto pré-marcado na origem é o primeiro "grande" em ordem alfabética (Japão → Aomori, Brasil → Belém). Ordenar por movimento.
+
 ## 15/11: câmera junto do painel do voo
 
 - Prancha de opções: [Voa Aí · topo e câmera](https://claude.ai/artifact/KUGkLFBG7Sv7QCihqx5SL2). Ela mostra o layout de hoje, três caminhos no desktop (A, B e C) e dois no celular. Escolhido: **B**.
