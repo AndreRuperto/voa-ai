@@ -38,12 +38,12 @@ export function listarPaises() {
   return dadosAero.paises.map((p) => ({ codigo: p.codigo, nome: p.nome, aeroportos: conta.get(p.codigo) || 0 }));
 }
 
-/** Aeroportos de um país: grandes primeiro, depois por cidade. */
+/** Aeroportos de um país: os de mais movimento primeiro (rotas regulares), depois grandes, depois por cidade. */
 export function aeroportosDoPais(pais) {
   const c = String(pais || '').toUpperCase();
   return dadosAero.aeroportos
     .filter((a) => a.pais === c)
-    .sort((x, y) => (y.grande - x.grande) || String(x.cidade || x.nome).localeCompare(String(y.cidade || y.nome), 'pt-BR'))
+    .sort((x, y) => ((y.rotas || 0) - (x.rotas || 0)) || (y.grande - x.grande) || String(x.cidade || x.nome).localeCompare(String(y.cidade || y.nome), 'pt-BR'))
     .map(({ iata, icao, nome, cidade, lat, lon, grande }) => ({ iata, icao, nome, cidade, lat, lon, grande }));
 }
 

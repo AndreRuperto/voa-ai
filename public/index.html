@@ -162,14 +162,26 @@
   <form id="form-rota" novalidate style="display:flex;flex-direction:column;gap:var(--e-5)">
     <fieldset class="grupo">
       <legend>De</legend>
-      <label class="sr" for="pais-de">País de origem</label>
-      <select class="seletor" id="pais-de" data-lado="de"><option value="">Carregando países…</option></select>
+      <label class="sr" for="pais-de-campo">País de origem</label>
+      <div class="pais" id="pais-de" data-lado="de">
+        <span class="pais__bandeira bandeira" aria-hidden="true"></span>
+        <input class="pais__campo" id="pais-de-campo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+          aria-controls="pais-de-lista" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Carregando países…" disabled>
+        <span class="pais__seta" aria-hidden="true"></span>
+        <ul class="pais__lista" id="pais-de-lista" role="listbox" aria-label="País de origem" hidden></ul>
+      </div>
       <div class="chips" id="aero-de" role="group" aria-label="Aeroportos de origem"></div>
     </fieldset>
     <fieldset class="grupo">
       <legend>Para</legend>
-      <label class="sr" for="pais-para">País de destino</label>
-      <select class="seletor" id="pais-para" data-lado="para"><option value="">Carregando países…</option></select>
+      <label class="sr" for="pais-para-campo">País de destino</label>
+      <div class="pais" id="pais-para" data-lado="para">
+        <span class="pais__bandeira bandeira" aria-hidden="true"></span>
+        <input class="pais__campo" id="pais-para-campo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+          aria-controls="pais-para-lista" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Carregando países…" disabled>
+        <span class="pais__seta" aria-hidden="true"></span>
+        <ul class="pais__lista" id="pais-para-lista" role="listbox" aria-label="País de destino" hidden></ul>
+      </div>
       <div class="chips" id="aero-para" role="group" aria-label="Aeroportos de destino"></div>
       <p class="dica" id="pares-dica">Até 3 combinações de aeroportos por busca.</p>
     </fieldset>

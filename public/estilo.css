@@ -144,9 +144,38 @@ a { color: inherit; }
 .botao--google { background: #FFFFFF; color: #1F1F1F; border-color: #DADCE0; font-weight: 600; }
 .botao--google svg { width: 20px; height: 20px; }
 /* busca por rota */
-.seletor { font: 600 var(--fs-p) var(--f-texto); color: var(--c-tinta); background: var(--c-campo); min-height: 52px; padding: 0 var(--e-4);
-  border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); width: 100%; }
-.seletor:focus-visible { outline-offset: 0; border-color: var(--c-foco); }
+/* Escolha de país (seletor-pais.js): bandeira + busca; a lista abre logo abaixo e tem altura limitada. */
+@font-face { font-family: "Bandeiras"; src: url("/fontes/bandeiras.woff2") format("woff2"); font-display: swap;
+  unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F; }
+.bandeira { font-family: "Bandeiras", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 1.35em; line-height: 1; flex: none; }
+.pais { position: relative; }
+.pais__campo { font: 600 var(--fs-p) var(--f-texto); color: var(--c-tinta); background: var(--c-campo); min-height: 52px; width: 100%;
+  padding: 0 calc(var(--e-4) + 28px) 0 var(--e-4); border: 2px solid var(--c-linha-forte); border-radius: var(--r-campo); text-overflow: ellipsis; }
+.pais--com-bandeira .pais__campo { padding-left: calc(var(--e-4) + 38px); }
+.pais__campo::placeholder { color: var(--c-tinta-suave); opacity: 1; }
+.pais__campo:focus-visible { outline-offset: 0; border-color: var(--c-foco); }
+.pais__campo[aria-expanded="true"] { border-color: var(--c-foco); }
+.pais__campo:disabled { cursor: not-allowed; }
+.pais--erro .pais__campo::placeholder { color: var(--c-tinta); }
+.pais__bandeira { position: absolute; left: var(--e-4); top: 50%; transform: translateY(-50%); pointer-events: none; display: none; }
+.pais--com-bandeira .pais__bandeira { display: block; }
+/* seta: some quando o campo está travado */
+.pais__seta { position: absolute; right: 6px; top: 50%; width: 40px; height: 40px; transform: translateY(-50%); cursor: pointer; }
+.pais__seta::before { content: ""; position: absolute; left: 50%; top: 45%; width: 8px; height: 8px; border: solid var(--c-tinta-suave);
+  border-width: 0 2px 2px 0; transform: translate(-50%, -50%) rotate(45deg); transition: transform var(--m-dur) var(--m-curva); }
+.pais__campo[aria-expanded="true"] ~ .pais__seta::before { transform: translate(-50%, -20%) rotate(225deg); }
+.pais__campo:disabled ~ .pais__seta { display: none; }
+.pais__lista { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 4px; list-style: none;
+  max-height: min(320px, 42vh); overflow-y: auto; overscroll-behavior: contain; background: var(--c-campo); border: 1px solid var(--c-linha-forte);
+  border-radius: var(--r-campo); box-shadow: 0 16px 40px rgba(0, 0, 0, .45); }
+.pais__lista[hidden] { display: none; }
+.pais__lista li { display: flex; align-items: center; gap: var(--e-3); min-height: 44px; padding: 0 var(--e-3); border-radius: 8px; cursor: pointer; }
+.pais__lista li[aria-selected="true"] { background: rgba(242, 245, 250, .1); }
+.pais__lista li.escolhido { font-weight: 700; color: var(--c-pista); }
+.pais__lista li.escolhido::after { content: ""; margin-left: auto; width: 10px; height: 5px; border: solid currentColor; border-width: 0 0 2px 2px;
+  transform: translateY(-2px) rotate(-45deg); }
+.pais__lista .pais__vazio { cursor: default; color: var(--c-tinta-suave); }
+@media (hover: hover) { .pais__lista li[data-codigo]:hover { background: rgba(242, 245, 250, .1); } }
 .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--e-2); }
 .chips label { position: relative; }
 .chips input { position: absolute; opacity: 0; inset: 0; }

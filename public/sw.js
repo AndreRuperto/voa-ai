@@ -1,8 +1,8 @@
 /* Voa Aí · service worker.
    - Guarda só a casca do app (HTML, CSS, JS, ícones). Nada de /api: dado de voo vem sempre do servidor.
    - Push: o servidor manda {titulo, corpo, url}; o toque abre essa url. */
-const VERSAO = 'voa-ai-casca-v11';
-const CASCA = ['/', '/index.html', '/estilo.css', '/app.js', '/api.js', '/formato.js', '/globo.js', '/aviao3d.js', '/viagens.js', '/manifest.webmanifest',
+const VERSAO = 'voa-ai-casca-v12';
+const CASCA = ['/', '/index.html', '/estilo.css', '/app.js', '/api.js', '/formato.js', '/globo.js', '/aviao3d.js', '/viagens.js', '/seletor-pais.js', '/paises.js', '/fontes/bandeiras.woff2', '/manifest.webmanifest',
   '/icones/icone.svg', '/icones/icone-192.png', '/icones/icone-512.png', '/icones/badge-96.png'];
 
 self.addEventListener('install', e => {

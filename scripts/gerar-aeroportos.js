@@ -6,12 +6,16 @@
 // Fontes (baixadas para uma pasta temporária e lidas só como dados):
 // - OurAirports (domínio público): airports.csv e countries.csv
 // - mwgg/Airports (MIT): airports.json, de onde vem o fuso (`tz`), juntado pelo ICAO
-// - OpenFlights (ODbL): airlines.dat, de onde vem o nome da companhia pelo ICAO
+// - OpenFlights (ODbL): airlines.dat, de onde vem o nome da companhia pelo ICAO, e routes.dat,
+//   de onde vem `rotas` (quantas rotas regulares saem ou chegam): a medida de movimento que põe
+//   Guarulhos antes de Belém e Narita antes de Aomori na escolha de aeroportos
 //
 // Ficam só os aeroportos large_airport/medium_airport com código IATA e serviço regular.
 // Quando a base de fusos não tem o aeroporto, usa o fuso do aeroporto mais próximo do mesmo país.
 // Nomes: server/dados/nomes-pt.json (curado à mão) troca cidade e nome por versões curtas em português;
 // os demais ganham um nome curto tirando "International Airport" e afins do nome oficial.
+//
+// Depois de regerar: suba VERSAO_LUGARES em public/app.js (o navegador guarda países e aeroportos por 1 dia).
 
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -24,6 +28,7 @@ const FONTES = {
   paises: 'https://davidmegginson.github.io/ourairports-data/countries.csv',
   fusos: 'https://raw.githubusercontent.com/mwgg/Airports/master/airports.json',
   companhias: 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/airlines.dat',
+  rotas: 'https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat',
 };
 
 async function baixar(url, destino) {
@@ -65,6 +70,20 @@ export function nomeCurto(nome, cidade) {
   return n || cidade || nome;
 }
 
+/**
+ * routes.dat (OpenFlights): companhia,id,origem,id,destino,id,codeshare,paradas,equipamento.
+ * Conta, por IATA, quantas rotas diretas e próprias (sem codeshare) saem ou chegam no aeroporto.
+ */
+export function contarRotas(dat) {
+  const conta = new Map();
+  for (const linha of String(dat || '').split('\n')) {
+    const c = linha.split(',');
+    if (c.length < 8 || c[6] === 'Y' || c[7] !== '0') continue;
+    for (const iata of [c[2], c[4]]) if (/^[A-Z]{3}$/.test(iata)) conta.set(iata, (conta.get(iata) || 0) + 1);
+  }
+  return conta;
+}
+
 function distancia(a, b) {
   const r = Math.PI / 180;
   const dLat = (b.lat - a.lat) * r, dLon = (b.lon - a.lon) * r;
@@ -76,12 +95,14 @@ async function main() {
   const pasta = process.argv[2] || mkdtempSync(join(tmpdir(), 'voa-ai-aeroportos-'));
   mkdirSync(pasta, { recursive: true });
   console.log(`Baixando fontes em ${pasta}`);
-  const [csvAero, csvPaises, jsonFusos, datCompanhias] = await Promise.all([
+  const [csvAero, csvPaises, jsonFusos, datCompanhias, datRotas] = await Promise.all([
     baixar(FONTES.aeroportos, join(pasta, 'airports.csv')),
     baixar(FONTES.paises, join(pasta, 'countries.csv')),
     baixar(FONTES.fusos, join(pasta, 'fusos.json')),
     baixar(FONTES.companhias, join(pasta, 'airlines.dat')),
+    baixar(FONTES.rotas, join(pasta, 'routes.dat')),
   ]);
+  const rotasPorIata = contarRotas(datRotas);
 
   const fusos = JSON.parse(jsonFusos);
   const fusoPorIcao = new Map();
@@ -118,6 +139,7 @@ async function main() {
       lon: Number.isFinite(lon) ? Math.round(lon * 1e4) / 1e4 : null,
       fuso: (icao && fusoPorIcao.get(icao)) || fusoPorIata.get(iata) || null,
       grande: a.type === 'large_airport',
+      rotas: rotasPorIata.get(iata) || 0,
     });
   }
 
@@ -164,7 +186,7 @@ async function main() {
   const gerado_em = new Date().toISOString().slice(0, 10);
   writeFileSync(join(saida, 'aeroportos.json'), JSON.stringify({
     gerado_em,
-    fontes: ['OurAirports (domínio público)', 'mwgg/Airports (fusos, MIT)'],
+    fontes: ['OurAirports (domínio público)', 'mwgg/Airports (fusos, MIT)', 'OpenFlights routes.dat (rotas, ODbL)'],
     paises,
     aeroportos,
   }));

@@ -3,6 +3,7 @@
    /v/<fa_flight_id> abre o status desse voo e oferece "Me avisar". */
 import { get, post, put, del, mensagemDe } from '/api.js';
 import { agruparViagens, conexao, momentoDaViagem } from '/viagens.js';
+import { SeletorPais } from '/seletor-pais.js';
 import { hora, diaISO, diasDeBusca, diaRelativo, nomeDoDia, duracao, minutosEntre, esc, plural } from '/formato.js';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -1050,28 +1051,29 @@ async function telaMeusVoos() {
 }
 
 /* ============================================================ BUSCA POR ROTA */
-const selDe = $('#pais-de'), selPara = $('#pais-para'), chipsDe = $('#aero-de'), chipsPara = $('#aero-para'), erroRota = $('#rota-erro');
+const selDe = new SeletorPais($('#pais-de')), selPara = new SeletorPais($('#pais-para')), chipsDe = $('#aero-de'), chipsPara = $('#aero-para'), erroRota = $('#rota-erro');
+// Países e aeroportos ficam 1 dia no cache do navegador. Ao regerar server/dados/aeroportos.json, suba este número
+// para ninguém ficar com a lista velha (v2: aeroportos ordenados por movimento).
+const VERSAO_LUGARES = 2;
 let paisesPromessa = null;
 function carregarPaises() { paisesPromessa ??= carregarPaises_().then(r => { if (!r) paisesPromessa = null; return r; }); return paisesPromessa; }
 async function carregarPaises_() {
   try {
-    estado.paises = (await get('/api/lugares/paises'))?.paises || [];
+    estado.paises = (await get(`/api/lugares/paises?v=${VERSAO_LUGARES}`))?.paises || [];
   } catch (e) {
-    for (const s of [selDe, selPara]) s.innerHTML = '<option value="">Países indisponíveis</option>';
+    for (const s of [selDe, selPara]) s.indisponivel('Não deu para carregar os países');
     mostrarErro(erroRota, `${esc(mensagemDe(e))} <a href="#inicio">Busque pelo número do voo</a>.`);
     return null;
   }
-  const ops = estado.paises.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-    .map(p => `<option value="${esc(p.codigo)}">${esc(p.nome)}</option>`).join('');
-  selDe.innerHTML = `<option value="">Escolha o país</option>${ops}`;
-  selPara.innerHTML = `<option value="">Escolha o país</option>${ops}`;
+  const ordem = estado.paises.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  selDe.definirPaises(ordem); selPara.definirPaises(ordem);
   // destino padrão: o país do aparelho (quem espera costuma estar no país de chegada)
   const regiao = (navigator.language || '').split('-')[1]?.toUpperCase();
   if (regiao && estado.paises.some(p => p.codigo === regiao)) { selPara.value = regiao; await trocarPais(selPara, chipsPara, false); }
   return estado.paises;
 }
 async function aeroportosDe(pais) {
-  if (!estado.aeroportos.has(pais)) estado.aeroportos.set(pais, get(`/api/lugares/aeroportos?pais=${encodeURIComponent(pais)}`).then(r => r?.aeroportos || [])
+  if (!estado.aeroportos.has(pais)) estado.aeroportos.set(pais, get(`/api/lugares/aeroportos?pais=${encodeURIComponent(pais)}&v=${VERSAO_LUGARES}`).then(r => r?.aeroportos || [])
     .catch(e => { estado.aeroportos.delete(pais); throw e; }));
   return estado.aeroportos.get(pais);
 }
