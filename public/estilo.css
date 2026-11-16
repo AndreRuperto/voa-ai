@@ -176,6 +176,15 @@ a { color: inherit; }
   transform: translateY(-2px) rotate(-45deg); }
 .pais__lista .pais__vazio { cursor: default; color: var(--c-tinta-suave); }
 @media (hover: hover) { .pais__lista li[data-codigo]:hover { background: rgba(242, 245, 250, .1); } }
+/* Buscar aeroporto digitando (seletor-aeroporto.js): mesmo campo e mesma lista do país, com lupa no lugar da bandeira. */
+.busca-aero[hidden] { display: none; }
+.busca-aero .pais__campo { padding-left: calc(var(--e-4) + 30px); padding-right: var(--e-4); }
+.busca-aero__lupa { position: absolute; left: var(--e-4); top: 26px; width: 20px; height: 20px; transform: translateY(-50%); color: var(--c-tinta-suave); pointer-events: none; }
+.busca-aero .pais__lista b { font: 700 var(--fs-m)/1 var(--f-placa); min-width: 3.2ch; }
+.busca-aero .pais__lista span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.busca-aero .pais__lista li.escolhido { color: var(--c-tinta); }
+.busca-aero .pais__lista li.escolhido b { color: var(--c-pista); }
+@media (hover: hover) { .busca-aero .pais__lista li[data-iata]:hover { background: rgba(242, 245, 250, .1); } }
 .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--e-2); }
 .chips label { position: relative; }
 .chips input { position: absolute; opacity: 0; inset: 0; }

@@ -11,6 +11,14 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
 
+## 16/11: buscar aeroporto digitando
+
+- Depois de escolher o país, "De" e "Para" ganham o campo **"Cidade, aeroporto ou código"** (`public/seletor-aeroporto.js`; funções puras em `public/aeroportos.js`, testadas em `test/aeroportos.test.js`). Digitar filtra os aeroportos do país sem acento ("sao paulo" → GRU e CGH, "ssa" → Salvador); setas, Home/End, Enter e Esc funcionam; tocar num resultado também. Escolher marca o cartão na grade, que continua como atalho, e passa pela mesma regra de no máximo 3 combinações.
+- Leitor de tela: combobox + listbox (WAI-ARIA APG) e um `role="status"` que anuncia "3 aeroportos…", "Nenhum aeroporto com…" e "Marcado: SSA, Salvador".
+- A busca é só dentro do país escolhido. Buscar a cidade direto, sem escolher o país antes, precisaria de uma rota nova no servidor (hoje só há `/api/lugares/aeroportos?pais=`).
+- [ ] Prancha de design: componente "busca de aeroporto" (vazio, filtrando, sem resultado, já marcado)
+- [ ] Testar com leitor de tela de verdade (NVDA/TalkBack): NAO_EXECUTADO
+
 ## 16/11: "Para" começa vazio e testes E2E
 
 - O "Para" da busca por rota vinha com o país do idioma do aparelho (`navigator.language`; `pt-BR` → Brasil, com a grade inteira de aeroportos). A especificação (docs/12, "Fluxo na tela") não pedia isso. Agora "De" e "Para" começam vazios.

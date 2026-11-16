@@ -4,6 +4,7 @@
 import { get, post, put, del, mensagemDe } from '/api.js';
 import { agruparViagens, conexao, momentoDaViagem } from '/viagens.js';
 import { SeletorPais } from '/seletor-pais.js';
+import { BuscaAeroporto } from '/seletor-aeroporto.js';
 import { hora, diaISO, diasDeBusca, diaRelativo, nomeDoDia, duracao, minutosEntre, esc, plural } from '/formato.js';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -1076,20 +1077,39 @@ async function aeroportosDe(pais) {
     .catch(e => { estado.aeroportos.delete(pais); throw e; }));
   return estado.aeroportos.get(pais);
 }
-async function trocarPais(sel, alvo, marcarMaior) {
+const marcados = alvo => $$('input:checked', alvo).map(i => i.value);
+// digitar a cidade, o aeroporto ou o código; a grade continua como atalho
+const buscaDe = new BuscaAeroporto($('#busca-de'), () => marcados(chipsDe)), buscaPara = new BuscaAeroporto($('#busca-para'), () => marcados(chipsPara));
+async function trocarPais(sel, alvo, marcarMaior, busca) {
   esconderErro(erroRota);
+  busca.definirAeroportos([]);
   if (!sel.value) { alvo.innerHTML = ''; atualizarPares(); return; }
   alvo.innerHTML = '<p class="carregando-texto">Carregando aeroportos…</p>';
   try {
     const lista = await aeroportosDe(sel.value);
     if (!lista.length) { alvo.innerHTML = '<p class="dica">Nenhum aeroporto com voos regulares nesse país.</p>'; atualizarPares(); return; }
     alvo.innerHTML = lista.map((a, i) => `<label><input type="checkbox" value="${esc(a.iata)}"${marcarMaior && i === 0 ? ' checked' : ''}><span><b>${esc(a.iata)}</b><small>${esc(nomeCurto(a))}</small></span></label>`).join('');
+    busca.definirAeroportos(lista);
   } catch (e) { alvo.innerHTML = ''; mostrarErro(erroRota, esc(mensagemDe(e))); }
   atualizarPares();
 }
-selDe.addEventListener('change', () => trocarPais(selDe, chipsDe, true));
-selPara.addEventListener('change', () => trocarPais(selPara, chipsPara, false));
-const marcados = alvo => $$('input:checked', alvo).map(i => i.value);
+/** Escolher na busca marca o cartão da grade (passando pela mesma regra de limite de combinações). */
+function marcarPelaBusca(busca, alvo, iata) {
+  const caixa = $$('input', alvo).find(i => i.value === iata);
+  if (!caixa) return;
+  const nome = caixa.nextElementSibling?.querySelector('small')?.textContent || '';
+  if (caixa.checked) { busca.anunciar(`${iata}, ${nome}, já estava marcado.`); return; }
+  caixa.checked = true;
+  caixa.dispatchEvent(new Event('change', { bubbles: true }));
+  if (!caixa.checked) { busca.anunciar(paresDica.textContent); return; }
+  const n = marcados(alvo).length;
+  busca.anunciar(`Marcado: ${iata}, ${nome}. ${n} ${n === 1 ? 'aeroporto marcado' : 'aeroportos marcados'} deste lado.`);
+  caixa.closest('label')?.scrollIntoView({ block: 'nearest' });
+}
+selDe.addEventListener('change', () => trocarPais(selDe, chipsDe, true, buscaDe));
+selPara.addEventListener('change', () => trocarPais(selPara, chipsPara, false, buscaPara));
+buscaDe.addEventListener('escolha', e => marcarPelaBusca(buscaDe, chipsDe, e.detail.iata));
+buscaPara.addEventListener('escolha', e => marcarPelaBusca(buscaPara, chipsPara, e.detail.iata));
 const pares = () => { const d = marcados(chipsDe), p = marcados(chipsPara); return d.flatMap(a => p.filter(b => b !== a).map(b => [a, b])); };
 const paresDica = $('#pares-dica');
 function atualizarPares(ev) {
