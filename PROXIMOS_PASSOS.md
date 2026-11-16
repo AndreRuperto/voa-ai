@@ -17,7 +17,7 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - Bandeiras: fonte `public/fontes/bandeiras.woff2` (Twemoji Country Flags, 78 KB, CC-BY 4.0; crédito em `public/fontes/CREDITOS.md`), só para os caracteres de bandeira. Assim aparecem também no Windows.
 - Testado no navegador a 1440×900 e 375×812 contra o simulador.
 - [ ] Prancha de design: componente "campo de país" (fechado, aberto, filtrando, sem resultado, indisponível)
-- [ ] Aeroporto pré-marcado na origem é o primeiro "grande" em ordem alfabética (Japão → Aomori, Brasil → Belém). Ordenar por movimento.
+- Aeroportos agora vêm por movimento (rotas regulares diretas no `routes.dat` da OpenFlights, campo `rotas` em `aeroportos.json`): Japão → Narita, Brasil → Guarulhos. A base de rotas é de 2014; um aeroporto novo pode ficar atrás. Ao regerar `aeroportos.json`, subir `VERSAO_LUGARES` em `public/app.js` (cache de 1 dia no navegador).
 
 ## 15/11: câmera junto do painel do voo
 

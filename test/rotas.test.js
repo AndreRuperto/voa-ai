@@ -69,7 +69,7 @@ test('aeroporto desconhecido → 400; rota pausada → 503 pausado', async () =>
   s.db.prepare("DELETE FROM CONFIG WHERE chave = 'rota_pausada'").run();
 });
 
-test('lugares: países em PT-BR e aeroportos grandes primeiro', async () => {
+test('lugares: países em PT-BR e aeroportos de mais movimento primeiro', async () => {
   const c = s.cliente();
   const p = await c.pedir('/api/lugares/paises');
   const pt = p.json.paises.find((x) => x.codigo === 'PT');
@@ -78,8 +78,11 @@ test('lugares: países em PT-BR e aeroportos grandes primeiro', async () => {
   assert.equal(p.json.paises.find((x) => x.codigo === 'DE').nome, 'Alemanha');
   const a = await c.pedir('/api/lugares/aeroportos?pais=PT');
   assert.ok(a.json.aeroportos.some((x) => x.iata === 'LIS'));
-  const grandes = a.json.aeroportos.map((x) => x.grande);
-  assert.deepEqual(grandes, [...grandes].sort((x, y) => y - x));
+  // o primeiro é o que vem pré-marcado na origem: tem de ser o principal do país, não o primeiro em ordem alfabética
+  assert.equal(a.json.aeroportos[0].iata, 'LIS');
+  for (const [pais, principal] of [['BR', 'GRU'], ['JP', 'NRT'], ['AE', 'DXB'], ['FR', 'CDG']]) {
+    assert.equal((await c.pedir(`/api/lugares/aeroportos?pais=${pais}`)).json.aeroportos[0].iata, principal, pais);
+  }
   assert.deepEqual(Object.keys(a.json.aeroportos[0]), ['iata', 'icao', 'nome', 'cidade', 'lat', 'lon', 'grande']);
   assert.equal((await c.pedir('/api/lugares/aeroportos')).status, 400);
 });
@@ -108,4 +111,21 @@ test('sem escala=1, a resposta não traz viagens nem faz a consulta extra', asyn
   const r = await s.cliente().pedir('/api/rotas/buscar?de=LIS&para=GIG&data=2026-11-14');
   assert.equal(r.json.pares[0].viagens, undefined);
   assert.equal(rotaCalls().length, antes + 1);
+});
+
+test('gerador: contarRotas conta rotas diretas e próprias por aeroporto', async () => {
+  const { contarRotas } = await import('../scripts/gerar-aeroportos.js');
+  const dat = [
+    'TP,1,LIS,1,GRU,2,,0,332',
+    'TP,1,GRU,2,LIS,1,,0,332',
+    'LA,2,GRU,2,GIG,3,Y,0,320',      // codeshare: não conta
+    'G3,3,GRU,2,CGH,4,,1,738',       // com parada: não conta
+    'AD,4,\N,5,GRU,2,,0,E95',       // origem sem IATA: conta só o destino
+    'linha quebrada',
+  ].join('\n');
+  const c = contarRotas(dat);
+  assert.equal(c.get('GRU'), 3);
+  assert.equal(c.get('LIS'), 2);
+  assert.equal(c.get('GIG'), undefined);
+  assert.equal(c.get('CGH'), undefined);
 });

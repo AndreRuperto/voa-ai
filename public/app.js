@@ -1052,11 +1052,14 @@ async function telaMeusVoos() {
 
 /* ============================================================ BUSCA POR ROTA */
 const selDe = new SeletorPais($('#pais-de')), selPara = new SeletorPais($('#pais-para')), chipsDe = $('#aero-de'), chipsPara = $('#aero-para'), erroRota = $('#rota-erro');
+// Países e aeroportos ficam 1 dia no cache do navegador. Ao regerar server/dados/aeroportos.json, suba este número
+// para ninguém ficar com a lista velha (v2: aeroportos ordenados por movimento).
+const VERSAO_LUGARES = 2;
 let paisesPromessa = null;
 function carregarPaises() { paisesPromessa ??= carregarPaises_().then(r => { if (!r) paisesPromessa = null; return r; }); return paisesPromessa; }
 async function carregarPaises_() {
   try {
-    estado.paises = (await get('/api/lugares/paises'))?.paises || [];
+    estado.paises = (await get(`/api/lugares/paises?v=${VERSAO_LUGARES}`))?.paises || [];
   } catch (e) {
     for (const s of [selDe, selPara]) s.indisponivel('Não deu para carregar os países');
     mostrarErro(erroRota, `${esc(mensagemDe(e))} <a href="#inicio">Busque pelo número do voo</a>.`);
@@ -1070,7 +1073,7 @@ async function carregarPaises_() {
   return estado.paises;
 }
 async function aeroportosDe(pais) {
-  if (!estado.aeroportos.has(pais)) estado.aeroportos.set(pais, get(`/api/lugares/aeroportos?pais=${encodeURIComponent(pais)}`).then(r => r?.aeroportos || [])
+  if (!estado.aeroportos.has(pais)) estado.aeroportos.set(pais, get(`/api/lugares/aeroportos?pais=${encodeURIComponent(pais)}&v=${VERSAO_LUGARES}`).then(r => r?.aeroportos || [])
     .catch(e => { estado.aeroportos.delete(pais); throw e; }));
   return estado.aeroportos.get(pais);
 }
