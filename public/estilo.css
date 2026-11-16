@@ -169,6 +169,13 @@ a { color: inherit; }
   max-height: min(320px, 42vh); overflow-y: auto; overscroll-behavior: contain; background: var(--c-campo); border: 1px solid var(--c-linha-forte);
   border-radius: var(--r-campo); box-shadow: 0 16px 40px rgba(0, 0, 0, .45); }
 .pais__lista[hidden] { display: none; }
+/* barra de rolagem da lista: a do painel (fina, arredondada, sem setas), com polegar mais claro porque o fundo é o do campo */
+.pais__lista::-webkit-scrollbar { width: 10px; }
+.pais__lista::-webkit-scrollbar-button { display: none; height: 0; }
+.pais__lista::-webkit-scrollbar-track { background: transparent; margin: 6px 0; }
+.pais__lista::-webkit-scrollbar-thumb { background: var(--c-linha-forte); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; min-height: 40px; }
+.pais__lista::-webkit-scrollbar-thumb:hover, .pais__lista::-webkit-scrollbar-thumb:active { background-color: var(--c-tinta-suave); }
+@supports not selector(::-webkit-scrollbar) { .pais__lista { scrollbar-width: thin; scrollbar-color: var(--c-linha-forte) transparent; } }
 .pais__lista li { display: flex; align-items: center; gap: var(--e-3); min-height: 44px; padding: 0 var(--e-3); border-radius: 8px; cursor: pointer; }
 .pais__lista li[aria-selected="true"] { background: rgba(242, 245, 250, .1); }
 .pais__lista li.escolhido { font-weight: 700; color: var(--c-pista); }
