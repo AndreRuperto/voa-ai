@@ -16,7 +16,8 @@ export default defineConfig({
     timezoneId: 'America/Sao_Paulo',
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    // sem --hide-scrollbars: a barra de rolagem aparece como no navegador de verdade
+    { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] } } },
     { name: 'celular', use: { ...devices['Pixel 7'], viewport: { width: 360, height: 740 } } },
   ],
   webServer: {
