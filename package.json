@@ -12,11 +12,15 @@
     "dev": "node --watch --env-file=.env server/index.js",
     "simular": "node --watch --env-file-if-exists=.env --env-file=simulacao.env server/index.js",
     "test": "node --test",
+    "test:e2e": "playwright test",
     "gerar:aeroportos": "node scripts/gerar-aeroportos.js",
     "buscar-voo": "node scripts/buscar-voo.js"
   },
   "dependencies": {
     "google-auth-library": "^11.3.4",
     "web-push": "^4.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1"
   }
 }
