@@ -1066,10 +1066,9 @@ async function carregarPaises_() {
     return null;
   }
   const ordem = estado.paises.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  // "De" e "Para" começam vazios: o idioma do aparelho não diz para onde a pessoa vai
+  // (antes o "Para" vinha com o país de navigator.language, e "pt-BR" abria a grade inteira do Brasil).
   selDe.definirPaises(ordem); selPara.definirPaises(ordem);
-  // destino padrão: o país do aparelho (quem espera costuma estar no país de chegada)
-  const regiao = (navigator.language || '').split('-')[1]?.toUpperCase();
-  if (regiao && estado.paises.some(p => p.codigo === regiao)) { selPara.value = regiao; await trocarPais(selPara, chipsPara, false); }
   return estado.paises;
 }
 async function aeroportosDe(pais) {

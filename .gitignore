@@ -6,3 +6,5 @@ dist/
 .DS_Store
 dados/
 !server/dados/
+e2e/resultados/
+playwright-report/

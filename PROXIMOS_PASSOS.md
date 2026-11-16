@@ -11,6 +11,12 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
 
+## 16/11: "Para" começa vazio e testes E2E
+
+- O "Para" da busca por rota vinha com o país do idioma do aparelho (`navigator.language`; `pt-BR` → Brasil, com a grade inteira de aeroportos). A especificação (docs/12, "Fluxo na tela") não pedia isso. Agora "De" e "Para" começam vazios.
+- E2E com Playwright (`npm run test:e2e`, pasta `e2e/`): sobe o servidor com a AeroAPI simulada na porta 3107 e banco `dados/e2e.sqlite`, em desktop (1440×900) e celular (360×740). O Playwright está fixo na 1.61.1, cujo Chromium (1228) já estava baixado nesta máquina; em outra, rodar `npx playwright install chromium`.
+- `e2e/capturas.spec.js` tira as capturas dos PRs: `CAPTURAS=<pasta> npx playwright test capturas --project=desktop`.
+
 ## 15/11: país com bandeira na busca por rota
 
 - O `<select>` nativo de país virou um campo com busca e bandeira (`public/seletor-pais.js`, funções puras em `public/paises.js`). A lista abre logo abaixo do campo, com no máximo 320 px de altura (antes o navegador abria até o topo do monitor). Digitar filtra sem acento ("japao", "jp", "sul"); setas, Enter, Esc e Tab funcionam.
