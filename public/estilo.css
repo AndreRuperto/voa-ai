@@ -518,3 +518,11 @@ dialog.folha::backdrop { background: rgba(5, 9, 15, .6); }
 .resultado__escala { display: inline-flex; align-items: center; gap: 3px; color: var(--c-ceu); font-weight: 600; white-space: nowrap; }
 .resultado__escala svg { width: 14px; height: 14px; fill: currentColor; }
 .cartao-voo--trecho { list-style: none; }
+
+/* Mapa (admin): filtros por fase como links; o atual fica marcado */
+.filtros-mapa { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+.filtros-mapa a { font-weight: 700; text-decoration: none; color: var(--c-tinta); min-height: 40px; display: inline-flex; align-items: center;
+  padding: 0 var(--e-3); border-radius: var(--r-campo); border: 2px solid var(--c-linha-forte); }
+.filtros-mapa a[aria-current="page"] { background: var(--c-tinta); color: var(--c-placa-tinta); border-color: var(--c-tinta); }
+.filtros-mapa a:focus-visible { outline: 3px solid var(--c-foco); outline-offset: 2px; }
+
