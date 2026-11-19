@@ -2,6 +2,8 @@
    Quem não está em ADMIN_EMAILS recebe 404 do servidor; aqui isso vira a porta de entrada. */
 import { get, post, put, del, mensagemDe } from '/api.js';
 import { hora, diaISO, esc, usd as brl, plural } from '/formato.js';
+import { SeletorPais } from '/seletor-pais.js';
+import { VERSAO_LUGARES } from '/paises.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -299,6 +301,7 @@ function pintarFases() {
   });
 }
 async function pintarVoos() {
+  carregarLugaresPartidas();
   const corpo = $('#tabela-voos');
   if (!voos.length) corpo.innerHTML = linhaCarregando(COLS_VOOS);
   try { const r = await get('/api/admin/voos'); voos = r?.voos || []; contagemVoos = r?.contagem || {}; }
@@ -316,12 +319,50 @@ async function pintarVoos() {
   }).join('') : linhaVazia(COLS_VOOS, faseVoo ? `Nenhum voo ${ROTULO_FASE[faseVoo].toLowerCase()} agora.` : 'Nenhum voo nas últimas 24 h nem nas próximas. Busque um voo no app ou atualize as partidas de um aeroporto.');
 }
 $$('#fases-voo [data-fase]').forEach(b => b.addEventListener('click', () => { faseVoo = b.dataset.fase; pintarVoos(); }));
+/* Partidas: país e aeroporto com os componentes da busca por rota. Aeroportos já vêm por movimento (o principal primeiro). */
+const selPaisPartidas = new SeletorPais($('#partidas-pais')), selAeroPartidas = new SeletorPais($('#partidas-aero'));
+const LEMBRAR_PARTIDAS = 'voa-ai:admin:partidas';
+const lembrado = () => { try { return JSON.parse(localStorage.getItem(LEMBRAR_PARTIDAS) || 'null'); } catch { return null; } };
+const lembrar = (v) => { try { localStorage.setItem(LEMBRAR_PARTIDAS, JSON.stringify(v)); } catch { /* sem armazenamento: tudo bem */ } };
+const aeroportosCache = new Map();
+let lugaresCarregados = null;
+/** Aeroporto no formato do seletor: código + "GRU · Guarulhos, São Paulo" (digitar acha por código, nome ou cidade). */
+const opcaoAeroporto = (a) => {
+  const nome = a.nome || '', cidade = a.cidade && a.cidade !== a.nome ? `, ${a.cidade}` : '';
+  return { codigo: a.iata, nome: `${a.iata} · ${nome}${cidade}` };
+};
+async function trocarPaisPartidas(preferido) {
+  const pais = selPaisPartidas.value;
+  if (!pais) { selAeroPartidas.indisponivel('Escolha o país primeiro'); return; }
+  selAeroPartidas.indisponivel('Carregando aeroportos…');
+  try {
+    if (!aeroportosCache.has(pais)) aeroportosCache.set(pais, (await get(`/api/lugares/aeroportos?pais=${encodeURIComponent(pais)}&v=${VERSAO_LUGARES}`))?.aeroportos || []);
+    const lista = aeroportosCache.get(pais).map(opcaoAeroporto);
+    if (!lista.length) { selAeroPartidas.indisponivel('Nenhum aeroporto com voos regulares'); return; }
+    selAeroPartidas.definirPaises(lista);
+    selAeroPartidas.value = lista.some(a => a.codigo === preferido) ? preferido : lista[0].codigo;
+  } catch (e) { aeroportosCache.delete(pais); selAeroPartidas.indisponivel('Não deu para carregar os aeroportos'); }
+}
+function carregarLugaresPartidas() {
+  lugaresCarregados ??= (async () => {
+    try {
+      const paises = ((await get(`/api/lugares/paises?v=${VERSAO_LUGARES}`))?.paises || [])
+        .filter(p => p.aeroportos > 0).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+      selPaisPartidas.definirPaises(paises);
+      const antes = lembrado();
+      selPaisPartidas.value = paises.some(p => p.codigo === antes?.pais) ? antes.pais : 'BR';
+      await trocarPaisPartidas(antes?.aeroporto || 'GRU');
+    } catch (e) { lugaresCarregados = null; selPaisPartidas.indisponivel('Não deu para carregar os países'); }
+  })();
+  return lugaresCarregados;
+}
+selPaisPartidas.addEventListener('change', () => trocarPaisPartidas());
 $('#form-partidas').addEventListener('submit', async e => {
   e.preventDefault();
-  const campo = $('#partidas-aero'), botao = $('#partidas-botao'), saida = $('#partidas-resultado');
-  const codigo = campo.value.trim().toUpperCase();
-  if (!/^[A-Z0-9]{3,4}$/.test(codigo)) { campo.setAttribute('aria-invalid', 'true'); saida.textContent = 'Use o código de 3 letras do aeroporto, como GRU.'; campo.focus(); return; }
-  campo.removeAttribute('aria-invalid');
+  const botao = $('#partidas-botao'), saida = $('#partidas-resultado');
+  const codigo = selAeroPartidas.value;
+  if (!codigo) { saida.textContent = 'Escolha o país e o aeroporto.'; $('#partidas-aero-campo').focus(); return; }
+  lembrar({ pais: selPaisPartidas.value, aeroporto: codigo });
   ocupado(botao, true); saida.textContent = `Buscando as partidas de ${codigo}…`;
   try {
     const r = await post('/api/admin/partidas', { aeroporto: codigo });

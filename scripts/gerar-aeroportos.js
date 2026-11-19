@@ -15,7 +15,7 @@
 // Nomes: server/dados/nomes-pt.json (curado à mão) troca cidade e nome por versões curtas em português;
 // os demais ganham um nome curto tirando "International Airport" e afins do nome oficial.
 //
-// Depois de regerar: suba VERSAO_LUGARES em public/app.js (o navegador guarda países e aeroportos por 1 dia).
+// Depois de regerar: suba VERSAO_LUGARES em public/paises.js (o navegador guarda países e aeroportos por 1 dia).
 
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
