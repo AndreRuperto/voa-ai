@@ -294,6 +294,8 @@ function quemAcompanha(x) {
   return `<span class="quem-voo"><span>${partes.join(' · ')}</span>${nomes ? `<span class="pequeno">${nomes}</span>` : ''}</span>`;
 }
 function pintarFases() {
+  $('#ver-no-mapa').href = faseVoo ? `/#mapa/${faseVoo}` : '/#mapa';
+  $('#ver-no-mapa').textContent = faseVoo ? `Ver no mapa · ${ROTULO_FASE[faseVoo]}` : 'Ver todos no mapa';
   $$('#fases-voo [data-fase]').forEach(b => {
     const f = b.dataset.fase, n = f ? contagemVoos[f] || 0 : voos.length;
     b.textContent = `${f ? ROTULO_FASE[f] : 'Todos'} (${n})`;
@@ -310,7 +312,8 @@ async function pintarVoos() {
   const lista = voos.map((x, i) => [x, i]).filter(([x]) => !faseVoo || x.fase === faseVoo);
   corpo.innerHTML = lista.length ? lista.map(([x, i]) => {
     const v = x.voo || {}, cod = esc(v.ident_iata || v.ident || '');
-    return `<tr><td>${placaEstado(v)}</td><td>${esc(v.origem?.iata || '?')} a ${esc(v.destino?.iata || '?')}</td>
+    const noMapa = `/#status/${encodeURIComponent(v.fa_flight_id)}`;
+    return `<tr><td><a class="link-voo" href="${noMapa}" target="_blank" rel="noopener" aria-label="Ver o voo ${cod} no mapa (abre o app numa aba nova)">${placaEstado(v)}</a></td><td>${esc(v.origem?.iata || '?')} a ${esc(v.destino?.iata || '?')}</td>
       <td>${partidaDe(v)}</td><td>${quemAcompanha(x)}</td>
       <td class="n">${x.consultas ?? 0}</td><td class="n">${brl(x.custo_usd)}</td>
       <td style="text-align:right">${x.inscritos || x.alert_id

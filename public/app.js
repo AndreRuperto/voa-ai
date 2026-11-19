@@ -1,5 +1,5 @@
 /* Voa Aí · app (PWA). Telas por hash, como no protótipo v2, mas com dados da API (docs/13-api.md).
-   #inicio · #confirmacao/<ident>/<data> · #status/<fa_flight_id> · #meus-voos · #rota · #entrar
+   #inicio · #confirmacao/<ident>/<data> · #status/<fa_flight_id> · #meus-voos · #rota · #entrar · #mapa[/<fase>] (admin)
    /v/<fa_flight_id> abre o status desse voo e oferece "Me avisar". */
 import { get, post, put, del, mensagemDe } from '/api.js';
 import { agruparViagens, conexao, momentoDaViagem } from '/viagens.js';
@@ -1235,7 +1235,57 @@ function telaRota() { carregarPaises().then(() => cenaRota()); cenaRota(); }
 function telaEntrar() { pintarConta(); cenaLista({ girar: true }); if (!estado.eu?.conta) prepararGoogle(); }
 
 /* ============================================================ ROTEADOR */
-const TELAS = { inicio: telaInicio, confirmacao: telaConfirmacao, status: telaStatus, 'meus-voos': telaMeusVoos, rota: telaRota, entrar: telaEntrar };
+/* ============================================================ MAPA (admin) */
+// Todos os voos que o app conhece, no globo, a partir da lista do admin (/api/admin/voos). Nada aqui chama a AeroAPI.
+const FASES_MAPA = { no_ar: 'no ar', para_decolar: 'para decolar', pousou: 'pousados', cancelado: 'cancelados' };
+const MAX_ROTULOS_MAPA = 25;
+const listaMapa = $('#lista-mapa');
+async function telaMapa(args) {
+  const fase = FASES_MAPA[args[0]] ? args[0] : '';
+  $$('#filtros-mapa a').forEach(a => a.getAttribute('href') === (fase ? `#mapa/${fase}` : '#mapa') ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  const est = $('#mapa-estado'), resumo = $('#mapa-resumo');
+  if (!listaMapa.children.length) est.innerHTML = esqueleto(3);
+  let r;
+  try { r = await get('/api/admin/voos'); }
+  catch (e) {
+    if (rotaAtual().nome !== 'mapa') return;
+    listaMapa.innerHTML = ''; resumo.textContent = '';
+    est.innerHTML = e.status === 404
+      ? vazio({ titulo: 'Só para administradores', texto: 'Este mapa mostra os voos do painel de admin. Entre com uma conta de administrador.', acao: '<a class="botao" href="/admin/">Abrir o admin</a>' })
+      : vazio({ erro: true, titulo: 'Não deu para carregar os voos', texto: esc(mensagemDe(e)) });
+    cenaGlobo({ voos: [] });
+    return;
+  }
+  if (rotaAtual().nome !== 'mapa') return;
+  const itens = (r?.voos || []).filter(x => !fase || x.fase === fase);
+  for (const x of itens) estado.voos.set(x.voo.fa_flight_id, x.voo);
+  const noGlobo = itens.map(x => x.voo).filter(temCoordenadas);
+  const fora = itens.length - noGlobo.length;
+  resumo.textContent = `${plural(itens.length, 'voo', 'voos')}${fase ? ` ${FASES_MAPA[fase]}` : ''}, das últimas 24 h às próximas 24 h`
+    + (fora ? ` · ${plural(fora, 'sem coordenadas, fora do globo', 'sem coordenadas, fora do globo')}` : '') + '.';
+  est.innerHTML = itens.length ? '' : vazio({ titulo: fase ? `Nenhum voo ${FASES_MAPA[fase]} agora` : 'Nenhum voo agora',
+    texto: 'Busque um voo no app ou atualize as partidas de um aeroporto no admin.', acao: '<a class="botao botao--secundario" href="/admin/#voos">Abrir o admin</a>' });
+  listaMapa.innerHTML = itens.map(x => {
+    const v = x.voo, id = v.fa_flight_id, q = x.quem || {}, n = (q.contas || 0) + (q.aparelhos || 0);
+    return `<li class="item-voo" data-voo="${esc(id)}">
+      <a class="item-voo__link" href="#status/${encodeURIComponent(id)}">
+        <span class="item-voo__nome">${esc(codigo(v))}${n ? ` · ${esc(plural(n, 'acompanha', 'acompanham'))}` : ''}</span>
+        ${placaMiniVoo(v)}
+        <span class="item-voo__trecho">${esc(nomeCurto(v.origem))} a ${esc(nomeCurto(v.destino))}, ${esc(diaRelativo(saidaDe(v), fusoDe(v)))}</span>
+      </a></li>`;
+  }).join('');
+  // rótulo só nos aviões no ar (os que esperam para decolar ficam todos em cima do aeroporto)
+  const rotulos = noGlobo.filter(v => v.horarios?.decolagem_real && !v.horarios?.pouso_real).slice(0, MAX_ROTULOS_MAPA)
+    .map(v => { const info = infoEstado(v); return { id: v.fa_flight_id, onde: 'aviao', html: placaMini(codigo(v), info.curto, info.curtoTipo || 'direcao') }; });
+  cenaGlobo({ voos: noGlobo.map(v => paraGlobo(v)), rotulos });
+}
+listaMapa.addEventListener('mouseover', e => {
+  const li = e.target.closest('.item-voo'); if (!li || li.hasAttribute('data-destaque')) return;
+  listaMapa.querySelectorAll('.item-voo').forEach(x => x.toggleAttribute('data-destaque', x === li));
+  globo?.focar(globo.tem(li.dataset.voo) ? li.dataset.voo : null);
+});
+
+const TELAS = { inicio: telaInicio, confirmacao: telaConfirmacao, status: telaStatus, 'meus-voos': telaMeusVoos, rota: telaRota, entrar: telaEntrar, mapa: telaMapa };
 function rotaAtual() {
   const [nome, ...args] = location.hash.replace(/^#/, '').split('/');
   return { nome: TELAS[nome] ? nome : 'inicio', args: args.map(a => { try { return decodeURIComponent(a); } catch { return a; } }) };

@@ -13,6 +13,8 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 
 ## 19/11: admin · voos que o app conhece e partidas de um aeroporto
 
+- Cada voo da lista do admin abre a tela dele no app (aba nova). "Ver todos no mapa" abre `/#mapa[/<fase>]`: todos os voos da lista no globo, com lista e filtro por fase, só para admin e sem chamar a AeroAPI (abrir a tela de um voo pode atualizar os dados dele: US$ 0,005 se tiverem mais de 15 min e o voo não terminou).
+
 - **Voos** no admin agora lista tudo o que o app conhece nas últimas/próximas 24 h, por fase (no ar, para decolar, pousados, cancelados), com quem acompanha, consultas e custo. Ver a lista é de graça.
 - Botão **Atualizar partidas**, com país e aeroporto escolhidos em listas com busca (padrão Brasil · GRU, lembra a última escolha), quantos voos (15 a 60) e horas para trás (0 a 12 h, via `/flights/departures`, que o Personal libera: testado com 15 saídas de GRU): uma consulta paga a `/airports/{icao}/flights/scheduled_departures`, até 15 voos das próximas 6 h; cache de 10 min por aeroporto. Testado na AeroAPI real (Personal): 15 partidas de GRU. Preço exato não confirmado (US$ 0,005 a 0,02); o painel registra 0,02.
 - [ ] Conferir no portal da FlightAware ([uso](https://pt.flightaware.com/aeroapi/portal/usage)) quanto a consulta de partidas custou de verdade e ajustar `PRECOS.aeroporto`

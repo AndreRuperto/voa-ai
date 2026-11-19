@@ -244,3 +244,8 @@ dialog .acoes { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: 
 #fases-voo { flex-wrap: wrap; }
 .quem-voo { display: flex; flex-direction: column; gap: 2px; }
 
+/* Voos: a placa leva ao voo no mapa do app (aba nova) */
+.link-voo { display: inline-flex; border-radius: var(--r-placa); text-decoration: none; }
+.link-voo:hover .placa { filter: brightness(1.12); }
+.link-voo:focus-visible { outline: 3px solid var(--c-pista); outline-offset: 2px; }
+

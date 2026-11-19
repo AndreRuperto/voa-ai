@@ -259,6 +259,21 @@
   <a class="botao botao--secundario" href="#inicio" id="outro-voo"><svg aria-hidden="true"><use href="#i-mais"/></svg>Acompanhar outro voo</a>
 </section>
 
+<!-- ======================= MAPA (admin) ======================= -->
+<!-- Todos os voos da lista do admin no globo, sem chamar a AeroAPI. Aberto por /admin/#voos → "Ver todos no mapa". -->
+<section class="tela" data-tela="mapa" aria-labelledby="t-mapa">
+  <a class="voltar" href="/admin/#voos"><svg aria-hidden="true"><use href="#i-voltar"/></svg>Admin · Voos</a>
+  <div style="display:flex;flex-direction:column;gap:var(--e-2)">
+    <h1 id="t-mapa">Voos no mapa</h1>
+    <p class="limite num" id="mapa-resumo"></p>
+  </div>
+  <nav class="filtros-mapa" aria-label="Fase do voo" id="filtros-mapa">
+    <a href="#mapa">Todos</a><a href="#mapa/no_ar">No ar</a><a href="#mapa/para_decolar">Para decolar</a><a href="#mapa/pousou">Pousados</a><a href="#mapa/cancelado">Cancelados</a>
+  </nav>
+  <div id="mapa-estado" aria-live="polite"></div>
+  <ul class="lista-voos" id="lista-mapa"></ul>
+</section>
+
 </main>
 
 <dialog class="folha" id="folha" aria-labelledby="folha-titulo">
