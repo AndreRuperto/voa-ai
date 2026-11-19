@@ -192,12 +192,20 @@ export function criarAeroapi({
       return (json?.flights || []).filter((f) => f.segments?.length === 2).map((f) => f.segments);
     },
 
-    /** Próximas partidas de um aeroporto (só companhias aéreas), uma página de até 15 voos. */
-    async partidas(icao, { start, end, quem } = {}) {
+    /** Próximas partidas de um aeroporto (só companhias aéreas). Cada página traz até 15 voos e é cobrada. */
+    async partidas(icao, { start, end, paginas = 1, quem } = {}) {
       const { json } = await chamar('GET', `/airports/${encodeURIComponent(icao)}/flights/scheduled_departures`, {
-        endpoint: '/airports/{id}/flights/scheduled_departures', tipo: 'aeroporto', query: { type: 'Airline', start, end, max_pages: 1 }, quem, ref: icao, aceitar404: true,
+        endpoint: '/airports/{id}/flights/scheduled_departures', tipo: 'aeroporto', query: { type: 'Airline', start, end, max_pages: paginas }, quem, ref: icao, aceitar404: true,
       });
       return json?.scheduled_departures || [];
+    },
+
+    /** Voos que já saíram de um aeroporto (só companhias aéreas). Cada página traz até 15 voos e é cobrada. */
+    async saidas(icao, { start, end, paginas = 1, quem } = {}) {
+      const { json } = await chamar('GET', `/airports/${encodeURIComponent(icao)}/flights/departures`, {
+        endpoint: '/airports/{id}/flights/departures', tipo: 'aeroporto', query: { type: 'Airline', start, end, max_pages: paginas }, quem, ref: icao, aceitar404: true,
+      });
+      return json?.departures || [];
     },
 
     /** Cria um alerta e devolve o id (vem no cabeçalho Location: /alerts/{id}). */

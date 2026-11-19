@@ -129,9 +129,17 @@
               <span class="pais__seta" aria-hidden="true"></span>
               <ul class="pais__lista" id="partidas-aero-lista" role="listbox" aria-label="Aeroporto" hidden></ul>
             </div></div>
+          <div class="campo"><label for="partidas-voos">Quantos voos</label>
+            <select id="partidas-voos" aria-describedby="partidas-dica">
+              <option value="15" selected>Até 15</option><option value="30">Até 30</option><option value="45">Até 45</option><option value="60">Até 60</option>
+            </select></div>
+          <div class="campo"><label for="partidas-atras">Horas para trás</label>
+            <select id="partidas-atras" aria-describedby="partidas-dica">
+              <option value="0" selected>Nenhuma</option><option value="1">1 h</option><option value="3">3 h</option><option value="6">6 h</option><option value="12">12 h</option>
+            </select></div>
           <button class="botao" type="submit" id="partidas-botao">Atualizar partidas</button>
         </form>
-        <p class="pequeno" id="partidas-dica">Busca as próximas partidas (até 15 voos, das próximas 6 h) e junta à lista. Uma consulta paga, de US$ 0,005 a 0,02. O mesmo aeroporto em menos de 10 min não cobra de novo.</p>
+        <p class="pequeno" id="partidas-dica" aria-live="polite"></p>
         <p class="pequeno" id="partidas-resultado" role="status" aria-live="polite"></p>
       </section>
       <section class="cartao">
