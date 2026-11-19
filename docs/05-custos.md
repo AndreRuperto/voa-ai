@@ -29,7 +29,7 @@ Como o alerta é **por voo** e não por pessoa (regra R1), 10 pessoas acompanhan
 
 | Fase | Plano | Custo fixo | Comporta |
 |---|---|---|---|
-| **Desenvolvimento e uso pessoal** (família e amigos) | **Personal** | US$ 0 (US$ 5/mês grátis) | ≈ **50 voos/mês** dentro do grátis |
+| **Desenvolvimento e uso pessoal** (família e amigos) | **Personal** | US$ 0 (US$ 5/mês grátis) | ≈ **50 voos/mês** dentro do grátis (sem alertas: o agendador consulta o voo, [ADR-009](07-decisoes.md#adr-009--plano-personal-o-agendador-consulta-o-voo)) |
 | **Lançamento público** | **Standard** | **US$ 100/mês** (mínimo, que vira crédito) | ≈ 1.000 voos/mês dentro do mínimo |
 | Escala (> 10 mil voos/mês) | Standard/Premium com desconto por volume | conforme uso | desconto progressivo a partir de US$ 1.000/mês |
 

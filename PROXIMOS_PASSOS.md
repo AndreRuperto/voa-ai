@@ -11,6 +11,14 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
 
+## 19/11: chave da AeroAPI ativa, plano sem alertas
+
+- Chave em `AEROAPI_KEY` no `.env` e no Railway (produção responde `"aeroapi": true`). `GET /account/usage` respondeu 200.
+- O plano Personal **não tem alertas nem `/canonical`** (401 "only available on Standard and Premium tiers"). Busca por número, voo por id e busca por rota funcionam.
+- Sem alertas, o agendador consulta o voo por fase e avisa decolou, pousou, portão, cancelado e desviado ([ADR-009](docs/07-decisoes.md#adr-009--plano-personal-o-agendador-consulta-o-voo)). Testado contra a AeroAPI real: `TP103` achado sem `/canonical`, US$ 0,005.
+- [ ] Depois do merge: acompanhar um voo real que decole em breve e conferir os avisos no celular e o custo no admin
+- [ ] Se o app abrir ao público: plano Standard (licença) e, com ele, os alertas voltam sozinhos
+
 ## 16/11: buscar aeroporto digitando
 
 - Depois de escolher o país, "De" e "Para" ganham o campo **"Cidade, aeroporto ou código"** (`public/seletor-aeroporto.js`; funções puras em `public/aeroportos.js`, testadas em `test/aeroportos.test.js`). Digitar filtra os aeroportos do país sem acento ("sao paulo" → GRU e CGH, "ssa" → Salvador); setas, Home/End, Enter e Esc funcionam; tocar num resultado também. Escolher marca o cartão na grade, que continua como atalho, e passa pela mesma regra de no máximo 3 combinações.
@@ -91,14 +99,15 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 
 ## Próximos passos
 
-- [ ] **Chave da AeroAPI.** O plano Personal foi assinado em 14/11/2026, mas o portal da FlightAware dá erro 500 e não mostra "API Keys". Abrir chamado no suporte da FlightAware. Com a chave, colocar em `AEROAPI_KEY` no `.env`.
-- [ ] Com a chave: `npm run buscar-voo -- TP103` e um voo real de ponta a ponta (Marco 1 e critérios de aceite da [02](docs/02-v1-alertas.md#critérios-de-aceite-da-v1))
+- [x] **Chave da AeroAPI.** Ativa desde 19/11/2026, no `.env` e no Railway.
+- [x] `npm run buscar-voo -- TP103` com a chave real (19/11)
+- [ ] Um voo real de ponta a ponta (Marco 1 e critérios de aceite da [02](docs/02-v1-alertas.md#critérios-de-aceite-da-v1))
 - [x] Login Google e painel `/admin/` testados em produção
 - [ ] Depois do merge: em https://voaai.up.railway.app/admin/#limites, tocar em "Receber neste aparelho" no celular e em "Enviar aviso de teste"
 - [ ] E-mail nos avisos de gasto (precisa de um serviço de envio, ex.: Resend, e da chave dele)
 - [x] Deploy no Railway em 14/11/2026: projeto `voa-ai`, serviço `voa-ai`, volume em `/data`, variáveis do `.env`, domínio **https://voaai.up.railway.app** (porta 8080)
 - [x] Repositório GitHub ligado ao Railway: cada merge na `main` publica sozinho
-- [ ] Colocar a `AEROAPI_KEY` também no Railway: `railway variable set --service voa-ai AEROAPI_KEY=...`
+- [x] `AEROAPI_KEY` no Railway (19/11)
 - [ ] Migrar `railway.json` para `.railway/railway.ts` antes de 01/12/2026 (`railway config migrate`)
 - [x] Alertas do admin a 50% e 80% do crédito (push) e limite por IP
 - [ ] Incluir em "Público-alvo → Usuários de teste" quem mais for testar o login
@@ -129,4 +138,4 @@ npm test
 - Protótipo antigo: `python -m http.server 8741 --directory prototipo` (configuração `prototipo`).
 - Buscar um voo pelo terminal: `node --env-file=.env scripts/buscar-voo.js TP103`.
 - Regerar os aeroportos: `node scripts/gerar-aeroportos.js`.
-- O `.env` (fora do git) já tem `GOOGLE_CLIENT_ID`, `ADMIN_EMAILS`, `SESSAO_SEGREDO`, VAPID e `WEBHOOK_SEGREDO`. Falta só `AEROAPI_KEY`.
+- O `.env` (fora do git) já tem `GOOGLE_CLIENT_ID`, `ADMIN_EMAILS`, `SESSAO_SEGREDO`, VAPID e `WEBHOOK_SEGREDO`. `AEROAPI_KEY` também, desde 19/11.

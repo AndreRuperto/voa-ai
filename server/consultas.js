@@ -71,13 +71,22 @@ function guardarVoos(ctx, voos, data) {
     .sort((a, b) => String(a.dados.scheduled_out || a.dados.scheduled_off).localeCompare(String(b.dados.scheduled_out || b.dados.scheduled_off)));
 }
 
-/** IATA → ICAO pelo /canonical, com cache longo. */
+/**
+ * IATA → ICAO pelo /canonical, com cache longo. No plano sem /canonical (Personal), usa o número como veio:
+ * o /flights/{ident} aceita o código IATA ("TP103" acha o TAP103).
+ */
 async function identIcao(ctx, ident, quem) {
   if (pareceIcao(ident)) return ident;
   const chave = `canonical:${ident}`;
   const c = lerCache(ctx.db, chave, ctx.agora());
   if (c) return c;
-  const idents = await ctx.aeroapi.canonical(ident, { quem });
+  let idents;
+  try {
+    idents = await ctx.aeroapi.canonical(ident, { quem });
+  } catch (e) {
+    if (e?.codigo !== 'aeroapi_plano') throw e;
+    idents = [];
+  }
   const r = idents[0] || ident;
   gravarCache(ctx.db, chave, r, CACHE_CANONICAL_MS, ctx.agora());
   return r;

@@ -61,18 +61,26 @@ function alertasCriadosHoje(db, agora) {
 
 /**
  * Garante que o voo tem um alerta na AeroAPI (R1: um por voo, compartilhado).
- * @returns {Promise<number>} alert_id
+ * No plano sem alertas (Personal) não cria nada e devolve null: o agendador consulta o voo (ADR-009).
+ * @returns {Promise<number|null>} alert_id
  */
 export async function garantirAlerta(ctx, faFlightId, { quem } = {}) {
   return comTrava(faFlightId, async () => {
     const v = lerVoo(ctx.db, faFlightId);
     if (!v) throw new ErroRegra(404, 'nao_encontrado', 'Voo não encontrado.');
     if (v.alert_id) return v.alert_id;
+    if (ctx.aeroapi.temAlertas?.() === false) return null;
     const cfg = lerConfig(ctx.db);
     if (alertasCriadosHoje(ctx.db, ctx.agora()) >= cfg.teto_alertas_dia) {
       throw new ErroRegra(429, 'limite', 'Hoje já chegamos ao número máximo de voos acompanhados. Tente de novo amanhã.');
     }
-    const id = await ctx.aeroapi.criarAlerta(corpoDoAlerta(v.dados, { modoEconomico: cfg.modo_economico }), { fa_flight_id: faFlightId, quem });
+    let id;
+    try {
+      id = await ctx.aeroapi.criarAlerta(corpoDoAlerta(v.dados, { modoEconomico: cfg.modo_economico }), { fa_flight_id: faFlightId, quem });
+    } catch (e) {
+      if (e?.codigo === 'aeroapi_plano') return null;   // descobriu agora que o plano não tem alertas
+      throw e;
+    }
     ctx.db.prepare('UPDATE VOO SET alert_id = ? WHERE fa_flight_id = ?').run(id, faFlightId);
     return id;
   });
