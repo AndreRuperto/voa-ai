@@ -4,6 +4,7 @@
 import { get, post, put, del, mensagemDe } from '/api.js';
 import { agruparViagens, conexao, momentoDaViagem } from '/viagens.js';
 import { SeletorPais } from '/seletor-pais.js';
+import { VERSAO_LUGARES } from '/paises.js';
 import { BuscaAeroporto } from '/seletor-aeroporto.js';
 import { hora, diaISO, diasDeBusca, diaRelativo, nomeDoDia, duracao, minutosEntre, esc, plural } from '/formato.js';
 
@@ -1053,9 +1054,6 @@ async function telaMeusVoos() {
 
 /* ============================================================ BUSCA POR ROTA */
 const selDe = new SeletorPais($('#pais-de')), selPara = new SeletorPais($('#pais-para')), chipsDe = $('#aero-de'), chipsPara = $('#aero-para'), erroRota = $('#rota-erro');
-// Países e aeroportos ficam 1 dia no cache do navegador. Ao regerar server/dados/aeroportos.json, suba este número
-// para ninguém ficar com a lista velha (v2: aeroportos ordenados por movimento).
-const VERSAO_LUGARES = 2;
 let paisesPromessa = null;
 function carregarPaises() { paisesPromessa ??= carregarPaises_().then(r => { if (!r) paisesPromessa = null; return r; }); return paisesPromessa; }
 async function carregarPaises_() {

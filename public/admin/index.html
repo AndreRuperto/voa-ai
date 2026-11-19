@@ -113,8 +113,22 @@
       <section class="cartao partidas" aria-labelledby="t-partidas">
         <h2 id="t-partidas" class="partidas__titulo">Partidas de um aeroporto</h2>
         <form id="form-partidas" class="partidas__form" novalidate>
-          <div class="campo"><label for="partidas-aero">Aeroporto</label>
-            <input id="partidas-aero" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="GRU" aria-describedby="partidas-dica"></div>
+          <div class="campo"><label for="partidas-pais-campo">País</label>
+            <div class="pais" id="partidas-pais">
+              <span class="pais__bandeira bandeira" aria-hidden="true"></span>
+              <input class="pais__campo" id="partidas-pais-campo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                aria-controls="partidas-pais-lista" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Carregando países…" disabled>
+              <span class="pais__seta" aria-hidden="true"></span>
+              <ul class="pais__lista" id="partidas-pais-lista" role="listbox" aria-label="País" hidden></ul>
+            </div></div>
+          <div class="campo"><label for="partidas-aero-campo">Aeroporto</label>
+            <div class="pais" id="partidas-aero" data-placeholder="Escolha ou digite cidade ou código">
+              <span class="pais__bandeira bandeira" aria-hidden="true"></span>
+              <input class="pais__campo" id="partidas-aero-campo" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                aria-controls="partidas-aero-lista" aria-describedby="partidas-dica" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Escolha o país primeiro" disabled>
+              <span class="pais__seta" aria-hidden="true"></span>
+              <ul class="pais__lista" id="partidas-aero-lista" role="listbox" aria-label="Aeroporto" hidden></ul>
+            </div></div>
           <button class="botao" type="submit" id="partidas-botao">Atualizar partidas</button>
         </form>
         <p class="pequeno" id="partidas-dica">Busca as próximas partidas (até 15 voos, das próximas 6 h) e junta à lista. Uma consulta paga, de US$ 0,005 a 0,02. O mesmo aeroporto em menos de 10 min não cobra de novo.</p>

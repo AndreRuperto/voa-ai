@@ -46,7 +46,7 @@ export class SeletorPais extends EventTarget {
   definirPaises(paises) {
     this.#paises = paises;
     this.#campo.disabled = false;
-    this.#campo.placeholder = 'Escolha ou digite o país';
+    this.#campo.placeholder = this.#raiz.dataset.placeholder || 'Escolha ou digite o país';
     this.#raiz.classList.remove('pais--erro');
     this.#mostrarAtual();
   }
@@ -63,7 +63,7 @@ export class SeletorPais extends EventTarget {
   #mostrarAtual() {
     this.#campo.value = this.#atual?.nome || '';
     this.#flag.textContent = bandeira(this.#atual?.codigo);
-    this.#raiz.classList.toggle('pais--com-bandeira', !!this.#atual);
+    this.#raiz.classList.toggle('pais--com-bandeira', !!bandeira(this.#atual?.codigo));   // aeroporto (código de 3 letras) não tem bandeira
   }
 
   #abrir(termo) {
@@ -73,7 +73,7 @@ export class SeletorPais extends EventTarget {
     // lista inteira: começa no país escolhido; filtrando: no primeiro que bate
     this.#ativo = filtrando ? (this.#vistos.length ? 0 : -1) : Math.max(0, this.#vistos.indexOf(this.#atual));
     if (!filtrando && !this.#aberta) this.#campo.select();
-    this.#raiz.classList.toggle('pais--com-bandeira', !filtrando && !!this.#atual);
+    this.#raiz.classList.toggle('pais--com-bandeira', !filtrando && !!bandeira(this.#atual?.codigo));
     this.#flag.textContent = filtrando ? '' : bandeira(this.#atual?.codigo);
     this.#lista.innerHTML = this.#vistos.length
       ? this.#vistos.map((p, i) => `<li role="option" id="${this.#lista.id}-${esc(p.codigo)}" data-codigo="${esc(p.codigo)}" aria-selected="${i === this.#ativo}"${p === this.#atual ? ' class="escolhido"' : ''}><span class="bandeira" aria-hidden="true">${bandeira(p.codigo)}</span><span>${esc(p.nome)}</span></li>`).join('')
