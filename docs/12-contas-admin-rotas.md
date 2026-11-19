@@ -98,7 +98,7 @@ Uma busca típica (1 par, 1 página) custa **US$ 0,05**, metade de um voo inteir
 | Seção | Mostra | Ações |
 |---|---|---|
 | **Visão geral** | Gasto do mês na AeroAPI contra o crédito (US$ 5 no Personal, US$ 100 no Standard), projeção para o fim do mês, gasto por dia, gasto por tipo de chamada, voos ativos, alertas entregues, contas e buscas por rota | — |
-| **Voos** | Voos ativos e recentes: número, rota, estado, inscritos, alertas entregues, custo acumulado | Apagar o alerta de um voo (para os avisos de todos os inscritos) |
+| **Voos** | Todos os voos que o app conhece (buscados, acompanhados ou trazidos pelas partidas), das últimas 24 h às próximas 24 h, filtrados por fase (no ar, para decolar, pousados, cancelados): número, estado, rota, partida no fuso da origem, quem acompanha (contas, aparelhos sem conta, apelidos), consultas e custo acumulado. Ver a lista não chama a AeroAPI | Parar os avisos de um voo (para todos os inscritos); **atualizar as partidas de um aeroporto** (uma consulta paga, até 15 voos das próximas 6 h; o mesmo aeroporto em menos de 10 min sai do cache, de graça) |
 | **Contas** | Contas Google: e-mail, voos ativos, buscas no mês, último acesso | Bloquear, apagar |
 | **Rotas** | Pares de aeroportos mais buscados, acertos de cache, custo | — |
 | **Limites** | Os números da tabela de limites, teto diário de alertas criados, teto mensal de gasto | Editar; **pausar buscas por rota**; **modo econômico** (desliga o evento `in`) |

@@ -1,7 +1,10 @@
 // Painel de admin: /api/admin/* (404 para quem não está em ADMIN_EMAILS). Ver docs/12 e docs/13.
 import { enviarJson, lerJson } from '../http.js';
 import { lerConfig, gravarConfig } from '../limites.js';
-import { lerVoo, vooDaLinha, vooAtivo } from '../voos.js';
+import { lerVoo, salvarVoo, vooDaLinha, vooAtivo } from '../voos.js';
+import { lerCache, gravarCache } from '../db.js';
+import { aeroporto } from '../lugares.js';
+import { ErroAeroapi, MENSAGEM_SEM_CHAVE } from '../aeroapi.js';
 import { apagarAlertaDoVoo, ErroRegra } from '../alertas.js';
 import { voosAtivos } from '../inscricoes.js';
 import { apagarConta, auditar } from '../contas.js';
@@ -9,6 +12,19 @@ import { avisosDoMes, avisarAdmins, aparelhosDosAdmins } from '../avisosgasto.js
 import { creditoMensal } from '../limites.js';
 
 const r6 = (n) => Math.round(n * 1e6) / 1e6;
+const HORA = 3_600_000;
+
+/** Fase do voo agora, para agrupar a lista do admin. */
+export function faseDoVoo(d) {
+  if (d.cancelled) return 'cancelado';
+  if (d.actual_on || d.actual_in) return 'pousou';
+  if (d.actual_off) return 'no_ar';
+  return 'para_decolar';
+}
+const ORDEM_FASE = { no_ar: 0, para_decolar: 1, pousou: 2, cancelado: 3 };
+
+/** Intervalo mínimo entre duas consultas pagas das partidas do mesmo aeroporto (evita clique duplo). */
+export const PARTIDAS_CACHE_MS = 10 * 60_000;
 
 /** Resumo do mês (AAAA-MM). */
 export function resumoDoMes(ctx, mes) {
@@ -63,29 +79,74 @@ export function registrarAdmin(r) {
     enviarJson(res, 200, { enviados });
   });
 
-  r.rota('GET', '/api/admin/voos', ({ ctx, res }) => {
+  // Voos que o app já conhece (buscados, acompanhados ou trazidos pelas partidas), sem chamar a AeroAPI.
+  // Sem ?todos=1, só os de agora: partida nas últimas 24 h ou nas próximas 24 h, ou com alguém acompanhando.
+  r.rota('GET', '/api/admin/voos', ({ ctx, res, url }) => {
     const db = ctx.db;
     const agora = ctx.agora();
+    const todos = url.searchParams.get('todos') === '1';
+    const de = new Date(agora.getTime() - 24 * HORA).toISOString(), ate = new Date(agora.getTime() + 24 * HORA).toISOString();
     const linhas = db.prepare(`
       SELECT v.fa_flight_id, v.alert_id,
         (SELECT COUNT(*) FROM INSCRICAO i WHERE i.fa_flight_id = v.fa_flight_id) inscritos,
+        (SELECT COUNT(DISTINCT i.usuario_id) FROM INSCRICAO i WHERE i.fa_flight_id = v.fa_flight_id AND i.usuario_id IS NOT NULL) contas,
+        (SELECT COUNT(*) FROM INSCRICAO i WHERE i.fa_flight_id = v.fa_flight_id AND i.usuario_id IS NULL) aparelhos,
+        (SELECT GROUP_CONCAT(DISTINCT i.apelido) FROM INSCRICAO i WHERE i.fa_flight_id = v.fa_flight_id AND i.apelido IS NOT NULL AND i.apelido <> '') apelidos,
         (SELECT COUNT(*) FROM CHAMADA_API c WHERE c.fa_flight_id = v.fa_flight_id AND c.tipo = 'alerta_entregue') entregues,
+        (SELECT COUNT(*) FROM CHAMADA_API c WHERE c.fa_flight_id = v.fa_flight_id AND c.tipo <> 'alerta_entregue') consultas,
         (SELECT COALESCE(SUM(custo), 0) FROM CHAMADA_API c WHERE c.fa_flight_id = v.fa_flight_id) custo
       FROM VOO v
-      WHERE v.alert_id IS NOT NULL
+      WHERE ? OR v.alert_id IS NOT NULL
          OR EXISTS (SELECT 1 FROM INSCRICAO i WHERE i.fa_flight_id = v.fa_flight_id)
-         OR EXISTS (SELECT 1 FROM EVENTO e WHERE e.fa_flight_id = v.fa_flight_id)
-      ORDER BY v.scheduled_out DESC
-      LIMIT 500`).all();
-    enviarJson(res, 200, {
-      voos: linhas.map((l) => ({
-        voo: vooDaLinha(lerVoo(db, l.fa_flight_id), agora),
+         OR COALESCE(v.scheduled_out, v.scheduled_in) BETWEEN ? AND ?
+      LIMIT 1000`).all(todos ? 1 : 0, de, ate);
+    const voos = linhas.map((l) => {
+      const linha = lerVoo(db, l.fa_flight_id);
+      return {
+        voo: vooDaLinha(linha, agora),
+        fase: faseDoVoo(linha.dados),
         inscritos: l.inscritos,
+        quem: { apelidos: l.apelidos ? String(l.apelidos).split(',') : [], contas: l.contas, aparelhos: l.aparelhos },
+        consultas: l.consultas,
         alertas_entregues: l.entregues,
         custo_usd: r6(l.custo),
         alert_id: l.alert_id,
-      })),
+        _saida: linha.dados.estimated_off || linha.dados.scheduled_off || linha.dados.scheduled_out || '',
+      };
     });
+    // No ar e para decolar: o próximo primeiro. Pousados e cancelados: o mais recente primeiro.
+    voos.sort((a, b) => (ORDEM_FASE[a.fase] - ORDEM_FASE[b.fase])
+      || (a.fase === 'pousou' || a.fase === 'cancelado' ? b._saida.localeCompare(a._saida) : a._saida.localeCompare(b._saida)));
+    const contagem = { no_ar: 0, para_decolar: 0, pousou: 0, cancelado: 0 };
+    for (const v of voos) { contagem[v.fase]++; delete v._saida; }
+    enviarJson(res, 200, { voos, contagem });
+  });
+
+  // Partidas de um aeroporto, sob demanda (o admin aperta o botão): uma página paga, até 15 voos, guardados no banco.
+  // Protegida pelo teto duro como qualquer chamada; o mesmo aeroporto em menos de 10 min sai do cache, de graça.
+  r.rota('POST', '/api/admin/partidas', async ({ ctx, req, res, quem }) => {
+    const corpo = await lerJson(req);
+    const codigo = String(corpo?.aeroporto || '').trim().toUpperCase();
+    if (!/^[A-Z0-9]{3,4}$/.test(codigo)) throw new ErroRegra(400, 'invalido', 'Informe o aeroporto com o código de 3 letras (ex.: GRU).');
+    const a = aeroporto(codigo);
+    if (!a?.icao) throw new ErroRegra(400, 'invalido', `Não achamos o aeroporto ${codigo}.`);
+    const agora = ctx.agora();
+    const chave = `partidas:${a.icao}`;
+    const guardado = lerCache(ctx.db, chave, agora);
+    if (guardado) { enviarJson(res, 200, { ...guardado, aeroporto: a.iata, em_cache: true, custo_usd: 0 }); return; }
+    if (!ctx.aeroapi.temChave()) throw new ErroAeroapi('aeroapi_sem_chave', MENSAGEM_SEM_CHAVE);
+    const antes = ctx.db.prepare('SELECT COALESCE(SUM(custo), 0) s FROM CHAMADA_API').get().s;
+    const brutos = await ctx.aeroapi.partidas(a.icao, {
+      start: new Date(agora.getTime() - 30 * 60_000).toISOString().slice(0, 19) + 'Z',
+      end: new Date(agora.getTime() + 6 * HORA).toISOString().slice(0, 19) + 'Z',
+      quem: `admin:${quem.usuario.email}`,
+    });
+    const ids = brutos.filter((f) => f?.fa_flight_id).map((f) => salvarVoo(ctx.db, f, agora).linha.fa_flight_id);
+    const custo = r6(ctx.db.prepare('SELECT COALESCE(SUM(custo), 0) s FROM CHAMADA_API').get().s - antes);
+    const resposta = { aeroporto: a.iata, voos: ids.length, atualizado_em: agora.toISOString() };
+    gravarCache(ctx.db, chave, resposta, PARTIDAS_CACHE_MS, agora);
+    auditar(ctx.db, quem.usuario.email, 'partidas', { aeroporto: a.iata, voos: ids.length, custo_usd: custo }, agora);
+    enviarJson(res, 200, { ...resposta, em_cache: false, custo_usd: custo });
   });
 
   r.rota('POST', '/api/admin/voos/:id/parar', async ({ ctx, res, params, quem }) => {

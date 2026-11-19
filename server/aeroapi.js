@@ -9,6 +9,9 @@ export const PRECOS = {
   canonical: 0.001,
   flights: 0.005,
   rota: 0.05,
+  // Partidas de um aeroporto (/airports/{id}/flights/scheduled_departures): a FlightAware não publica o preço
+  // de forma clara (vimos US$ 0,005 e 0,02 por página). Fica o maior, para o painel não subestimar.
+  aeroporto: 0.02,
   alerts: 0,
   alerta_entregue: 0.02,
 };
@@ -187,6 +190,14 @@ export function criarAeroapi({
         endpoint: '/airports/{id}/flights/to/{dest_id}', tipo: 'rota', query: { connection: 'onestop', type: 'Airline' }, quem, ref, aceitar404: true,
       });
       return (json?.flights || []).filter((f) => f.segments?.length === 2).map((f) => f.segments);
+    },
+
+    /** Próximas partidas de um aeroporto (só companhias aéreas), uma página de até 15 voos. */
+    async partidas(icao, { start, end, quem } = {}) {
+      const { json } = await chamar('GET', `/airports/${encodeURIComponent(icao)}/flights/scheduled_departures`, {
+        endpoint: '/airports/{id}/flights/scheduled_departures', tipo: 'aeroporto', query: { type: 'Airline', start, end, max_pages: 1 }, quem, ref: icao, aceitar404: true,
+      });
+      return json?.scheduled_departures || [];
     },
 
     /** Cria um alerta e devolve o id (vem no cabeçalho Location: /alerts/{id}). */
