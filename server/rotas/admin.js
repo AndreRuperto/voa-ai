@@ -25,6 +25,21 @@ const ORDEM_FASE = { no_ar: 0, para_decolar: 1, pousou: 2, cancelado: 3 };
 
 /** Intervalo mínimo entre duas consultas pagas das partidas do mesmo aeroporto (evita clique duplo). */
 export const PARTIDAS_CACHE_MS = 10 * 60_000;
+/** Opções da tela de partidas: quantos voos (15 por página paga) e quantas horas para trás. */
+export const PARTIDAS_VOOS = [15, 30, 45, 60];
+export const PARTIDAS_HORAS_ATRAS = [0, 1, 3, 6, 12];
+export const PARTIDAS_HORAS_FRENTE = 6;
+
+/**
+ * Páginas de cada consulta. Voos que vão sair e voos que já saíram são consultas diferentes na AeroAPI,
+ * então com horas para trás há pelo menos uma página de cada (15 voos com 3 h para trás = 2 páginas).
+ */
+export function paginasDasPartidas(voos, horasAtras) {
+  const total = voos / 15;
+  if (!horasAtras) return { frente: total, atras: 0 };
+  const atras = Math.max(1, Math.floor(total / 2));
+  return { frente: Math.max(1, total - atras), atras };
+}
 
 /** Resumo do mês (AAAA-MM). */
 export function resumoDoMes(ctx, mes) {
@@ -122,30 +137,40 @@ export function registrarAdmin(r) {
     enviarJson(res, 200, { voos, contagem });
   });
 
-  // Partidas de um aeroporto, sob demanda (o admin aperta o botão): uma página paga, até 15 voos, guardados no banco.
-  // Protegida pelo teto duro como qualquer chamada; o mesmo aeroporto em menos de 10 min sai do cache, de graça.
+  // Partidas de um aeroporto, sob demanda (o admin aperta o botão), guardadas no banco: até `voos` voos
+  // (15 por página paga), das próximas 6 h e, se `horas_atras` > 0, também os que já saíram nessas horas.
+  // Protegida pelo teto duro como qualquer chamada; o mesmo pedido em menos de 10 min sai do cache, de graça.
   r.rota('POST', '/api/admin/partidas', async ({ ctx, req, res, quem }) => {
     const corpo = await lerJson(req);
     const codigo = String(corpo?.aeroporto || '').trim().toUpperCase();
     if (!/^[A-Z0-9]{3,4}$/.test(codigo)) throw new ErroRegra(400, 'invalido', 'Informe o aeroporto com o código de 3 letras (ex.: GRU).');
+    const voos = corpo?.voos == null ? 15 : Number(corpo.voos);
+    const horasAtras = corpo?.horas_atras == null ? 0 : Number(corpo.horas_atras);
+    if (!PARTIDAS_VOOS.includes(voos)) throw new ErroRegra(400, 'invalido', `Quantidade de voos inválida. Use ${PARTIDAS_VOOS.join(', ')}.`);
+    if (!PARTIDAS_HORAS_ATRAS.includes(horasAtras)) throw new ErroRegra(400, 'invalido', `Horas para trás inválidas. Use ${PARTIDAS_HORAS_ATRAS.join(', ')}.`);
     const a = aeroporto(codigo);
     if (!a?.icao) throw new ErroRegra(400, 'invalido', `Não achamos o aeroporto ${codigo}.`);
     const agora = ctx.agora();
-    const chave = `partidas:${a.icao}`;
+    const chave = `partidas:${a.icao}:${voos}:${horasAtras}`;
     const guardado = lerCache(ctx.db, chave, agora);
     if (guardado) { enviarJson(res, 200, { ...guardado, aeroporto: a.iata, em_cache: true, custo_usd: 0 }); return; }
     if (!ctx.aeroapi.temChave()) throw new ErroAeroapi('aeroapi_sem_chave', MENSAGEM_SEM_CHAVE);
+    const iso = (ms) => new Date(ms).toISOString().slice(0, 19) + 'Z';
+    const t = agora.getTime();
+    const pag = paginasDasPartidas(voos, horasAtras);
+    const op = { quem: `admin:${quem.usuario.email}` };
     const antes = ctx.db.prepare('SELECT COALESCE(SUM(custo), 0) s FROM CHAMADA_API').get().s;
-    const brutos = await ctx.aeroapi.partidas(a.icao, {
-      start: new Date(agora.getTime() - 30 * 60_000).toISOString().slice(0, 19) + 'Z',
-      end: new Date(agora.getTime() + 6 * HORA).toISOString().slice(0, 19) + 'Z',
-      quem: `admin:${quem.usuario.email}`,
-    });
-    const ids = brutos.filter((f) => f?.fa_flight_id).map((f) => salvarVoo(ctx.db, f, agora).linha.fa_flight_id);
+    // Sem horas para trás, pega também quem devia ter saído há pouco e ainda não saiu (atraso).
+    const futuros = await ctx.aeroapi.partidas(a.icao, { ...op, paginas: pag.frente,
+      start: iso(horasAtras ? t : t - 30 * 60_000), end: iso(t + PARTIDAS_HORAS_FRENTE * HORA) });
+    const passados = pag.atras ? await ctx.aeroapi.saidas(a.icao, { ...op, paginas: pag.atras, start: iso(t - horasAtras * HORA), end: iso(t) }) : [];
+    const ids = new Set();
+    for (const f of [...passados, ...futuros]) if (f?.fa_flight_id) ids.add(salvarVoo(ctx.db, f, agora).linha.fa_flight_id);
     const custo = r6(ctx.db.prepare('SELECT COALESCE(SUM(custo), 0) s FROM CHAMADA_API').get().s - antes);
-    const resposta = { aeroporto: a.iata, voos: ids.length, atualizado_em: agora.toISOString() };
+    const resposta = { aeroporto: a.iata, voos: ids.size, ja_sairam: passados.length, vao_sair: futuros.length,
+      pedido: { voos, horas_atras: horasAtras }, atualizado_em: agora.toISOString() };
     gravarCache(ctx.db, chave, resposta, PARTIDAS_CACHE_MS, agora);
-    auditar(ctx.db, quem.usuario.email, 'partidas', { aeroporto: a.iata, voos: ids.length, custo_usd: custo }, agora);
+    auditar(ctx.db, quem.usuario.email, 'partidas', { aeroporto: a.iata, voos: ids.size, pedido: { voos, horas_atras: horasAtras }, custo_usd: custo }, agora);
     enviarJson(res, 200, { ...resposta, em_cache: false, custo_usd: custo });
   });
 

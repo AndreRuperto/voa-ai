@@ -351,24 +351,49 @@ function carregarLugaresPartidas() {
       selPaisPartidas.definirPaises(paises);
       const antes = lembrado();
       selPaisPartidas.value = paises.some(p => p.codigo === antes?.pais) ? antes.pais : 'BR';
+      if ([15, 30, 45, 60].includes(antes?.voos)) $('#partidas-voos').value = String(antes.voos);
+      if ([0, 1, 3, 6, 12].includes(antes?.horas_atras)) $('#partidas-atras').value = String(antes.horas_atras);
+      dicaPartidas();
       await trocarPaisPartidas(antes?.aeroporto || 'GRU');
     } catch (e) { lugaresCarregados = null; selPaisPartidas.indisponivel('Não deu para carregar os países'); }
   })();
   return lugaresCarregados;
 }
 selPaisPartidas.addEventListener('change', () => trocarPaisPartidas());
+/** Mesma conta do servidor (paginasDasPartidas): 15 voos por página; com horas para trás, ao menos uma página de cada lado. */
+function paginasPartidas(voos, atras) {
+  const total = voos / 15;
+  if (!atras) return { frente: total, atras: 0 };
+  const a = Math.max(1, Math.floor(total / 2));
+  return { frente: Math.max(1, total - a), atras: a };
+}
+const PRECO_PAGINA = { min: 0.005, max: 0.02 };
+function dicaPartidas() {
+  const voos = Number($('#partidas-voos').value), atras = Number($('#partidas-atras').value);
+  const p = paginasPartidas(voos, atras), n = p.frente + p.atras;
+  const oQue = atras
+    ? `até ${p.frente * 15} voos que vão sair nas próximas 6 h e até ${p.atras * 15} que já saíram nas últimas ${atras} h`
+    : `até ${voos} voos que vão sair nas próximas 6 h`;
+  $('#partidas-dica').textContent = `Busca ${oQue} e junta à lista. ${plural(n, 'página paga', 'páginas pagas')}: de US$ ${brl(n * PRECO_PAGINA.min, 3)} a ${brl(n * PRECO_PAGINA.max, 3)} no máximo. `
+    + 'Se vierem menos voos, vêm menos páginas. O mesmo pedido em menos de 10 min não cobra de novo.';
+}
+$('#partidas-voos').addEventListener('change', dicaPartidas);
+$('#partidas-atras').addEventListener('change', dicaPartidas);
+dicaPartidas();
 $('#form-partidas').addEventListener('submit', async e => {
   e.preventDefault();
   const botao = $('#partidas-botao'), saida = $('#partidas-resultado');
   const codigo = selAeroPartidas.value;
   if (!codigo) { saida.textContent = 'Escolha o país e o aeroporto.'; $('#partidas-aero-campo').focus(); return; }
-  lembrar({ pais: selPaisPartidas.value, aeroporto: codigo });
+  const voos = Number($('#partidas-voos').value), horas_atras = Number($('#partidas-atras').value);
+  lembrar({ pais: selPaisPartidas.value, aeroporto: codigo, voos, horas_atras });
   ocupado(botao, true); saida.textContent = `Buscando as partidas de ${codigo}…`;
   try {
-    const r = await post('/api/admin/partidas', { aeroporto: codigo });
+    const r = await post('/api/admin/partidas', { aeroporto: codigo, voos, horas_atras });
+    const partes = horas_atras ? ` (${r.vao_sair ?? 0} vão sair, ${r.ja_sairam ?? 0} já saíram)` : '';
     saida.textContent = r.em_cache
-      ? `${plural(r.voos, 'voo', 'voos')} de ${r.aeroporto}, da consulta das ${hora(r.atualizado_em)}. Sem custo: espere 10 min para consultar de novo.`
-      : `${plural(r.voos, 'voo', 'voos')} de ${r.aeroporto} na lista. Custo estimado: US$ ${brl(r.custo_usd)}.`;
+      ? `${plural(r.voos, 'voo', 'voos')} de ${r.aeroporto}${partes}, da consulta das ${hora(r.atualizado_em)}. Sem custo: espere 10 min para consultar de novo.`
+      : `${plural(r.voos, 'voo', 'voos')} de ${r.aeroporto} na lista${partes}. Custo estimado: US$ ${brl(r.custo_usd)}.`;
     faseVoo = ''; await pintarVoos();
   } catch (err) { if (!tratarErro(err)) saida.textContent = mensagemDe(err); }
   finally { ocupado(botao, false); }
