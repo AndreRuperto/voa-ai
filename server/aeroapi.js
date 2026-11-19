@@ -16,7 +16,7 @@ export const PRECOS = {
 /** Erro com código do contrato (docs/13-api.md). */
 export class ErroAeroapi extends Error {
   /**
-   * @param {'aeroapi_sem_chave'|'aeroapi_falhou'|'teto_duro'} codigo
+   * @param {'aeroapi_sem_chave'|'aeroapi_falhou'|'aeroapi_plano'|'teto_duro'} codigo
    * @param {string} mensagem
    * @param {{status?: number, corpo?: string}} [extra]
    */
@@ -24,13 +24,19 @@ export class ErroAeroapi extends Error {
     super(mensagem);
     this.name = 'ErroAeroapi';
     this.codigo = codigo;
-    this.http = codigo === 'aeroapi_falhou' ? 502 : 503;
+    this.http = codigo === 'aeroapi_falhou' || codigo === 'aeroapi_plano' ? 502 : 503;
     this.statusAeroapi = extra.status ?? null;
     this.corpo = extra.corpo ?? null;
   }
 }
 
 export const MENSAGEM_TETO_DURO = 'A busca de voos está pausada até o mês que vem: o limite de gasto do serviço foi atingido. Os voos que você já acompanha continuam avisando.';
+
+/**
+ * Resposta da AeroAPI quando o plano não inclui o recurso. O Personal não tem alertas nem `/canonical`
+ * ("Alerts and Historical data are only available on Standard and Premium tiers"). Ver ADR-009.
+ */
+export const eRecusaDoPlano = (status, texto) => (status === 401 || status === 403) && /Standard and Premium/i.test(String(texto || ''));
 
 export const MENSAGEM_SEM_CHAVE = 'A busca de voos ainda não está ligada neste servidor. Falta configurar a chave da AeroAPI.';
 
@@ -63,6 +69,15 @@ export function criarAeroapi({
   bloqueado = () => tetoDuroAtingido(db, agora()),
 } = {}) {
   const temChave = () => Boolean(chave());
+  // Plano sem alertas (Personal): descoberto na primeira recusa, vale até o servidor reiniciar.
+  // AEROAPI_ALERTAS=0 força o modo sem alertas desde o início; =1 ignora a descoberta.
+  let planoSemAlertas = false;
+  const temAlertas = () => {
+    const forcado = process.env.AEROAPI_ALERTAS;
+    if (forcado === '0') return false;
+    if (forcado === '1') return true;
+    return !planoSemAlertas;
+  };
 
   /**
    * @param {string} metodo
@@ -104,8 +119,16 @@ export function criarAeroapi({
         continue;
       }
       const paginas = Math.max(1, Number(json?.num_pages) || 1);
+      const recusa = eRecusaDoPlano(r.status, texto);
       // A AeroAPI cobra as consultas que respondem; registramos todas para o painel bater com a fatura.
-      registrarChamada(db, { tipo: op.tipo, endpoint, paginas, status: r.status, fa_flight_id: op.fa_flight_id, ref: op.ref, quem: op.quem }, agora());
+      // Recusa por chave ou plano (401/403) não é cobrada: fica no painel com custo zero.
+      registrarChamada(db, { tipo: op.tipo, endpoint, paginas, status: r.status, fa_flight_id: op.fa_flight_id, ref: op.ref, quem: op.quem,
+        preco: r.status === 401 || r.status === 403 ? 0 : undefined }, agora());
+      if (recusa) {
+        if (!planoSemAlertas) console.warn('[aeroapi] o plano não inclui alertas nem /canonical: o agendador vai consultar os voos sozinho (ADR-009).');
+        planoSemAlertas = true;
+        throw new ErroAeroapi('aeroapi_plano', 'O plano da AeroAPI não inclui este recurso.', { status: r.status, corpo: texto.slice(0, 1000) });
+      }
       if (r.status === 404 && op.aceitar404) return { status: 404, json: null, headers: r.headers };
       if (!r.ok) {
         console.warn(`[aeroapi] ${metodo} ${url.pathname} → ${r.status} ${texto.slice(0, 300)}`);
@@ -118,9 +141,12 @@ export function criarAeroapi({
 
   return {
     temChave,
+    /** Se o plano tem alertas (webhook). Sem eles, o agendador consulta os voos (ADR-009). */
+    temAlertas,
 
     /** IATA → ICAO (R6). Devolve a lista de idents canônicos. */
     async canonical(ident, { quem } = {}) {
+      if (!temAlertas()) return [];   // o mesmo plano que recusa alertas recusa o /canonical
       const { json } = await chamar('GET', `/flights/${encodeURIComponent(ident)}/canonical`, {
         endpoint: '/flights/{ident}/canonical', tipo: 'canonical', query: { ident_type: 'designator' }, quem, aceitar404: true,
       });

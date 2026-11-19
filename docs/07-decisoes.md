@@ -38,7 +38,7 @@ Formato curto de ADR (*Architecture Decision Record*). Cada decisão tem context
 
 ## ADR-003 · Alertas por webhook em vez de polling
 
-**Status:** aceita · 13/11/2026
+**Status:** aceita · 13/11/2026 · no plano Personal, substituída pela [ADR-009](#adr-009--plano-personal-o-agendador-consulta-o-voo)
 
 **Contexto.** Consultar o status a cada minuto custaria cerca de US$ 3 a US$ 6 por voo. Alertas entregues custam US$ 0,020 cada.
 
@@ -101,4 +101,34 @@ Formato curto de ADR (*Architecture Decision Record*). Cada decisão tem context
 **Decisão.** A viagem é **deduzida**, não cadastrada: o voo B continua o A quando sai do aeroporto onde A chega, até 24 h depois, e é da mesma pessoa (mesmo apelido, ou um sem apelido). Em Meus voos, as pernas viram um cartão de viagem com a frase de onde ela está e a conexão entre os trechos (escala, apertada abaixo de 45 min, pode perder). No status, uma seção mostra todos os trechos; no globo, o que já voou fica como rastro, o que falta como tracejado, com um rótulo só por viagem.
 
 **Consequências.** Nenhuma mudança na API e nenhum custo extra na AeroAPI. Cada perna continua com seus avisos. O agendador repete a dedução no servidor (mesmo `public/viagens.js`) e avisa por push quando a conexão fica pior que a planejada: apertada, depois pode perder, e uma vez quando volta ao normal. Uma conexão vendida apertada pela companhia não gera aviso; cancelado e desviado ficam com o aviso do próprio voo. Uma ida e volta no mesmo dia, com o mesmo apelido e menos de 24 h de intervalo, seria lida como conexão.
+
+---
+
+## ADR-009 · Plano Personal: o agendador consulta o voo
+
+**Status:** aceita · 19/11/2026
+
+**Contexto.** Com a chave ativa, a AeroAPI recusou `POST /alerts`, `GET /alerts` e `/flights/{ident}/canonical` com 401 e a frase "Alerts and Historical data are only available on Standard and Premium tiers". O plano Personal não tem alertas, então a ADR-003 não vale nele. `/flights/{ident}`, `/flights/{id}` e `/airports/{id}/flights/to/{dest}` respondem normalmente.
+
+**Decisão.** O cliente descobre o plano na primeira recusa (`aeroapi_plano`) e deixa de tentar alertas e `/canonical` até o servidor reiniciar. `AEROAPI_ALERTAS=0` força esse modo e `=1` ignora a descoberta. Sem `/canonical`, a busca usa o número como veio: `/flights/TP103` acha o TAP103. Sem alerta, a inscrição funciona com `alert_id` vazio e o agendador consulta o voo (`intervaloDeConsulta`):
+
+| Fase | Intervalo |
+|---|---|
+| Mais de 20 min antes da saída | só os marcos de 3 h, 1 h e 15 min |
+| Da saída −20 min até +1 h, sem decolar | 10 min |
+| Atraso longo sem decolar (até 12 h) | 30 min |
+| Voando, até 40 min antes do pouso | 45 min |
+| Perto do pouso (até 2 h depois do previsto) | 10 min |
+| Pousou, esperando o portão (até 90 min; desligado no modo econômico) | 10 min |
+| Chegou ao portão ou cancelado | para |
+
+Qualquer atualização do voo conta, inclusive a de quem abre a página dele, então ninguém paga duas consultas seguidas. Os avisos olham o **estado**, não a diferença: decolou, pousou, chegou ao portão, cancelado e desviado saem uma vez cada (mesma chave da rede de segurança), e só para eventos depois da primeira inscrição.
+
+**Consequências.**
+
+- O aviso pode chegar até ~10 min depois do evento, contra segundos no webhook.
+- O custo é parecido com o dos alertas: ~14 consultas (US$ 0,07) num voo de 2 h e ~25 (US$ 0,13) num de 12 h, contra ~US$ 0,08 em alertas. O crédito de US$ 5/mês segue cerca de 50 voos curtos.
+- O limite do Personal é de 10 consultas/min; o cliente já espera e tenta de novo no 429.
+- Recusas 401/403 ficam no painel com custo zero.
+- Se a conta passar para o Standard, basta reiniciar o servidor: os alertas voltam a ser criados sem mudar código.
 
