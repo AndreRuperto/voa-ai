@@ -101,11 +101,29 @@
     <!-- ===== VOOS ===== -->
     <section class="secao" data-secao="voos" aria-labelledby="t-voos">
       <header class="cabeca"><div><h1 id="t-voos" tabindex="-1">Voos</h1>
-        <p class="apoio">Um alerta por voo, compartilhado por quem acompanha. Parar os avisos de um voo vale para todos os inscritos.</p></div></header>
+        <p class="apoio">Os voos que o app já conhece: buscados, acompanhados ou trazidos pelas partidas, das últimas 24 h às próximas 24 h. Ver esta lista não custa nada.</p></div>
+        <div class="segmentado" role="group" aria-label="Fase do voo" id="fases-voo">
+          <button type="button" data-fase="" aria-pressed="true">Todos</button>
+          <button type="button" data-fase="no_ar" aria-pressed="false">No ar</button>
+          <button type="button" data-fase="para_decolar" aria-pressed="false">Para decolar</button>
+          <button type="button" data-fase="pousou" aria-pressed="false">Pousados</button>
+          <button type="button" data-fase="cancelado" aria-pressed="false">Cancelados</button>
+        </div>
+      </header>
+      <section class="cartao partidas" aria-labelledby="t-partidas">
+        <h2 id="t-partidas" class="partidas__titulo">Partidas de um aeroporto</h2>
+        <form id="form-partidas" class="partidas__form" novalidate>
+          <div class="campo"><label for="partidas-aero">Aeroporto</label>
+            <input id="partidas-aero" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" value="GRU" aria-describedby="partidas-dica"></div>
+          <button class="botao" type="submit" id="partidas-botao">Atualizar partidas</button>
+        </form>
+        <p class="pequeno" id="partidas-dica">Busca as próximas partidas (até 15 voos, das próximas 6 h) e junta à lista. Uma consulta paga, de US$ 0,005 a 0,02. O mesmo aeroporto em menos de 10 min não cobra de novo.</p>
+        <p class="pequeno" id="partidas-resultado" role="status" aria-live="polite"></p>
+      </section>
       <section class="cartao">
         <div class="rolagem"><table>
-          <caption class="sr">Voos acompanhados agora</caption>
-          <thead><tr><th>Voo</th><th>Rota</th><th class="n">Inscritos</th><th class="n">Alertas</th><th class="n">Custo (US$)</th><th><span class="sr">Ações</span></th></tr></thead>
+          <caption class="sr">Voos que o app conhece</caption>
+          <thead><tr><th>Voo</th><th>Rota</th><th>Partida</th><th>Quem acompanha</th><th class="n">Consultas</th><th class="n">Custo (US$)</th><th><span class="sr">Ações</span></th></tr></thead>
           <tbody id="tabela-voos"></tbody>
         </table></div>
       </section>

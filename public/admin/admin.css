@@ -197,3 +197,14 @@ dialog .acoes { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: 
 
 /* Contas: foto (ou inicial) ao lado do nome */
 .pessoa { display: flex; align-items: center; gap: 12px; }
+
+/* Voos: partidas de um aeroporto (consulta paga, sob demanda) */
+.partidas { display: flex; flex-direction: column; gap: 10px; }
+.partidas__titulo { font: 700 1rem var(--f-texto); margin: 0; }
+.partidas__form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.partidas__form .campo { width: 9rem; }
+.partidas__form input { text-transform: uppercase; font-weight: 700; letter-spacing: .04em; }
+#partidas-resultado:empty { display: none; }
+#fases-voo { flex-wrap: wrap; }
+.quem-voo { display: flex; flex-direction: column; gap: 2px; }
+

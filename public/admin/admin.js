@@ -272,21 +272,66 @@ function placaEstado(v) {
   }[v.estado] || ['dir', esc(v.estado || '–')];
   return `<span class="placa"><span class="loc">${cod}</span><span class="${cls}">${txt}</span>${extra ? `<span class="${extra[0]}">${extra[1]}</span>` : ''}</span>`;
 }
-let voos = [];
+let voos = [], contagemVoos = {}, faseVoo = '';
+const ROTULO_FASE = { no_ar: 'No ar', para_decolar: 'Para decolar', pousou: 'Pousados', cancelado: 'Cancelados' };
+const COLS_VOOS = 7;
+/** Partida no fuso da origem: "14:30", ou "20 nov, 14:30" se não for hoje lá. */
+function partidaDe(v) {
+  const h = v.horarios || {}, iso = h.decolagem_real || h.saida_real || h.saida_estimada || h.saida_prevista;
+  if (!iso) return '–';
+  const fuso = v.origem?.fuso, dia = diaISO(iso, fuso), hoje = diaISO(new Date().toISOString(), fuso);
+  const [, m, dd] = dia.split('-').map(Number);
+  return dia === hoje ? hora(iso, fuso) : `${dd} ${MES_CURTO[m - 1]}, ${hora(iso, fuso)}`;
+}
+function quemAcompanha(x) {
+  const q = x.quem || {}, partes = [];
+  if (q.contas) partes.push(plural(q.contas, 'conta', 'contas'));
+  if (q.aparelhos) partes.push(plural(q.aparelhos, 'aparelho sem conta', 'aparelhos sem conta'));
+  if (!partes.length) return '<span class="pequeno">Ninguém</span>';
+  const nomes = (q.apelidos || []).map(esc).join(', ');
+  return `<span class="quem-voo"><span>${partes.join(' · ')}</span>${nomes ? `<span class="pequeno">${nomes}</span>` : ''}</span>`;
+}
+function pintarFases() {
+  $$('#fases-voo [data-fase]').forEach(b => {
+    const f = b.dataset.fase, n = f ? contagemVoos[f] || 0 : voos.length;
+    b.textContent = `${f ? ROTULO_FASE[f] : 'Todos'} (${n})`;
+    b.setAttribute('aria-pressed', f === faseVoo);
+  });
+}
 async function pintarVoos() {
   const corpo = $('#tabela-voos');
-  if (!voos.length) corpo.innerHTML = linhaCarregando(6);
-  try { voos = (await get('/api/admin/voos'))?.voos || []; }
-  catch (e) { if (!tratarErro(e)) corpo.innerHTML = linhaErro(6, e); return; }
-  corpo.innerHTML = voos.length ? voos.map((x, i) => {
+  if (!voos.length) corpo.innerHTML = linhaCarregando(COLS_VOOS);
+  try { const r = await get('/api/admin/voos'); voos = r?.voos || []; contagemVoos = r?.contagem || {}; }
+  catch (e) { if (!tratarErro(e)) corpo.innerHTML = linhaErro(COLS_VOOS, e); return; }
+  pintarFases();
+  const lista = voos.map((x, i) => [x, i]).filter(([x]) => !faseVoo || x.fase === faseVoo);
+  corpo.innerHTML = lista.length ? lista.map(([x, i]) => {
     const v = x.voo || {}, cod = esc(v.ident_iata || v.ident || '');
     return `<tr><td>${placaEstado(v)}</td><td>${esc(v.origem?.iata || '?')} a ${esc(v.destino?.iata || '?')}</td>
-      <td class="n">${x.inscritos ?? 0}</td><td class="n">${x.alertas_entregues ?? 0}</td><td class="n">${brl(x.custo_usd)}</td>
+      <td>${partidaDe(v)}</td><td>${quemAcompanha(x)}</td>
+      <td class="n">${x.consultas ?? 0}</td><td class="n">${brl(x.custo_usd)}</td>
       <td style="text-align:right">${x.inscritos || x.alert_id
         ? `<button class="botao botao--sec botao--mini" type="button" data-parar="${i}" aria-label="Parar os avisos do voo ${cod} para todos os inscritos">Parar avisos</button>`
-        : '<span class="pequeno">Avisos parados</span>'}</td></tr>`;
-  }).join('') : linhaVazia(6, 'Nenhum voo acompanhado agora.');
+        : ''}</td></tr>`;
+  }).join('') : linhaVazia(COLS_VOOS, faseVoo ? `Nenhum voo ${ROTULO_FASE[faseVoo].toLowerCase()} agora.` : 'Nenhum voo nas últimas 24 h nem nas próximas. Busque um voo no app ou atualize as partidas de um aeroporto.');
 }
+$$('#fases-voo [data-fase]').forEach(b => b.addEventListener('click', () => { faseVoo = b.dataset.fase; pintarVoos(); }));
+$('#form-partidas').addEventListener('submit', async e => {
+  e.preventDefault();
+  const campo = $('#partidas-aero'), botao = $('#partidas-botao'), saida = $('#partidas-resultado');
+  const codigo = campo.value.trim().toUpperCase();
+  if (!/^[A-Z0-9]{3,4}$/.test(codigo)) { campo.setAttribute('aria-invalid', 'true'); saida.textContent = 'Use o código de 3 letras do aeroporto, como GRU.'; campo.focus(); return; }
+  campo.removeAttribute('aria-invalid');
+  ocupado(botao, true); saida.textContent = `Buscando as partidas de ${codigo}…`;
+  try {
+    const r = await post('/api/admin/partidas', { aeroporto: codigo });
+    saida.textContent = r.em_cache
+      ? `${plural(r.voos, 'voo', 'voos')} de ${r.aeroporto}, da consulta das ${hora(r.atualizado_em)}. Sem custo: espere 10 min para consultar de novo.`
+      : `${plural(r.voos, 'voo', 'voos')} de ${r.aeroporto} na lista. Custo estimado: US$ ${brl(r.custo_usd)}.`;
+    faseVoo = ''; await pintarVoos();
+  } catch (err) { if (!tratarErro(err)) saida.textContent = mensagemDe(err); }
+  finally { ocupado(botao, false); }
+});
 $('#tabela-voos').addEventListener('click', async e => {
   const b = e.target.closest('[data-parar]'); if (!b) return;
   const x = voos[b.dataset.parar], v = x.voo, cod = v.ident_iata || v.ident, n = x.inscritos || 0;

@@ -11,6 +11,12 @@ Os dados simulados saíram. O app agora tem servidor e telas de verdade, seguind
 - **`public/`**: o visual da v2 (globo e painel) e o admin, alimentados só pela API. Inclui service worker, manifest, ícones da PWA e os estados que faltavam (pousou, desviado, avisos bloqueados ou desligados).
 - **`prototipo/`** continua como registro histórico.
 
+## 19/11: admin · voos que o app conhece e partidas de um aeroporto
+
+- **Voos** no admin agora lista tudo o que o app conhece nas últimas/próximas 24 h, por fase (no ar, para decolar, pousados, cancelados), com quem acompanha, consultas e custo. Ver a lista é de graça.
+- Botão **Atualizar partidas** (padrão GRU): uma consulta paga a `/airports/{icao}/flights/scheduled_departures`, até 15 voos das próximas 6 h; cache de 10 min por aeroporto. Testado na AeroAPI real (Personal): 15 partidas de GRU. Preço exato não confirmado (US$ 0,005 a 0,02); o painel registra 0,02.
+- [ ] Conferir no portal da FlightAware ([uso](https://pt.flightaware.com/aeroapi/portal/usage)) quanto a consulta de partidas custou de verdade e ajustar `PRECOS.aeroporto`
+
 ## 19/11: chave da AeroAPI ativa, plano sem alertas
 
 - Chave em `AEROAPI_KEY` no `.env` e no Railway (produção responde `"aeroapi": true`). `GET /account/usage` respondeu 200.
