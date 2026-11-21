@@ -313,18 +313,39 @@ export function criarGlobo({ canvas, camadaRotulos, desktop, reduzir, aoArrastar
       const pos = r.onde === 'a' ? o.origem : r.onde === 'b' ? o.destino : (o.aviao ? o.aviao.position : o.curva.getPoint(.5));
       const el = document.createElement('div'); el.className = 'rotulo ' + (r.classe || ''); el.innerHTML = r.html;
       if (r.onde === 'aviao') el.dataset.voo = r.id;
-      camadaRotulos.append(el); rotulos.push({ el, pos });
+      camadaRotulos.append(el); rotulos.push({ el, pos, abaixo: (r.classe || '').includes('rotulo--aero'), lw: 0, lh: 0, dy: 0 });
     }
   }
   const _v = new THREE.Vector3(), _c = new THREE.Vector3();
+  const FOLGA = 4, MAX_EMPURROES = 6;
   function posicionarRotulos() {
     const w = canvas.clientWidth, h = canvas.clientHeight;
+    const ocupados = [];
     for (const r of rotulos) {
       _v.copy(r.pos).project(camera);
       _c.copy(camera.position).sub(r.pos).normalize();
       const visivel = _c.dot(r.pos.clone().normalize()) > .2;
       r.el.toggleAttribute('data-oculto', !visivel);
-      r.el.style.left = ((_v.x + 1) / 2 * w) + 'px'; r.el.style.top = ((1 - _v.y) / 2 * h) + 'px';
+      const x = (_v.x + 1) / 2 * w, y = (1 - _v.y) / 2 * h;
+      r.el.style.left = x + 'px'; r.el.style.top = y + 'px';
+      // Aeroportos vizinhos (CPT, UTN, JNB…): empurra o rótulo para longe do ponto até não cobrir outro já posto.
+      let dy = 0;
+      if (visivel) {
+        if (!r.lw) { r.lw = r.el.offsetWidth; r.lh = r.el.offsetHeight; }
+        const caixa = (d) => {
+          const topo = r.abaixo ? y + 12 + d : y - 10 - r.lh - d;
+          return { x0: x - r.lw / 2, x1: x + r.lw / 2, y0: topo, y1: topo + r.lh };
+        };
+        const bate = (c) => ocupados.some((o) => c.x0 < o.x1 + FOLGA && o.x0 < c.x1 + FOLGA && c.y0 < o.y1 + FOLGA && o.y0 < c.y1 + FOLGA);
+        let c = caixa(0);
+        for (let i = 0; i < MAX_EMPURROES && r.lw && bate(c); i++) { dy += r.lh + FOLGA; c = caixa(dy); }
+        if (r.lw) ocupados.push(c);
+      }
+      if (dy !== r.dy) {
+        r.dy = dy;
+        r.el.style.setProperty('--dy', dy + 'px');
+        r.el.toggleAttribute('data-puxado', dy > 0);
+      }
     }
   }
 

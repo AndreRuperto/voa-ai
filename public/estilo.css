@@ -53,9 +53,12 @@ a { color: inherit; }
 .palco canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .palco canvas:active { cursor: grabbing; }
 .rotulos { position: absolute; inset: 0; pointer-events: none; }
-.rotulo { position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap; transition: opacity var(--m-dur); }
+.rotulo { position: absolute; left: 0; top: 0; transform: translate(-50%, calc(-100% - 10px - var(--dy, 0px))); white-space: nowrap; transition: opacity var(--m-dur); }
 .rotulo[data-oculto] { opacity: 0; }
-.rotulo--aero { transform: translate(-50%, 12px); }
+.rotulo--aero { transform: translate(-50%, calc(12px + var(--dy, 0px))); }
+/* rótulo afastado do vizinho: um fio liga o rótulo ao seu ponto */
+.rotulo[data-puxado]::before { content: ''; position: absolute; left: 50%; top: 100%; width: 1px; height: var(--dy); background: var(--c-tinta-suave); }
+.rotulo--aero[data-puxado]::before { top: auto; bottom: 100%; }
 
 /* ============================================================ TOPO */
 .topo { position: fixed; top: 0; left: 0; right: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between;
