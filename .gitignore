@@ -8,3 +8,7 @@ dados/
 !server/dados/
 e2e/resultados/
 playwright-report/
+
+# Material da FlightAware: baixado e gerado localmente (docs/aeroapi/README.md)
+docs/aeroapi/AeroAPI-FlightAware.pdf
+docs/aeroapi/fonte/aeroapi-openapi.yml

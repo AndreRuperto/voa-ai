@@ -1,7 +1,7 @@
 # FlightAware AeroAPI: documentação
 
-- **[AeroAPI-FlightAware.pdf](AeroAPI-FlightAware.pdf)**: referência completa da AeroAPI v4.17.1 (58 endpoints, ~110 páginas). Inclui guia rápido, planos e preços, parâmetros, respostas e modelos de dados.
-- `fonte/aeroapi-openapi.yml`: especificação OpenAPI oficial, baixada de https://flightaware.com/commercial/aeroapi/resources/aeroapi-openapi.yml
+- `AeroAPI-FlightAware.pdf` (gerado, fora do Git): referência da AeroAPI v4.17.1 (58 endpoints, ~110 páginas), com guia rápido, planos e preços, parâmetros, respostas e modelos de dados. É material da FlightAware, por isso não fica no repositório: gere com os comandos abaixo.
+- `fonte/aeroapi-openapi.yml` (baixado, fora do Git): especificação OpenAPI oficial, de https://flightaware.com/commercial/aeroapi/resources/aeroapi-openapi.yml
 - `fonte/precos.json`: preço por endpoint, extraído de https://www.flightaware.com/commercial/aeroapi/
 - `gerador/`: scripts que geram o PDF.
 
