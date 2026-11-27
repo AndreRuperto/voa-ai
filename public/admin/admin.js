@@ -57,8 +57,14 @@ function quandoCurto(iso) {
 }
 function avatar(c) {
   const ini = esc((c?.nome || c?.email || '?').trim().charAt(0).toUpperCase());
-  return c?.foto ? `<img src="${esc(c.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${ini}'))">` : ini;
+  return c?.foto ? `<img src="${esc(c.foto)}" alt="" referrerpolicy="no-referrer" data-inicial="${ini}">` : ini;
 }
+// Foto da conta que não carrega vira a inicial (sem onerror inline: a CSP bloqueia handler inline).
+document.addEventListener('error', (e) => {
+  const img = e.target;
+  if (img instanceof HTMLImageElement && img.dataset.inicial != null) img.replaceWith(document.createTextNode(img.dataset.inicial));
+}, true);
+
 /** 404 de /api/admin/* = sessão de admin acabou: volta para a porta. */
 function tratarErro(e) { if (e?.status === 404) { eu = null; portao('Sua sessão de admin acabou. Entre de novo com uma conta de administrador.'); return true; } return false; }
 

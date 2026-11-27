@@ -19,7 +19,7 @@ export const PRECOS = {
 /** Erro com código do contrato (docs/13-api.md). */
 export class ErroAeroapi extends Error {
   /**
-   * @param {'aeroapi_sem_chave'|'aeroapi_falhou'|'aeroapi_plano'|'teto_duro'} codigo
+   * @param {'aeroapi_sem_chave'|'aeroapi_falhou'|'aeroapi_plano'|'teto_duro'|'so_convidados'} codigo
    * @param {string} mensagem
    * @param {{status?: number, corpo?: string}} [extra]
    */
@@ -27,7 +27,7 @@ export class ErroAeroapi extends Error {
     super(mensagem);
     this.name = 'ErroAeroapi';
     this.codigo = codigo;
-    this.http = codigo === 'aeroapi_falhou' || codigo === 'aeroapi_plano' ? 502 : 503;
+    this.http = codigo === 'so_convidados' ? 403 : codigo === 'aeroapi_falhou' || codigo === 'aeroapi_plano' ? 502 : 503;
     this.statusAeroapi = extra.status ?? null;
     this.corpo = extra.corpo ?? null;
   }
@@ -40,6 +40,28 @@ export const MENSAGEM_TETO_DURO = 'A busca de voos está pausada até o mês que
  * ("Alerts and Historical data are only available on Standard and Premium tiers"). Ver ADR-009.
  */
 export const eRecusaDoPlano = (status, texto) => (status === 401 || status === 403) && /Standard and Premium/i.test(String(texto || ''));
+
+export const MENSAGEM_SO_CONVIDADOS = 'A busca ao vivo está aberta só para convidados por enquanto. Os voos que já aparecem aqui continuam disponíveis.';
+
+/**
+ * Quem pode gerar consulta paga. Com AEROAPI_CONVIDADOS definida (lista de e-mails, pode ser vazia), só as contas
+ * dessa lista e os admins: o plano Personal da AeroAPI é de uso pessoal, e visitante anônimo não pode gastar o
+ * orçamento do mês (docs/revisao: itens 1 e 2). O agendador e as ações de admin continuam. Sem a variável, todos
+ * podem (desenvolvimento e testes antigos).
+ * @param {import('node:sqlite').DatabaseSync} db
+ * @returns {(quem?: string) => boolean}
+ */
+export function criarPermissaoPaga(db, env = process.env) {
+  if (env.AEROAPI_CONVIDADOS === undefined) return () => true;
+  const lista = (s) => String(s || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+  const permitidos = new Set([...lista(env.AEROAPI_CONVIDADOS), ...lista(env.ADMIN_EMAILS)]);
+  return (quem) => {
+    if (!quem || quem === 'agendador' || quem.startsWith('admin:')) return true;
+    if (!quem.startsWith('u:')) return false;
+    const u = db.prepare('SELECT email, bloqueado FROM USUARIO WHERE id = ?').get(quem.slice(2));
+    return Boolean(u && !u.bloqueado && permitidos.has(String(u.email).toLowerCase()));
+  };
+}
 
 export const MENSAGEM_SEM_CHAVE = 'A busca de voos ainda não está ligada neste servidor. Falta configurar a chave da AeroAPI.';
 
@@ -70,6 +92,7 @@ export function criarAeroapi({
   tentativas = 3,
   agora = () => new Date(),
   bloqueado = () => tetoDuroAtingido(db, agora()),
+  permitido = criarPermissaoPaga(db),
 } = {}) {
   const temChave = () => Boolean(chave());
   // Plano sem alertas (Personal): descoberto na primeira recusa, vale até o servidor reiniciar.
@@ -94,6 +117,8 @@ export function criarAeroapi({
     if (!(metodo === 'DELETE' && op.tipo === 'alerts') && bloqueado()) {
       throw new ErroAeroapi('teto_duro', MENSAGEM_TETO_DURO);
     }
+    // Só convidados geram consulta paga (apagar alerta continua liberado: é de graça).
+    if (metodo !== 'DELETE' && !permitido(op.quem)) throw new ErroAeroapi('so_convidados', MENSAGEM_SO_CONVIDADOS);
     const url = new URL(base + caminho);
     for (const [n, v] of Object.entries(op.query || {})) if (v != null) url.searchParams.set(n, String(v));
     const endpoint = `${metodo} ${op.endpoint}`;

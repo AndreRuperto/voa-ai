@@ -8,8 +8,19 @@ O nome é um trocadilho: *"tô indo aí"* virou *"voa aí"*.
 
 ## Status
 
-📝 **v1 em especificação.** PWA + servidor Node que avisa por push quando o voo decola, atrasa, está chegando e pousa.
-💭 **v2:** o avião voando num globo 3D (Three.js).
+✅ **No ar** em [voaai.up.railway.app](https://voaai.up.railway.app): PWA + servidor Node 22 (sem framework) que avisa por Web Push quando o voo decola, atrasa, está chegando e pousa, com o avião num globo 3D (Three.js), login com Google e painel de admin.
+
+A busca ao vivo na AeroAPI está aberta só para convidados (o plano usado é de uso pessoal); para ver o app funcionando sem chave, rode o modo simulado: `npm run simular`.
+
+**Como rodar e testar**
+
+```bash
+npm ci
+npm run simular   # AeroAPI simulada, sem chave e sem custo (simulacao.env)
+npm test          # node --test
+```
+
+**Destaques técnicos:** cliente da AeroAPI com novas tentativas e registro de custo por chamada; tetos de gasto mensal e limites por IP e por conta; webhook com segredo comparado em tempo constante e deduplicação; detecção de atraso com histerese; agendador que consulta o voo nos marcos certos quando o plano não tem alertas; CSP estrita e cabeçalhos de segurança.
 
 ## Documentação
 
@@ -31,10 +42,14 @@ O nome é um trocadilho: *"tô indo aí"* virou *"voa aí"*.
 
 ### Referência da AeroAPI
 
-- [AeroAPI: referência completa (PDF)](docs/aeroapi/AeroAPI-FlightAware.pdf): endpoints, parâmetros, respostas e preços.
-- [Spec OpenAPI oficial](docs/aeroapi/fonte/aeroapi-openapi.yml)
+- AeroAPI: a referência em PDF e a especificação OpenAPI são da FlightAware e ficam fora do repositório; [docs/aeroapi/README.md](docs/aeroapi/README.md) explica como baixar e gerar.
 - [Como regenerar o PDF](docs/aeroapi/README.md)
 
 ## Configuração
 
 A chave da AeroAPI nunca deve ir para o repositório. Copie `.env.example` para `.env` e preencha. A lista completa de variáveis está em [03-arquitetura.md](docs/03-arquitetura.md#variáveis-de-ambiente).
+
+## Segurança e uso
+
+- Falhas de segurança: veja [SECURITY.md](SECURITY.md) (aviso privado, não abra issue pública).
+- **Código aberto para leitura.** Todos os direitos reservados: não há licença de uso, cópia ou redistribuição.

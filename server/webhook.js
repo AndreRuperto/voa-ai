@@ -74,6 +74,12 @@ export async function processarWebhook(ctx, corpo) {
   const alertId = Number.isFinite(Number(corpo?.alert_id)) ? Number(corpo.alert_id) : null;
   let fa = typeof flight?.fa_flight_id === 'string' ? flight.fa_flight_id : null;
 
+  // Só vale callback de um alerta que nós criamos: sem isso, quem souber o segredo da URL manda push falso a todos
+  // os inscritos e infla o gasto (docs/revisao: webhook). O voo é o do alerta, não o que veio no corpo.
+  const doAlerta = alertId != null ? db.prepare('SELECT fa_flight_id FROM VOO WHERE alert_id = ?').get(alertId) : null;
+  if (!doAlerta) return { resultado: 'alerta_desconhecido' };
+  fa = doAlerta.fa_flight_id;
+
   // Cada alerta entregue custa US$ 0,020 (doc 04).
   registrarChamada(db, { tipo: 'alerta_entregue', endpoint: 'POST /webhook/aeroapi', fa_flight_id: fa, ref: codigo }, agora);
 
@@ -83,11 +89,7 @@ export async function processarWebhook(ctx, corpo) {
     'INSERT INTO EVENTO (fa_flight_id, alert_id, event_code, chave, payload_json, recebido_em, notificado) VALUES (?, ?, ?, ?, ?, ?, 0)',
   ).run(fa, alertId, codigo, chave, JSON.stringify(corpo ?? null).slice(0, 100_000), agora.toISOString());
 
-  let atual = fa ? lerVoo(db, fa) : null;
-  if (!atual && alertId != null) {
-    const porAlerta = db.prepare('SELECT fa_flight_id FROM VOO WHERE alert_id = ?').get(alertId);
-    if (porAlerta) { fa = porAlerta.fa_flight_id; atual = lerVoo(db, fa); }
-  }
+  const atual = lerVoo(db, fa);
   if (!atual || !flight) return { resultado: 'voo_desconhecido' };
 
   const destinoAntes = atual.dados.destination;

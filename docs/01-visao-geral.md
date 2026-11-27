@@ -22,7 +22,7 @@ O nome brinca com o *"tô indo aí"*: a pessoa está **voando aí**, até você.
 
 | Versão | Entrega | Status |
 |---|---|---|
-| **v1 · Alertas** | PWA no celular: cadastra o voo e recebe push de decolagem, atraso, aproximação e pouso | 📝 Em especificação: [02-v1-alertas.md](02-v1-alertas.md) |
+| **v1 · Alertas** | PWA no celular: cadastra o voo e recebe push de decolagem, atraso, aproximação e pouso | ✅ No ar |
 | **v2 · 3D** | O avião voando num globo 3D (Three.js) com a rota real, no estilo do [escrithorius-3d](https://github.com/AndreRuperto/escrithorius-3d) | 💭 Visão: [06-v2-3d.md](06-v2-3d.md) |
 
 ## Princípios
@@ -52,4 +52,4 @@ O nome brinca com o *"tô indo aí"*: a pessoa está **voando aí**, até você.
 | 07 | [Decisões](07-decisoes.md) | Registro das decisões de arquitetura |
 | 08 | [Roadmap](08-roadmap.md) | Marcos e checklist |
 | 09 | [Direção visual](09-direcao-visual.md) | Tokens, tipografia, componentes e telas da v1 |
-| — | [AeroAPI (PDF)](aeroapi/AeroAPI-FlightAware.pdf) | Referência completa da API |
+| — | [AeroAPI (como gerar o PDF)](aeroapi/README.md) | Referência completa da API |

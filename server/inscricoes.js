@@ -5,6 +5,7 @@ import { obterVoo } from './consultas.js';
 import { lerVoo, vooAtivo, vooDaLinha } from './voos.js';
 import { limitesPara } from './limites.js';
 import { lerPushSubscription } from './push.js';
+import { criarPermissaoPaga, ErroAeroapi, MENSAGEM_SO_CONVIDADOS } from './aeroapi.js';
 
 /**
  * Quem está pedindo.
@@ -64,6 +65,8 @@ function lerApelido(apelido) {
 export async function criarInscricao(ctx, q, corpo) {
   const agora = ctx.agora();
   if (q.usuario?.bloqueado) throw new ErroRegra(403, 'bloqueado', 'Esta conta está bloqueada.');
+  // Acompanhar faz o agendador consultar o voo (pago) até ele pousar: só quem pode gerar consulta paga.
+  if (!criarPermissaoPaga(ctx.db)(rotuloQuem(q))) throw new ErroAeroapi('so_convidados', MENSAGEM_SO_CONVIDADOS);
   const fa = corpo?.fa_flight_id;
   if (typeof fa !== 'string' || !fa) throw new ErroRegra(400, 'invalido', 'Falta o voo (fa_flight_id).');
   const apelido = lerApelido(corpo.apelido);
