@@ -1,6 +1,6 @@
 # 05 · Custos
 
-Valores da tabela oficial da FlightAware (novembro de 2026). Detalhes em [aeroapi/AeroAPI-FlightAware.pdf](aeroapi/AeroAPI-FlightAware.pdf).
+Valores da tabela oficial da FlightAware (novembro de 2026). Detalhes em o PDF gerado em `docs/aeroapi/` (fora do Git; ver [aeroapi/README.md](aeroapi/README.md)).
 
 > ⚠️ **Correção importante:** criar e apagar alertas é gratuito, mas **cada alerta entregue custa US$ 0,020**. Por isso, escolher os eventos ativos é a principal alavanca de custo.
 

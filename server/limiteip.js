@@ -24,17 +24,33 @@ export function grupoDoPedido(metodo, caminho) {
 }
 
 /**
- * IP de quem pediu. Atrás do proxy do Railway, o IP real vem em X-Real-IP (o Railway sobrescreve esse
- * cabeçalho, então o cliente não consegue forjar). Fora do Railway, só confia num cabeçalho se
- * CABECALHO_IP disser qual; senão usa o IP da conexão.
+ * Chave do limite para um IP: IPv4 como está; IPv6 pelo prefixo /64, porque quem tem um /64 tem endereços à
+ * vontade (docs/revisao: item 1). Endereço IPv4 mapeado em IPv6 (::ffff:1.2.3.4) vira o IPv4.
+ */
+export function chaveDeIp(ip) {
+  const s = String(ip || '').trim().replace(/^\[|\]$/g, '');
+  const v4 = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(s);
+  if (v4) return v4[1];
+  if (!s.includes(':')) return s || 'desconhecido';
+  const [cabeca, cauda = ''] = s.split('::');
+  const a = cabeca ? cabeca.split(':') : [];
+  const b = cauda ? cauda.split(':') : [];
+  const grupos = [...a, ...Array(Math.max(0, 8 - a.length - b.length)).fill('0'), ...b];
+  return grupos.slice(0, 4).map((g) => (g || '0').toLowerCase().replace(/^0+(?=.)/, '')).join(':') + '::/64';
+}
+
+/**
+ * IP de quem pediu. No Railway, o último item do X-Forwarded-For é o que o proxy dele acrescenta (os anteriores o
+ * cliente pode inventar); X-Real-IP não é usado, porque não há garantia de que o proxy o sobrescreva (docs/revisao:
+ * item 12). Fora do Railway, só confia num cabeçalho se CABECALHO_IP disser qual; senão usa o IP da conexão.
  */
 export function ipDoPedido(req, env = process.env) {
-  const cab = (env.CABECALHO_IP || (env.RAILWAY_ENVIRONMENT_NAME ? 'x-real-ip' : '')).toLowerCase();
+  const cab = (env.CABECALHO_IP || (env.RAILWAY_ENVIRONMENT_NAME ? 'x-forwarded-for' : '')).toLowerCase();
   if (cab) {
-    const v = String(req.headers[cab] || '').split(',')[0].trim();
-    if (v) return v;
+    const partes = String(req.headers[cab] || '').split(',').map((p) => p.trim()).filter(Boolean);
+    if (partes.length) return chaveDeIp(partes[partes.length - 1]);
   }
-  return req.socket?.remoteAddress || 'desconhecido';
+  return chaveDeIp(req.socket?.remoteAddress || '');
 }
 
 /**

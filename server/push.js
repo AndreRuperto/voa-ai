@@ -21,11 +21,26 @@ export function criarEnvioWebPush() {
 }
 
 /** Converte o PushSubscription do navegador em colunas (ou null se inválido). */
+/**
+ * Hosts dos serviços de push dos navegadores (Chrome/Edge/Android, Firefox, Safari/iOS, Windows). Endpoint de
+ * outro host seria o servidor mandando POST para qualquer lugar (docs/revisao: Web Push, SSRF limitado).
+ */
+const HOSTS_PUSH = [/^fcm\.googleapis\.com$/, /^updates\.push\.services\.mozilla\.com$/, /^([a-z0-9-]+\.)*push\.apple\.com$/, /^([a-z0-9-]+\.)*notify\.windows\.com$/];
+
+export function hostDePushValido(endpoint) {
+  try {
+    const u = new URL(endpoint);
+    return u.protocol === 'https:' && !u.username && !u.password && !u.port && HOSTS_PUSH.some((re) => re.test(u.hostname));
+  } catch {
+    return false;
+  }
+}
+
 export function lerPushSubscription(p) {
   if (!p || typeof p !== 'object') return null;
   const endpoint = typeof p.endpoint === 'string' ? p.endpoint : null;
   const p256dh = p.keys?.p256dh, auth = p.keys?.auth;
-  if (!endpoint || !/^https:\/\//.test(endpoint) || typeof p256dh !== 'string' || typeof auth !== 'string') return null;
+  if (!endpoint || !hostDePushValido(endpoint) || typeof p256dh !== 'string' || typeof auth !== 'string') return null;
   return { endpoint, p256dh, auth };
 }
 

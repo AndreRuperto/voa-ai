@@ -24,6 +24,7 @@ const PADRAO = {
 
 /** Texto para a pessoa. `aeroapi_sem_chave` ganha uma frase própria. */
 export function mensagemDe(e) {
+  if (e?.erro === 'so_convidados') return 'A busca ao vivo está aberta só para convidados por enquanto. Os voos que já aparecem aqui continuam disponíveis.';
   if (e?.erro === 'aeroapi_sem_chave') return 'O serviço de voos ainda não está configurado. Tente de novo mais tarde.';
   return e?.mensagem || e?.message || PADRAO[503];
 }

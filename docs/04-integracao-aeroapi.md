@@ -1,6 +1,6 @@
 # 04 · Integração com a AeroAPI
 
-Referência completa: [aeroapi/AeroAPI-FlightAware.pdf](aeroapi/AeroAPI-FlightAware.pdf) (v4.17.1).
+Referência completa: o PDF gerado em `docs/aeroapi/` (fora do Git; ver [aeroapi/README.md](aeroapi/README.md)) (v4.17.1).
 Base URL: `https://aeroapi.flightaware.com/aeroapi`. Header: `x-apikey: $AEROAPI_KEY`.
 
 ## Endpoints usados

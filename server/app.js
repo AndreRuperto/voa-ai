@@ -1,5 +1,7 @@
 // Monta o contexto (banco, AeroAPI, push) e o tratador HTTP. Separado do index.js para os testes.
 import { join, dirname } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { abrirBanco } from './db.js';
 import { criarAeroapi } from './aeroapi.js';
@@ -70,9 +72,9 @@ export function criarApp(ctx) {
   registrarApi(r);
   registrarAdmin(r);
 
+  const seguranca = cabecalhosDeSeguranca(ctx);
   return async function tratar(req, res) {
-    res.setHeader('x-content-type-options', 'nosniff');
-    res.setHeader('referrer-policy', 'strict-origin-when-cross-origin');
+    for (const [n, v] of seguranca) res.setHeader(n, v);
     let url;
     try {
       url = new URL(req.url, 'http://localhost');
@@ -136,4 +138,49 @@ export function criarApp(ctx) {
       tratarErro(res, e);
     }
   };
+}
+
+/** Hashes dos <script> inline (só o importmap) do index.html, para a CSP sem 'unsafe-inline'. O navegador troca CRLF por LF antes do hash. */
+function hashesInline(pastaPublica) {
+  try {
+    const html = readFileSync(join(pastaPublica, 'index.html'), 'utf8');
+    return [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
+      .map((m) => `'sha256-${createHash('sha256').update(m[1].replace(/\r\n?/g, '\n')).digest('base64')}'`);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Cabeçalhos de segurança (docs/revisao: item 5), como no Truco: CSP estrita (scripts só do site, do jsdelivr,
+ * do login do Google e o importmap pelo hash), sem embutir em outro site, HSTS quando o site é https.
+ * Estilos inline continuam permitidos (o HTML usa style=, e isso não executa código).
+ */
+export function cabecalhosDeSeguranca(ctx) {
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' ${hashesInline(ctx.pastaPublica).join(' ')} https://cdn.jsdelivr.net https://accounts.google.com/gsi/client`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https://*.googleusercontent.com",
+    "connect-src 'self' https://cdn.jsdelivr.net https://accounts.google.com/gsi/",
+    'frame-src https://accounts.google.com/gsi/',
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+  const lista = [
+    ['content-security-policy', csp],
+    ['x-content-type-options', 'nosniff'],
+    ['referrer-policy', 'strict-origin-when-cross-origin'],
+    ['x-frame-options', 'DENY'],
+    ['permissions-policy', 'camera=(), microphone=(), geolocation=(), payment=()'],
+    // O popup do login com Google precisa falar com a janela que o abriu.
+    ['cross-origin-opener-policy', 'same-origin-allow-popups'],
+  ];
+  if (/^https:/i.test(process.env.URL_PUBLICA || '')) lista.push(['strict-transport-security', 'max-age=31536000; includeSubDomains']);
+  return lista;
 }

@@ -213,8 +213,14 @@ function limiteComConta(tipo) {
 /* ============================================================ TOPO E CONTA */
 function avatarHtml(conta) {
   const inicial = esc((conta?.nome || conta?.email || '?').trim().charAt(0).toUpperCase());
-  return conta?.foto ? `<img src="${esc(conta.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${inicial}'))">` : inicial;
+  return conta?.foto ? `<img src="${esc(conta.foto)}" alt="" referrerpolicy="no-referrer" data-inicial="${inicial}">` : inicial;
 }
+// Foto da conta que não carrega vira a inicial (sem onerror inline: a CSP bloqueia handler inline).
+document.addEventListener('error', (e) => {
+  const img = e.target;
+  if (img instanceof HTMLImageElement && img.dataset.inicial != null) img.replaceWith(document.createTextNode(img.dataset.inicial));
+}, true);
+
 function pintarContador() {
   const el = $('#contador');
   const n = estado.eu?.uso?.voos ?? estado.inscricoes?.length;
@@ -936,7 +942,7 @@ async function telaStatus([id], { silencioso = false } = {}) {
     const naoExiste = e.erro === 'nao_encontrado';
     pintar($('#st-cabeca'), `<div class="quem"><h1 id="t-status" tabindex="-1">${naoExiste ? 'Voo não encontrado' : 'Não deu para abrir o voo'}</h1></div>`);
     pintar($('#st-corpo'), vazio({ erro: !naoExiste,
-      titulo: naoExiste ? 'Esse voo não está mais aqui' : e.erro === 'aeroapi_sem_chave' ? 'Busca de voos indisponível' : e.erro === 'teto_duro' ? 'Busca de voos pausada' : 'Algo deu errado',
+      titulo: naoExiste ? 'Esse voo não está mais aqui' : e.erro === 'aeroapi_sem_chave' ? 'Busca de voos indisponível' : e.erro === 'teto_duro' ? 'Busca de voos pausada' : e.erro === 'so_convidados' ? 'Busca ao vivo só para convidados' : 'Algo deu errado',
       texto: naoExiste ? 'O link pode estar errado, ou o voo já foi apagado: os dados somem 7 dias depois do pouso.' : esc(mensagemDe(e)),
       acao: `<a class="botao" href="#inicio">${icone('i-mais')}Acompanhar um voo</a>` }));
     $('#st-acoes').innerHTML = ''; $('#st-acoes').dataset.chave = ''; $('#st-conexao').innerHTML = ''; $('#st-conexao').dataset.chave = '';

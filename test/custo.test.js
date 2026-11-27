@@ -2,7 +2,7 @@
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { prepararAmbiente, aeroapiFalsa, subir, vooAeroapi, tokenGoogle, SUB } from './ajuda.js';
-import { grupoDoPedido, ipDoPedido, criarLimitePorIp } from '../server/limiteip.js';
+import { grupoDoPedido, ipDoPedido, criarLimitePorIp, chaveDeIp } from '../server/limiteip.js';
 import { registrarChamada } from '../server/aeroapi.js';
 import { verificarGasto } from '../server/avisosgasto.js';
 
@@ -37,11 +37,22 @@ test('grupos do limite por IP', () => {
   assert.equal(grupoDoPedido('GET', '/estilo.css'), null);
 });
 
-test('IP: X-Real-IP só vale no Railway ou com CABECALHO_IP', () => {
+test('IP: no Railway vale o último item do X-Forwarded-For; X-Real-IP é ignorado', () => {
   const req = { headers: { 'x-real-ip': '9.9.9.9', 'x-forwarded-for': '1.1.1.1' }, socket: { remoteAddress: '127.0.0.1' } };
   assert.equal(ipDoPedido(req, {}), '127.0.0.1');
-  assert.equal(ipDoPedido(req, { RAILWAY_ENVIRONMENT_NAME: 'production' }), '9.9.9.9');
+  assert.equal(ipDoPedido(req, { RAILWAY_ENVIRONMENT_NAME: 'production' }), '1.1.1.1');
   assert.equal(ipDoPedido(req, { CABECALHO_IP: 'X-Forwarded-For' }), '1.1.1.1');
+  // O cliente pode pôr o que quiser no começo do X-Forwarded-For; o proxy acrescenta o IP real no fim.
+  const forjado = { headers: { 'x-forwarded-for': '6.6.6.6, 7.7.7.7, 2.2.2.2' }, socket: {} };
+  assert.equal(ipDoPedido(forjado, { RAILWAY_ENVIRONMENT_NAME: 'production' }), '2.2.2.2');
+});
+
+test('IP: IPv6 do mesmo /64 conta como um só; IPv4 mapeado vira IPv4', () => {
+  assert.equal(chaveDeIp('2001:db8:abcd:12:1::5'), '2001:db8:abcd:12::/64');
+  assert.equal(chaveDeIp('2001:0db8:abcd:0012:ffff:1:2:3'), '2001:db8:abcd:12::/64');
+  assert.equal(chaveDeIp('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.equal(chaveDeIp('::ffff:10.0.0.7'), '10.0.0.7');
+  assert.equal(chaveDeIp('8.8.8.8'), '8.8.8.8');
 });
 
 test('janela do limite por IP reabre depois do tempo', () => {

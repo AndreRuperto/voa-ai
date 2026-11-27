@@ -128,4 +128,4 @@ export function criarCliente(base) {
   };
 }
 
-export const SUB = (n = 1) => ({ endpoint: `https://push.exemplo.com/sub/${n}`, keys: { p256dh: `p256dh-${n}`, auth: `auth-${n}` } });
+export const SUB = (n = 1) => ({ endpoint: `https://fcm.googleapis.com/fcm/send/sub-${n}`, keys: { p256dh: `p256dh-${n}`, auth: `auth-${n}` } });

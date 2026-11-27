@@ -89,3 +89,16 @@ test('inscrição de push morta (410) é removida', async () => {
   assert.equal(s.db.prepare('SELECT COUNT(*) n FROM INSCRICAO WHERE push_endpoint IS NOT NULL').get().n, 0);
   assert.equal(s.db.prepare('SELECT COUNT(*) n FROM APARELHO WHERE push_endpoint IS NOT NULL').get().n, 0);
 });
+
+test('alerta que não é nosso (segredo vazou): ignorado, sem aviso, sem evento e sem custo', async () => {
+  s.pushes.length = 0;
+  const eventos = s.db.prepare('SELECT COUNT(*) n FROM EVENTO').get().n;
+  const custos = s.db.prepare("SELECT COUNT(*) n FROM CHAMADA_API WHERE tipo = 'alerta_entregue'").get().n;
+  for (const alert_id of [987654321, undefined]) {
+    const r = await entregar({ event_code: 'arrival', alert_id, flight: flightWebhook({ fa_flight_id: FA, actual_on: '2026-11-15T00:00:00Z' }) });
+    assert.equal(r.status, 200);
+  }
+  assert.equal(s.pushes.length, 0);
+  assert.equal(s.db.prepare('SELECT COUNT(*) n FROM EVENTO').get().n, eventos);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM CHAMADA_API WHERE tipo = 'alerta_entregue'").get().n, custos);
+});
